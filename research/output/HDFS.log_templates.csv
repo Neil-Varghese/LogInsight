@@ -1,0 +1,397 @@
+EventId,EventTemplate,Occurrences
+09a53393,Receiving block <*> src: <*> dest: <*>,1723232
+3d91fa85,BLOCK* NameSystem.allocateBlock: <*> <*>,575061
+d38aa58d,PacketResponder <*> for block <*> <*>,1706728
+e3df2680,Received block <*> of size <*> from <*>,1706514
+5d5de21c,BLOCK* NameSystem.addStoredBlock: blockMap updated: <*> is added to <*> size <*>,1719741
+d6b7b743,Received block <*> src: <*> dest: <*> of size <*>,7097
+8aef43d5,<*> block blk_-1608999687919862906 to <*>,4
+6ba1b4fb,<*> Starting thread to transfer block <*> to <*> <*>,165
+54e5f6b4,BLOCK* ask <*> to replicate <*> to datanode(s) <*> <*>,165
+626085d5,<*> Served block <*> to <*>,428726
+728076ac,BLOCK* ask <*> to replicate <*> to datanode(s) <*>,6837
+40651754,<*> Starting thread to transfer block <*> to <*>,6837
+32777b38,Verification succeeded for <*>,120036
+ace40671,writeBlock <*> received exception <*>,67
+e817fa45,PacketResponder <*> 2 Exception java.io.EOFException,19
+bcc910df,writeBlock <*> received exception java.io.IOException: Could not read from stream,3226
+e7f7aecf,10.251.43.21:50010:Transmitted block <*> to <*>,39
+dba996ef,Deleting block <*> file <*>,1402047
+0567184d,Receiving empty packet for block <*>,1464
+0c931542,<*> block <*> to /10.250.7.230:50010,36
+5cd2b741,10.251.123.20:50010:Transmitted block <*> to <*>,35
+b0aeb5a9,<*> block <*> to /10.251.65.203:50010,45
+0f007b51,<*> block <*> to /10.251.106.214:50010,42
+5b926977,<*> block <*> to /10.251.126.22:50010,42
+f98316e6,10.251.65.237:50010:Transmitted block <*> to <*>,37
+87a2a229,<*> block <*> to /10.251.203.179:50010,36
+11b50198,10.250.15.240:50010:Transmitted block <*> to <*>,32
+d69af4d9,<*> block <*> to /10.250.11.53:50010,32
+75086cd0,<*> block <*> to /10.251.127.191:50010,26
+f57b0f16,10.251.122.65:50010:Transmitted block <*> to <*>,33
+679647cd,<*> block <*> to /10.251.30.179:50010,42
+4654f7f3,10.251.42.16:50010:Transmitted block <*> to <*>,34
+69bca6e5,Exception in receiveBlock for block <*> java.io.IOException: Connection reset by peer,75
+d013b7a3,writeBlock <*> received exception java.io.IOException: Connection reset by peer,75
+885714b4,10.250.10.213:50010:Transmitted block <*> to <*>,29
+d8c816ba,10.251.90.64:50010:Transmitted block <*> to <*>,23
+1c4dbf56,<*> block <*> to /10.251.42.207:50010,32
+eeb18602,<*> block <*> to /10.251.74.79:50010,34
+07819ef5,10.251.39.179:50010:Transmitted block <*> to <*>,44
+0880ea19,<*> block <*> to /10.250.13.240:50010,34
+c294d20f,BLOCK* NameSystem.addStoredBlock: Redundant addStoredBlock request received for <*> on <*> size <*>,975
+6b6fa07f,10.250.10.223:50010:Transmitted block <*> to <*>,34
+1f232ebd,<*> block <*> to /10.250.18.114:50010,28
+1b31e02a,PacketResponder <*> <*> Exception java.net.SocketTimeoutException: <*> millis timeout while waiting for channel to be ready for read. ch : java.nio.channels.SocketChannel[connected <*> <*>,22
+f6fa9369,PacketResponder <*> <*> Exception java.io.InterruptedIOException: Interruped while waiting for IO on channel java.nio.channels.SocketChannel[connected <*> <*> <*> millis timeout left.,33
+f266840a,Exception in receiveBlock for block <*> <*>,56
+15b484af,Changing block file offset of block <*> from 0 to <*> meta file offset to <*>,65
+a8d2bbfe,<*> block <*> to /10.251.199.225:50010,33
+f76c6ad4,<*> block <*> to /10.251.195.52:50010,42
+d9060841,10.251.70.211:50010:Transmitted block <*> to <*>,35
+e8fd08ce,10.251.111.209:50010:Transmitted block <*> to <*>,28
+69a72093,10.251.67.211:50010:Transmitted block <*> to <*>,38
+b055226b,<*> block <*> to /10.251.38.197:50010,39
+c4c327b6,10.250.19.16:50010:Transmitted block <*> to <*>,42
+7610b9b7,10.251.197.161:50010:Transmitted block <*> to <*>,32
+d4a51c33,<*> block <*> to /10.251.70.5:50010,22
+e7765fc7,<*> block <*> to /10.251.91.32:50010,33
+e9eb5bbf,<*> block <*> to /10.251.123.1:50010,33
+dbe79136,10.250.11.53:50010:Transmitted block <*> to <*>,27
+db919a6d,<*> block <*> to /10.251.214.130:50010,30
+ad66bb87,10.251.27.63:50010:Transmitted block <*> to <*>,28
+6c86b9a6,10.251.30.6:50010:Transmitted block <*> to <*>,41
+7b08e7b0,10.250.11.85:50010:Transmitted block <*> to <*>,29
+a9a95c6f,<*> block <*> to /10.251.214.18:50010,35
+8f0f6da4,<*> block <*> to /10.251.66.102:50010,34
+88312015,10.251.67.225:50010:Transmitted block <*> to <*>,29
+0feeae59,10.251.198.196:50010:Transmitted block <*> to <*>,31
+e193d1b9,10.251.66.102:50010:Transmitted block <*> to <*>,33
+37be5ead,<*> block <*> to /10.251.127.243:50010,34
+5e50cf8a,10.251.89.155:50010:Transmitted block <*> to <*>,33
+f28c97c7,<*> block <*> to /10.251.74.227:50010,36
+76969a59,<*> block <*> to /10.251.194.245:50010,41
+3b9d907e,<*> block <*> to /10.251.107.98:50010,31
+df4257de,10.251.39.242:50010:Transmitted block <*> to <*>,42
+1a1cfad7,<*> writing block <*> to mirror <*>,34
+6636078e,Exception in receiveBlock for block <*> java.io.InterruptedIOException: Interruped while waiting for IO on channel java.nio.channels.SocketChannel[connected <*> <*> <*> millis timeout left.,16
+c91862e6,writeBlock <*> received exception java.io.InterruptedIOException: Interruped while waiting for IO on channel java.nio.channels.SocketChannel[connected <*> <*> <*> millis timeout left.,7
+2ecc047e,PacketResponder <*> <*> Exception java.io.IOException: Broken pipe,6
+40c285db,10.251.195.52:50010:Transmitted block <*> to <*>,36
+b2b4169e,<*> block <*> to /10.251.39.144:50010,30
+0e831ced,10.251.74.134:50010:Transmitted block <*> to <*>,27
+c746aad1,10.251.110.160:50010:Transmitted block <*> to <*>,28
+e96db9c2,10.251.42.9:50010:Transmitted block <*> to <*>,26
+105fd4e2,10.251.65.203:50010:Transmitted block <*> to <*>,31
+20c9b2ea,10.251.107.98:50010:Transmitted block <*> to <*>,29
+8d5c4d79,<*> block <*> to /10.251.26.131:50010,33
+a85c84ba,10.251.106.37:50010:Transmitted block <*> to <*>,32
+eb69d25c,<*> block <*> to /10.251.215.192:50010,32
+c8caeb87,10.251.203.80:50010:Transmitted block <*> to <*>,34
+9c167f6b,<*> block <*> to /10.250.14.143:50010,33
+4610d0f1,"writeBlock <*> received exception java.io.IOException: Block <*> is valid, and cannot be written to.",9
+3b9fb427,<*> to transfer <*> to <*> got java.io.IOException: Connection reset by peer,9
+c30bbdc7,<*> block <*> to /10.251.193.224:50010,32
+ab61bee0,10.251.214.175:50010:Transmitted block <*> to <*>,24
+e1e019db,10.250.7.244:50010:Transmitted block <*> to <*>,33
+d69ff2ec,<*> block <*> to /10.251.123.195:50010,32
+9de05847,10.251.125.174:50010:Transmitted block <*> to <*>,29
+56a6e7b5,<*> block <*> to /10.251.126.255:50010,23
+4aceea4d,<*> block <*> to /10.251.30.134:50010,29
+c2042504,10.251.25.237:50010:Transmitted block <*> to <*>,21
+43292310,<*> block <*> to /10.251.193.175:50010,29
+e5b780c6,10.251.125.237:50010:Transmitted block <*> to <*>,26
+bad7df3a,<*> block <*> to /10.251.67.4:50010,29
+d5c6e2d9,10.251.215.50:50010:Transmitted block <*> to <*>,31
+0f122308,<*> block <*> to /10.251.38.53:50010,31
+5f225388,10.251.107.196:50010:Transmitted block <*> to <*>,31
+e472a302,10.250.19.227:50010:Transmitted block <*> to <*>,33
+29f99231,<*> block <*> to /10.251.110.196:50010,27
+db6fcaa3,<*> block <*> to /10.251.203.4:50010,21
+8abbe67a,10.251.67.4:50010:Transmitted block <*> to <*>,30
+b7445b54,<*> block <*> to /10.251.75.228:50010,32
+25aa9c14,10.250.7.32:50010:Transmitted block <*> to <*>,26
+9bc6e361,10.251.37.240:50010:Transmitted block <*> to <*>,25
+5f19e52d,<*> block <*> to /10.251.194.213:50010,33
+64eae2f5,10.251.203.179:50010:Transmitted block <*> to <*>,34
+5029da49,<*> block <*> to /10.250.15.67:50010,20
+f5b60416,10.251.126.227:50010:Transmitted block <*> to <*>,28
+07e7a6c2,<*> block <*> to /10.251.71.68:50010,26
+a91ede62,<*> block <*> to /10.251.127.47:50010,31
+5b8cb530,10.251.127.47:50010:Transmitted block <*> to <*>,27
+bcdac3ae,<*> block <*> to /10.251.43.192:50010,20
+1c4e71cf,10.251.38.214:50010:Transmitted block <*> to <*>,25
+fa74ec9b,<*> block <*> to /10.251.91.159:50010,20
+01a09baa,10.251.195.70:50010:Transmitted block <*> to <*>,28
+bab00bee,10.251.71.16:50010:Transmitted block <*> to <*>,27
+bb78d274,<*> block <*> to /10.251.90.81:50010,25
+2971ae93,<*> block <*> to /10.251.75.49:50010,25
+33f1de1f,<*> block <*> to /10.250.11.85:50010,24
+38f5430f,10.251.106.10:50010:Transmitted block <*> to <*>,23
+de219d3c,<*> block <*> to /10.251.198.33:50010,22
+a15f1d92,<*> block <*> to /10.251.111.80:50010,33
+226885cf,10.251.26.8:50010:Transmitted block <*> to <*>,16
+d63ef163,BLOCK* NameSystem.delete: <*> is added to invalidSet of <*>,1396174
+ffe67575,Unexpected error trying to delete block <*> BlockInfo not found in volumeMap.,5545
+8f2bc724,BLOCK* NameSystem.addStoredBlock: addStoredBlock request received for <*> on <*> size <*> But it does not belong to any file.,1288
+6985d780,<*> block blk_-5820341108159367267 to <*>,2
+38b5ad97,<*> exception while serving <*> to <*>,356207
+e024fa48,PacketResponder <*> <*> Exception java.io.IOException: Connection reset by peer,11
+242426b2,<*> block <*> to /10.251.74.134:50010,29
+adef1a45,10.250.6.214:50010:Transmitted block <*> to <*>,27
+a63456fc,10.251.122.79:50010:Transmitted block <*> to <*>,25
+f26a4a8f,10.250.18.114:50010:Transmitted block <*> to <*>,26
+514477b2,10.251.67.113:50010:Transmitted block <*> to <*>,19
+0b1863e8,10.251.73.188:50010:Transmitted block <*> to <*>,27
+57f35bef,10.251.70.5:50010:Transmitted block <*> to <*>,26
+587220fa,10.251.203.129:50010:Transmitted block <*> to <*>,26
+7265129b,10.251.66.63:50010:Transmitted block <*> to <*>,28
+b849d14f,<*> block <*> to /10.251.203.129:50010,25
+3dc0649b,<*> block <*> to /10.251.215.50:50010,30
+a552981c,Exception in receiveBlock for block <*> java.net.SocketTimeoutException: <*> millis timeout while waiting for channel to be ready for write. ch : java.nio.channels.SocketChannel[connected <*> <*>,5
+ffedfdc8,writeBlock <*> received exception java.net.SocketTimeoutException: <*> millis timeout while waiting for channel to be ready for <*> ch : java.nio.channels.SocketChannel[connected <*> <*>,15
+06d16156,Reopen Block <*>,5
+cb0c6d7b,<*> block <*> to /10.251.202.209:50010,32
+5daf5bd2,<*> block <*> to /10.251.199.150:50010,26
+873ded92,10.251.70.37:50010:Transmitted block <*> to <*>,35
+a6fbc53b,<*> block <*> to /10.250.5.161:50010,20
+42bdcfad,<*> block <*> to /10.251.107.227:50010,14
+71acaee0,10.251.42.191:50010:Transmitted block <*> to <*>,25
+f7d7be78,10.251.75.143:50010:Transmitted block <*> to <*>,27
+aabefa74,10.251.194.129:50010:Transmitted block <*> to <*>,34
+78915d3a,PacketResponder <*> <*> Exception java.nio.channels.ClosedByInterruptException,10
+02a20786,10.251.202.209:50010:Transmitted block <*> to <*>,27
+3c1d2799,10.251.30.85:50010:Transmitted block <*> to <*>,24
+5c998b23,10.251.43.210:50010:Transmitted block <*> to <*>,31
+871d5c14,<*> block blk_-8333455052087360327 to <*>,3
+0cf821b5,<*> block blk_5762192118127023083 to <*>,2
+a326b32a,<*> block <*> to /10.251.203.166:50010,20
+eeb1deca,<*> block blk_-3907603481176056256 to <*>,4
+bb684db8,10.251.90.134:50010:Transmitted block <*> to <*>,21
+24e0b962,10.251.202.181:50010:Transmitted block <*> to <*>,29
+5c33666f,10.250.14.143:50010:Transmitted block <*> to <*>,27
+304f7cac,10.251.203.4:50010:Transmitted block <*> to <*>,21
+4734fbd2,10.251.70.112:50010:Transmitted block <*> to <*>,28
+9a330905,<*> block <*> to /10.251.39.209:50010,31
+81e73cd4,<*> block <*> to /10.251.43.147:50010,25
+f1a024e0,10.251.199.245:50010:Transmitted block <*> to <*>,24
+7eaf2bc3,10.251.42.246:50010:Transmitted block <*> to <*>,25
+f28efbb6,10.251.42.84:50010:Transmitted block <*> to <*>,31
+e42fa802,<*> block <*> to /10.251.202.181:50010,19
+3ecdc2dd,10.251.126.83:50010:Transmitted block <*> to <*>,20
+538a114d,<*> block <*> to /10.251.203.246:50010,29
+3c5ca360,10.251.201.204:50010:Transmitted block <*> to <*>,22
+d1b5b5e7,<*> block <*> to /10.251.214.32:50010,18
+19ee5fec,10.251.215.16:50010:Transmitted block <*> to <*>,21
+969ddb99,<*> block <*> to /10.251.199.245:50010,15
+9dd83bbd,<*> block <*> to /10.251.105.189:50010,22
+b869a209,10.250.11.100:50010:Transmitted block <*> to <*>,24
+017efaca,10.250.5.161:50010:Transmitted block <*> to <*>,24
+b6fce9b4,10.251.194.245:50010:Transmitted block <*> to <*>,29
+e324c53b,10.251.105.189:50010:Transmitted block <*> to <*>,24
+3b43676d,10.250.14.196:50010:Transmitted block <*> to <*>,26
+984e7f6d,10.251.214.130:50010:Transmitted block <*> to <*>,23
+a8a3f32b,<*> block <*> to /10.251.74.192:50010,10
+93a5a6df,<*> block <*> to /10.251.30.101:50010,23
+81e22496,<*> block <*> to /10.251.73.188:50010,24
+5ddf4f33,<*> block <*> to /10.251.43.21:50010,20
+df6714d8,<*> block <*> to /10.251.111.209:50010,14
+c3298e16,<*> block <*> to /10.250.6.4:50010,19
+d23729c2,10.251.123.99:50010:Transmitted block <*> to <*>,30
+13eb7010,BLOCK* Removing block <*> from neededReplications as it does not belong to any file.,4
+10dfb921,<*> block <*> to /10.251.91.229:50010,18
+9139e2ae,10.251.39.144:50010:Transmitted block <*> to <*>,35
+378d6dab,10.251.194.213:50010:Transmitted block <*> to <*>,20
+0488f944,10.250.15.198:50010:Transmitted block <*> to <*>,26
+fe6ed588,10.250.15.101:50010:Transmitted block <*> to <*>,21
+165d535b,<*> block <*> to /10.251.215.70:50010,21
+4ee32f7a,10.251.74.227:50010:Transmitted block <*> to <*>,21
+4983f394,10.251.39.64:50010:Transmitted block <*> to <*>,22
+99c4763c,10.251.203.166:50010:Transmitted block <*> to <*>,18
+045f4da2,<*> block <*> to /10.251.106.37:50010,22
+aaabed1a,10.250.14.38:50010:Transmitted block <*> to <*>,20
+c9b8e649,<*> block <*> to /10.251.26.177:50010,16
+c764abe5,10.251.126.255:50010:Transmitted block <*> to <*>,25
+b6ddb899,10.251.109.236:50010:Transmitted block <*> to <*>,23
+93557ccd,10.250.6.191:50010:Transmitted block <*> to <*>,26
+b95cb02c,<*> block <*> to /10.250.10.6:50010,16
+ab035b02,<*> block <*> to /10.251.29.239:50010,22
+b0dfdf86,<*> block <*> to /10.250.14.196:50010,13
+d3c2c6cd,10.251.123.132:50010:Transmitted block <*> to <*>,24
+6913ee88,<*> block <*> to /10.251.39.242:50010,13
+55a205fc,<*> block <*> to /10.251.215.16:50010,10
+48d17667,10.251.111.228:50010:Transmitted block <*> to <*>,25
+045efe1c,<*> block <*> to /10.251.66.63:50010,14
+6a2086e5,10.251.123.1:50010:Transmitted block <*> to <*>,24
+4751b6a8,10.251.31.160:50010:Transmitted block <*> to <*>,18
+a2f6d19b,10.251.202.134:50010:Transmitted block <*> to <*>,16
+57c4dacb,<*> block <*> to /10.251.123.20:50010,17
+9495f0b5,<*> block <*> to /10.251.67.211:50010,19
+2e317d06,10.251.106.214:50010:Transmitted block <*> to <*>,18
+d4f6b3b4,10.251.30.179:50010:Transmitted block <*> to <*>,19
+46443ec1,<*> block <*> to /10.251.126.5:50010,15
+d04cecab,<*> block <*> to /10.251.111.228:50010,16
+22a5b9ea,10.251.199.150:50010:Transmitted block <*> to <*>,20
+4a208b91,<*> block <*> to /10.250.6.214:50010,21
+44063f87,<*> block <*> to /10.251.195.70:50010,16
+87dcccea,<*> block <*> to /10.250.9.207:50010,18
+190a4ad6,<*> block <*> to /10.251.31.180:50010,16
+2b817481,<*> block <*> to /10.250.14.38:50010,13
+d180dd05,10.251.35.1:50010:Transmitted block <*> to <*>,14
+f79898ae,PendingReplicationMonitor timed out block <*>,47
+7806e574,<*> block <*> to /10.251.89.155:50010,18
+65dfe9c6,10.251.121.224:50010:Transmitted block <*> to <*>,20
+697fcaf6,<*> block <*> to /10.251.106.50:50010,23
+0536b2e0,<*> block <*> to /10.251.25.237:50010,18
+6276a1e7,<*> block <*> to /10.251.109.236:50010,19
+33e3cf74,<*> block <*> to /10.251.125.193:50010,19
+08e580d1,10.250.15.67:50010:Transmitted block <*> to <*>,25
+06206b47,10.251.111.130:50010:Transmitted block <*> to <*>,27
+b16707e7,10.251.38.53:50010:Transmitted block <*> to <*>,12
+6aa2fb5d,10.251.91.32:50010:Transmitted block <*> to <*>,21
+0fff37d6,10.251.31.85:50010:Transmitted block <*> to <*>,23
+4f449419,<*> block <*> to /10.250.15.240:50010,15
+51aa0f2d,<*> block <*> to /10.251.42.16:50010,14
+49362499,10.251.29.239:50010:Transmitted block <*> to <*>,11
+2010066d,<*> block <*> to /10.251.122.65:50010,18
+ead6ffe4,10.251.26.131:50010:Transmitted block <*> to <*>,19
+2fb41ef3,<*> block <*> to /10.251.111.130:50010,22
+7125a1d5,<*> block <*> to /10.251.75.79:50010,14
+965ada32,10.251.75.49:50010:Transmitted block <*> to <*>,17
+e73fcd30,<*> block <*> to /10.250.10.144:50010,11
+11f2cb7a,10.251.111.80:50010:Transmitted block <*> to <*>,25
+b032ca5c,10.251.26.177:50010:Transmitted block <*> to <*>,19
+9f4a8b91,10.250.14.224:50010:Transmitted block <*> to <*>,13
+40773db7,<*> block <*> to /10.250.10.213:50010,11
+1940fba1,10.251.198.33:50010:Transmitted block <*> to <*>,19
+1ebcaeca,10.251.214.225:50010:Transmitted block <*> to <*>,17
+928f0213,10.250.17.177:50010:Transmitted block <*> to <*>,21
+3d75686d,<*> block <*> to /10.251.75.163:50010,11
+2a20556a,<*> block <*> to /10.251.126.83:50010,16
+f190ee7d,<*> block <*> to /10.250.17.225:50010,18
+8f11c368,<*> block <*> to /10.251.73.220:50010,13
+cc787529,10.251.110.196:50010:Transmitted block <*> to <*>,17
+d8483224,10.251.107.242:50010:Transmitted block <*> to <*>,15
+7721db46,<*> block <*> to /10.251.111.37:50010,19
+e762d922,10.251.214.112:50010:Transmitted block <*> to <*>,12
+945a8508,10.251.43.192:50010:Transmitted block <*> to <*>,18
+c9fda43e,10.251.30.134:50010:Transmitted block <*> to <*>,20
+8330b1cc,10.251.90.239:50010:Transmitted block <*> to <*>,21
+744038de,10.250.7.96:50010:Transmitted block <*> to <*>,13
+88247f8c,10.251.107.19:50010:Transmitted block <*> to <*>,19
+a71998c9,<*> block <*> to /10.251.71.97:50010,9
+124068c6,writeBlock <*> received exception java.io.IOException: <*> <*>,16
+625a2a34,PacketResponder <*> 1 Exception java.io.InterruptedIOException: Interruped while waiting for IO on channel java.nio.channels.SocketChannel[closed]. <*> millis timeout left.,5
+8cb14f2b,10.251.31.180:50010:Transmitted block <*> to <*>,12
+b273121d,10.251.123.195:50010:Transmitted block <*> to <*>,18
+dd483152,10.251.74.79:50010:Transmitted block <*> to <*>,10
+a79354d3,10.251.73.220:50010:Transmitted block <*> to <*>,14
+3db07ee8,10.250.5.237:50010:Transmitted block <*> to <*>,14
+61052020,<*> block <*> to /10.250.19.227:50010,11
+65a16b95,10.251.199.225:50010:Transmitted block <*> to <*>,14
+f196fd6c,<*> block <*> to /10.250.7.146:50010,11
+bd4bc7e9,<*> block <*> to /10.251.122.79:50010,13
+e041a2b1,10.251.193.175:50010:Transmitted block <*> to <*>,8
+a2a9386e,10.250.9.207:50010:Transmitted block <*> to <*>,16
+5cd32cfd,10.251.71.97:50010:Transmitted block <*> to <*>,15
+e4cd34e8,10.251.109.209:50010:Transmitted block <*> to <*>,11
+74882d37,10.251.71.240:50010:Transmitted block <*> to <*>,20
+8d0826de,10.251.75.163:50010:Transmitted block <*> to <*>,14
+4d7399c3,<*> block <*> to /10.251.90.64:50010,10
+3fe3853b,<*> block <*> to /10.251.39.179:50010,20
+5f7f40d6,10.250.13.188:50010:Transmitted block <*> to <*>,12
+f1e677ff,10.251.75.228:50010:Transmitted block <*> to <*>,12
+4e26e433,<*> block <*> to /10.251.70.112:50010,14
+78eb4114,<*> block <*> to /10.251.71.146:50010,13
+580870a3,10.251.91.229:50010:Transmitted block <*> to <*>,9
+be7ab1ef,<*> block <*> to /10.251.31.242:50010,8
+ed1dc3df,10.251.31.242:50010:Transmitted block <*> to <*>,9
+ad15d7a9,10.251.66.192:50010:Transmitted block <*> to <*>,19
+d37f28e6,<*> block <*> to /10.251.123.132:50010,8
+95bb170c,10.251.39.192:50010:Transmitted block <*> to <*>,12
+8c3bc5d2,10.251.90.81:50010:Transmitted block <*> to <*>,15
+c2b71a05,<*> block <*> to /10.251.123.99:50010,11
+362e73e9,10.251.199.19:50010:Transmitted block <*> to <*>,17
+464ba0a4,10.251.30.101:50010:Transmitted block <*> to <*>,9
+3f6cdf07,10.251.215.192:50010:Transmitted block <*> to <*>,14
+28a4ba45,10.251.214.67:50010:Transmitted block <*> to <*>,12
+7aa191e7,10.251.199.86:50010:Transmitted block <*> to <*>,13
+c5642938,<*> block <*> to /10.250.19.16:50010,14
+9be52b5a,<*> block <*> to /10.251.194.102:50010,10
+a110f342,10.251.38.197:50010:Transmitted block <*> to <*>,13
+5b78d766,10.251.91.15:50010:Transmitted block <*> to <*>,6
+89363ea6,10.251.110.8:50010:Transmitted block <*> to <*>,13
+3f467133,10.251.71.146:50010:Transmitted block <*> to <*>,11
+92079198,<*> block <*> to /10.251.201.204:50010,8
+19430dce,10.250.7.230:50010:Transmitted block <*> to <*>,9
+eb6d22c3,10.251.107.227:50010:Transmitted block <*> to <*>,9
+60cc1430,10.250.10.6:50010:Transmitted block <*> to <*>,18
+1b8a3ae0,10.251.126.22:50010:Transmitted block <*> to <*>,16
+45c14169,10.250.6.4:50010:Transmitted block <*> to <*>,12
+348cb485,10.251.125.193:50010:Transmitted block <*> to <*>,14
+87699b6a,10.251.39.209:50010:Transmitted block <*> to <*>,18
+21c99ece,<*> block <*> to /10.251.195.33:50010,3
+49409d09,<*> block <*> to /10.251.107.242:50010,4
+2bff9f08,<*> block <*> to /10.251.197.226:50010,7
+583f7072,10.251.91.159:50010:Transmitted block <*> to <*>,8
+518400eb,10.251.66.3:50010:Transmitted block <*> to <*>,17
+3f2340cc,<*> block <*> to /10.250.5.237:50010,6
+10749905,10.251.193.224:50010:Transmitted block <*> to <*>,9
+3ea14909,<*> block <*> to /10.251.121.224:50010,5
+126b5cce,10.251.110.68:50010:Transmitted block <*> to <*>,7
+eb901ef3,10.251.127.191:50010:Transmitted block <*> to <*>,10
+1f2ae892,<*> block <*> to /10.251.43.210:50010,3
+50492617,<*> block <*> to /10.251.198.196:50010,8
+cdf0bf2a,<*> block <*> to /10.251.71.193:50010,4
+b1220106,10.251.195.33:50010:Transmitted block <*> to <*>,7
+054b3511,10.251.122.38:50010:Transmitted block <*> to <*>,12
+ff0a6bc8,10.251.194.102:50010:Transmitted block <*> to <*>,13
+455075f6,<*> block <*> to /10.251.65.237:50010,5
+c15ded51,<*> block <*> to /10.250.7.244:50010,5
+63ebe344,<*> block <*> to /10.251.91.84:50010,5
+818aadfe,<*> block <*> to /10.251.107.50:50010,3
+bbb5cff7,<*> block <*> to /10.251.42.191:50010,5
+d5f0cc36,10.251.91.84:50010:Transmitted block <*> to <*>,8
+4076b971,10.251.203.149:50010:Transmitted block <*> to <*>,9
+b31c2456,<*> block <*> to /10.251.67.113:50010,3
+3d31dfe8,10.251.42.207:50010:Transmitted block <*> to <*>,14
+f9fd88db,10.251.127.243:50010:Transmitted block <*> to <*>,13
+7f04aea7,<*> block <*> to /10.251.42.246:50010,5
+c9d0a45a,<*> block <*> to /10.251.202.134:50010,2
+ef1b091a,10.250.10.144:50010:Transmitted block <*> to <*>,9
+4a5c094f,10.250.10.100:50010:Transmitted block <*> to <*>,3
+1b7df22f,10.250.10.176:50010:Transmitted block <*> to <*>,7
+41d8b83f,<*> block <*> to /10.251.90.239:50010,2
+2f25c56a,<*> block <*> to /10.250.15.198:50010,6
+3540f62b,10.251.43.147:50010:Transmitted block <*> to <*>,9
+81f79c8e,10.251.31.5:50010:Transmitted block <*> to <*>,8
+81c80402,10.250.6.223:50010:Transmitted block <*> to <*>,13
+1c4c63a6,10.251.71.68:50010:Transmitted block <*> to <*>,7
+f2fea55f,10.250.17.225:50010:Transmitted block <*> to <*>,15
+9b91f911,<*> block <*> to /10.251.42.9:50010,6
+4f876246,10.251.214.32:50010:Transmitted block <*> to <*>,8
+049ad490,10.250.7.146:50010:Transmitted block <*> to <*>,12
+ad1e1d9f,10.251.197.226:50010:Transmitted block <*> to <*>,7
+11d4ec1f,10.250.11.194:50010:Transmitted block <*> to <*>,7
+cfb1cc47,10.251.74.192:50010:Transmitted block <*> to <*>,6
+7646cd66,<*> block <*> to /10.251.199.159:50010,3
+5429fd7c,writeBlock blk_1684134505299265593 received exception java.net.NoRouteToHostException: No route to host,1
+67682f80,10.251.194.147:50010:Transmitted block <*> to <*>,5
+fcd37a6d,Adding an already existing block <*>,10
+b522ba64,10.251.215.70:50010:Transmitted block <*> to <*>,7
+9c31f5b7,10.251.75.79:50010:Transmitted block <*> to <*>,3
+06a3c88f,<*> block <*> to /10.251.39.192:50010,3
+ad2f1a58,10.250.13.240:50010:Transmitted block <*> to <*>,5
+26524c97,10.251.71.193:50010:Transmitted block <*> to <*>,2
+32a8eb8b,10.251.43.115:50010:Transmitted block blk_3799066438435640351 to /10.251.199.19:50010,1
+7d2312cc,10.251.203.246:50010:Transmitted block <*> to <*>,6
+c6878c41,10.251.199.159:50010:Transmitted block <*> to <*>,4
+e752963e,10.251.126.5:50010:Transmitted block <*> to <*>,6
+3c4a7177,10.251.214.18:50010:Transmitted block <*> to <*>,7
+05b681d2,10.251.106.50:50010:Transmitted block <*> to <*>,5
+e88f2eec,10.251.111.37:50010:Transmitted block <*> to <*>,3
+559305d8,Exception in receiveBlock for block <*> java.io.IOException: Broken pipe,3
+acf9fa14,10.251.39.160:50010:Transmitted block blk_-4302740325033156929 to /10.251.203.80:50010,1
+fcf2c482,PacketResponder <*> 1 Exception java.io.IOException: The stream is closed,2
+af1c094b,10.251.107.50:50010:Transmitted block <*> to <*>,8
+fa1e3dc9,10.251.123.33:50010:Transmitted block <*> to <*>,3
