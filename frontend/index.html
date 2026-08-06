@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LogInsight UI</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">LogInsight</p>
+          <h1>Simple test set runner</h1>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="panel">
+          <h2>Available test sets</h2>
+          <ul id="file-list" class="file-list"></ul>
+        </section>
+
+        <section class="panel detail-panel">
+          <h2>Selection</h2>
+          <p id="selection-text">Choose a file from the list to preview it.</p>
+          <button id="run-btn" type="button">Run</button>
+          <p id="status-text" class="status">Nothing runs yet.</p>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
