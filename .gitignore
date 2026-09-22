@@ -4,3 +4,4 @@ research/output/HDFS.log_structured.csv
 research/X_train.npy
 __pycache__/
 *.pyc
+node_modules/
