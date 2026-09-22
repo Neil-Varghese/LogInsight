@@ -1,4 +1,0 @@
-2026-08-06 09:00:00 ERROR Connection timeout to service-a
-2026-08-06 09:00:01 WARN Retrying request
-2026-08-06 09:00:02 ERROR Connection timeout to service-a
-2026-08-06 09:00:03 ERROR High latency observed

@@ -26,6 +26,11 @@
           <p id="selection-text">Choose a file from the list to preview it.</p>
           <button id="run-btn" type="button">Run</button>
           <p id="status-text" class="status">Nothing runs yet.</p>
+          <div id="progress-panel" class="progress-panel" hidden>
+            <span id="progress-label">Waiting to start…</span>
+            <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+          </div>
+          <div id="result" class="result" hidden aria-live="polite"></div>
         </section>
       </main>
     </div>

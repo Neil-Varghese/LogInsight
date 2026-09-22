@@ -1,4 +1,0 @@
-timestamp,service,status
-2026-08-06T09:00:00Z,service-a,ok
-2026-08-06T09:00:01Z,service-b,error
-2026-08-06T09:00:02Z,service-c,ok

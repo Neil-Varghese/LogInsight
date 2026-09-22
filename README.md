@@ -1,3 +1,22 @@
+## Run the frontend
+
+The frontend lists every non-hidden file in `test sets/` automatically. Start
+the included local server from the project root:
+
+```bash
+python3 backend/server.py
+```
+
+Open http://localhost:8000/frontend/ and refresh the page after adding or
+deleting files from `test sets/`.
+
+Select a test set and click **Run** to parse it and score its BlockId sequences
+with `models/lstm_model(v2).keras`. Parsing and prediction progress is printed
+in the terminal that runs `backend/server.py`; the final normal/anomalous totals appear
+in the frontend.
+
+---
+
 log-anomaly-explainer/
 │
 ├── backend/

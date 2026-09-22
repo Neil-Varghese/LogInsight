@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resource Utilization Report (6-Hour Span)</title>
+  <style>
+    :root {
+      --bg-main: #f4f4f4;
+      --bg-card: #ffffff;
+      --bg-section-head: #f4f4f4;
+      --bg-table-head: #e0e0e0;
+      --bg-table-row-even: #f4f4f4;
+      --bg-table-row-odd: #ffffff;
+      --bg-table-hover: #e8f1ff;
+      --text-main: #161616;
+      --text-muted: #525252;
+      --border-color: #d0d0d0;
+      --accent-blue: #0f62fe;
+      --badge-neutral: #0f62fe;
+      --badge-neutral-bg: #e8f1ff;
+      --share-bg: #e8f1ff;
+      --share-text: #0f62fe;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      padding: 2.5rem 1.5rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 1.5rem;
+      border-left: 6px solid var(--accent-blue);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.25rem 0 1.25rem 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      padding: 0.75rem 1.1rem;
+      border-radius: 0;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: #e0e0e0;
+    }
+
+    .tab-btn.active {
+      background: transparent;
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 0;
+      overflow: hidden;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      background: var(--bg-section-head);
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .badge-count {
+      font-size: 0.8rem;
+      background: #edf5ff;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      color: var(--accent-blue);
+    }
+
+    .table-container {
+      overflow-x: auto;
+      max-height: 600px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-table-head);
+      color: #161616;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-bottom: 3px solid var(--accent-blue);
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: var(--bg-table-row-even);
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: var(--bg-table-row-odd);
+    }
+
+    tbody tr:hover {
+      background-color: var(--bg-table-hover);
+    }
+
+    td {
+      padding: 0.65rem 1rem;
+      white-space: nowrap;
+    }
+
+    .num-col {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .usage-share {
+      background: var(--share-bg) !important;
+      color: var(--share-text);
+      font-weight: 700;
+      border-left: 1px solid #c6ddff;
+      border-right: 1px solid #c6ddff;
+    }
+
+    th:nth-child(5),
+    th:nth-child(7) {
+      color: #a6c8ff;
+    }
+
+    .tag-size {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: var(--badge-neutral-bg);
+      color: var(--badge-neutral);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .font-mono {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .muted-val {
+      color: var(--text-muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Resource Utilization Dashboard</h1>
+      <p class="subtitle">Overview of Namespace &amp; Pipeline Resource Utilization (6-Hour Metric Window)</p>
+    </header>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('all')">Show Both</button>
+      <button class="tab-btn" onclick="switchTab('namespaces')">Namespace Utilization (51)</button>
+      <button class="tab-btn" onclick="switchTab('pipelines')">Pipeline Utilization (75)</button>
+    </div>
+
+    <!-- Table 1: Namespace Utilization -->
+    <div id="section-namespaces" class="card">
+      <div class="card-header">
+        <span class="card-title">1. Namespace Resource Utilization</span>
+        <span class="badge-count">51 Namespaces</span>
+      </div>
+      <div class="table-container">
+        <table id="table-namespaces">
+          <thead>
+            <tr>
+              <th class="num-col" style="width: 50px;">#</th>
+              <th>Namespace</th>
+              <th class="num-col">Used Memory</th>
+              <th class="num-col">Requested Memory</th>
+              <th class="num-col">% of Total Used</th>
+              <th class="num-col">Used CPU</th>
+              <th class="num-col">Requested CPU</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num-col">1</td><td class="font-mono">epm-kitt-black</td><td class="num-col">1.10 TiB</td><td class="num-col">336.97 GiB</td><td class="num-col">227.22</td><td class="num-col">97.51</td></tr>
+            <tr><td class="num-col">2</td><td class="font-mono">epm-kitt-red</td><td class="num-col">1.09 TiB</td><td class="num-col">295.66 GiB</td><td class="num-col">283.96</td><td class="num-col">84.59</td></tr>
+            <tr><td class="num-col">3</td><td class="font-mono">epm-bearded-dragons-black</td><td class="num-col">610.84 GiB</td><td class="num-col">964.91 GiB</td><td class="num-col">23.07</td><td class="num-col">238.30</td></tr>
+            <tr><td class="num-col">4</td><td class="font-mono">cust-cmr-black</td><td class="num-col">446.87 GiB</td><td class="num-col">708.98 GiB</td><td class="num-col">63.38</td><td class="num-col">96</td></tr>
+            <tr><td class="num-col">5</td><td class="font-mono">epm-raptors-red</td><td class="num-col">433.54 GiB</td><td class="num-col">994.99 GiB</td><td class="num-col">34.51</td><td class="num-col">67.75</td></tr>
+            <tr><td class="num-col">6</td><td class="font-mono">epm-raptors-black</td><td class="num-col">387.39 GiB</td><td class="num-col">1.58 TiB</td><td class="num-col">36.15</td><td class="num-col">105.25</td></tr>
+            <tr><td class="num-col">7</td><td class="font-mono">cust-cmr-red</td><td class="num-col">250.47 GiB</td><td class="num-col">329 GiB</td><td class="num-col">3.83</td><td class="num-col">32.50</td></tr>
+            <tr><td class="num-col">8</td><td class="font-mono">wf360-spark</td><td class="num-col">213.96 GiB</td><td class="num-col">704.80 GiB</td><td class="num-col">49.47</td><td class="num-col">192.56</td></tr>
+            <tr><td class="num-col">9</td><td class="font-mono">epm-bearded-dragons-red</td><td class="num-col">142.30 GiB</td><td class="num-col">333.24 GiB</td><td class="num-col">2.55</td><td class="num-col">97.15</td></tr>
+            <tr><td class="num-col">10</td><td class="font-mono">c360-ing-black</td><td class="num-col">97.85 GiB</td><td class="num-col">183.12 GiB</td><td class="num-col">4.59</td><td class="num-col">46</td></tr>
+            <tr><td class="num-col">11</td><td class="font-mono">epm-support-red</td><td class="num-col">69.72 GiB</td><td class="num-col">2.64 TiB</td><td class="num-col">2.63</td><td class="num-col">444.80</td></tr>
+            <tr><td class="num-col">12</td><td class="font-mono">ibm-observe</td><td class="num-col">66.22 GiB</td><td class="num-col">174 GiB</td><td class="num-col">38.58</td><td class="num-col">95.70</td></tr>
+            <tr><td class="num-col">13</td><td class="font-mono">epm-grizzlies-staging</td><td class="num-col">64.40 GiB</td><td class="num-col">208 GiB</td><td class="num-col">5.36</td><td class="num-col">76.35</td></tr>
+            <tr><td class="num-col">14</td><td class="font-mono">ibm-services-system</td><td class="num-col">62.48 GiB</td><td class="num-col">31.32 GiB</td><td class="num-col">6.84</td><td class="num-col">35.30</td></tr>
+            <tr><td class="num-col">15</td><td class="font-mono">default</td><td class="num-col">41.62 GiB</td><td class="num-col">25.75 GiB</td><td class="num-col">3.56</td><td class="num-col">4.35</td></tr>
+            <tr><td class="num-col">16</td><td class="font-mono">athena-pre-prod</td><td class="num-col">33.39 GiB</td><td class="num-col">99 GiB</td><td class="num-col">3.37</td><td class="num-col">6</td></tr>
+            <tr><td class="num-col">17</td><td class="font-mono">calico-system</td><td class="num-col">26.56 GiB</td><td class="num-col">12.60 GiB</td><td class="num-col">6.87</td><td class="num-col">7.72</td></tr>
+            <tr><td class="num-col">18</td><td class="font-mono">epm-isc-red</td><td class="num-col">21.53 GiB</td><td class="num-col">357.01 GiB</td><td class="num-col">1.85</td><td class="num-col">55.63</td></tr>
+            <tr><td class="num-col">19</td><td class="font-mono">kube-system</td><td class="num-col">17.41 GiB</td><td class="num-col">15.12 GiB</td><td class="num-col">2.76</td><td class="num-col">9.29</td></tr>
+            <tr><td class="num-col">20</td><td class="font-mono">c360-intg-black</td><td class="num-col">14.37 GiB</td><td class="num-col">40.69 GiB</td><td class="num-col">0.04</td><td class="num-col">4.90</td></tr>
+            <tr><td class="num-col">21</td><td class="font-mono">epm-quest-red</td><td class="num-col">12.24 GiB</td><td class="num-col">65 GiB</td><td class="num-col">1.14</td><td class="num-col">8</td></tr>
+            <tr><td class="num-col">22</td><td class="font-mono">wf360-airflow-v2</td><td class="num-col">6 GiB</td><td class="num-col">20.85 GiB</td><td class="num-col">5.92</td><td class="num-col">7.60</td></tr>
+            <tr><td class="num-col">23</td><td class="font-mono">c360-air-black</td><td class="num-col">3.64 GiB</td><td class="num-col">138 GiB</td><td class="num-col">3.56</td><td class="num-col">22.50</td></tr>
+            <tr><td class="num-col">24</td><td class="font-mono">epm-eoc-web-black</td><td class="num-col">2.93 GiB</td><td class="num-col">40.45 GiB</td><td class="num-col">1.23</td><td class="num-col">16.50</td></tr>
+            <tr><td class="num-col">25</td><td class="font-mono">epm-opal-wi</td><td class="num-col">2.62 GiB</td><td class="num-col">7.75 GiB</td><td class="num-col">0.78</td><td class="num-col">4.20</td></tr>
+            <tr><td class="num-col">26</td><td class="font-mono">epm-eoc-web-red</td><td class="num-col">2.32 GiB</td><td class="num-col">20.73 GiB</td><td class="num-col">1.20</td><td class="num-col">3.85</td></tr>
+            <tr><td class="num-col">27</td><td class="font-mono">ibm-system</td><td class="num-col">2.27 GiB</td><td class="num-col">320 MiB</td><td class="num-col">0.13</td><td class="num-col">0.06</td></tr>
+            <tr><td class="num-col">28</td><td class="font-mono">epm-grizzlies-jobs-production</td><td class="num-col">1.93 GiB</td><td class="num-col">26.50 GiB</td><td class="num-col">0.04</td><td class="num-col">14.25</td></tr>
+            <tr><td class="num-col">29</td><td class="font-mono">enterprise-data-security-prod</td><td class="num-col">1.84 GiB</td><td class="num-col">22 GiB</td><td class="num-col">0.06</td><td class="num-col">5</td></tr>
+            <tr><td class="num-col">30</td><td class="font-mono">wf360</td><td class="num-col">1.29 GiB</td><td class="num-col">1 GiB</td><td class="num-col">0.05</td><td class="num-col">0.40</td></tr>
+            <tr><td class="num-col">31</td><td class="font-mono">enterprise-data-security-pre-prod</td><td class="num-col">1.24 GiB</td><td class="num-col">12 GiB</td><td class="num-col">0.03</td><td class="num-col">4</td></tr>
+            <tr><td class="num-col">32</td><td class="font-mono">epm-eoc-job-black</td><td class="num-col">959.11 MiB</td><td class="num-col">140.80 GiB</td><td class="num-col">0.16</td><td class="num-col">13</td></tr>
+            <tr><td class="num-col">33</td><td class="font-mono">spark-operator</td><td class="num-col">927.92 MiB</td><td class="num-col">0 B</td><td class="num-col">3.94</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">34</td><td class="font-mono">epm-eoc-job-red</td><td class="num-col">784.31 MiB</td><td class="num-col">7.50 GiB</td><td class="num-col">0.01</td><td class="num-col">3</td></tr>
+            <tr><td class="num-col">35</td><td class="font-mono">ibm-object-s3fs</td><td class="num-col">714.38 MiB</td><td class="num-col">11 GiB</td><td class="num-col">0.27</td><td class="num-col">8.80</td></tr>
+            <tr><td class="num-col">36</td><td class="font-mono">tigera-operator</td><td class="num-col">538.47 MiB</td><td class="num-col">40 MiB</td><td class="num-col">0.03</td><td class="num-col">0.10</td></tr>
+            <tr><td class="num-col">37</td><td class="font-mono">elastic-system</td><td class="num-col">506.52 MiB</td><td class="num-col">150 MiB</td><td class="num-col">0.03</td><td class="num-col">0.10</td></tr>
+            <tr><td class="num-col">38</td><td class="font-mono">epm-dsc-prod</td><td class="num-col">223.65 MiB</td><td class="num-col">0 B</td><td class="num-col">0.004</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">39</td><td class="font-mono">external-secrets</td><td class="num-col">202.49 MiB</td><td class="num-col">0 B</td><td class="num-col">0.01</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">40</td><td class="font-mono">epm-macgyver-black</td><td class="num-col">186.11 MiB</td><td class="num-col">1.06 GiB</td><td class="num-col">0.40</td><td class="num-col">0.43</td></tr>
+            <tr><td class="num-col">41</td><td class="font-mono">calico-apiserver</td><td class="num-col">178.71 MiB</td><td class="num-col">140 MiB</td><td class="num-col">0.02</td><td class="num-col">0.02</td></tr>
+            <tr><td class="num-col">42</td><td class="font-mono">epm-macgyver-red</td><td class="num-col">176.72 MiB</td><td class="num-col">1.06 GiB</td><td class="num-col">0.45</td><td class="num-col">0.43</td></tr>
+            <tr><td class="num-col">43</td><td class="font-mono">epm-business-partner-black</td><td class="num-col">163.30 MiB</td><td class="num-col">0 B</td><td class="num-col">0.08</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">44</td><td class="font-mono">cert-manager</td><td class="num-col">161.13 MiB</td><td class="num-col">0 B</td><td class="num-col">0.005</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">45</td><td class="font-mono">c360-air-red</td><td class="num-col">114.68 MiB</td><td class="num-col">256 MiB</td><td class="num-col">0.43</td><td class="num-col">0.10</td></tr>
+            <tr><td class="num-col">46</td><td class="font-mono">c360-intg-red</td><td class="num-col">73.09 MiB</td><td class="num-col">640 MiB</td><td class="num-col">0</td><td class="num-col">0.30</td></tr>
+            <tr><td class="num-col">47</td><td class="font-mono">real-estate-360-prod</td><td class="num-col">71.23 MiB</td><td class="num-col">0 B</td><td class="num-col">0.002</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">48</td><td class="font-mono">ibm-kube-audit</td><td class="num-col">5.82 MiB</td><td class="num-col">0 B</td><td class="num-col">0</td><td class="num-col">0</td></tr>
+            <tr><td class="num-col">49</td><td class="font-mono">epm-services-v2-black</td><td class="num-col">4.25 MiB</td><td class="num-col">10 MiB</td><td class="num-col">0.002</td><td class="num-col">0.001</td></tr>
+            <tr><td class="num-col">50</td><td class="font-mono">epm-quest-black</td><td class="num-col muted-val">--</td><td class="num-col">5 GiB</td><td class="num-col muted-val">--</td><td class="num-col">2</td></tr>
+            <tr><td class="num-col">51</td><td class="font-mono">findgoe-black</td><td class="num-col muted-val">--</td><td class="num-col">4 GiB</td><td class="num-col muted-val">--</td><td class="num-col">2</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table 2: Pipeline Utilization -->
+    <div id="section-pipelines" class="card">
+      <div class="card-header">
+        <span class="card-title">2. Pipeline Resource Utilization</span>
+        <span class="badge-count">75 Pipelines</span>
+      </div>
+      <div class="table-container">
+        <table id="table-pipelines">
+          <thead>
+            <tr>
+              <th class="num-col" style="width: 50px;">#</th>
+              <th>Pipeline Name</th>
+              <th>Job Type</th>
+              <th style="text-align: center;">Size</th>
+              <th class="num-col">Used Memory</th>
+              <th class="num-col">Requested Memory</th>
+              <th class="num-col">% of Total Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num-col">1</td><td class="font-mono">fact-client-deployment-progre...</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">236.46 GiB</td><td class="num-col">31.37 GiB</td></tr>
+            <tr><td class="num-col">2</td><td class="font-mono">contact-master-v3-cmdp-poc</td><td>datamart-self-serve</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">118.96 GiB</td><td class="num-col">15.54 GiB</td></tr>
+            <tr><td class="num-col">3</td><td class="font-mono">epricer-componentreport-fact</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">107.77 GiB</td><td class="num-col">15.54 GiB</td></tr>
+            <tr><td class="num-col">4</td><td class="font-mono">fact-marketing-customer</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">105.39 GiB</td><td class="num-col">15.54 GiB</td></tr>
+            <tr><td class="num-col">5</td><td class="font-mono">treasury-financial-deals-delta-f...</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">81.99 GiB</td><td class="num-col">15.54 GiB</td></tr>
+            <tr><td class="num-col">6</td><td class="font-mono">epricer-component-feature-fact</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">80.43 GiB</td><td class="num-col">31.37 GiB</td></tr>
+            <tr><td class="num-col">7</td><td class="font-mono">fact-isc-opp-line-item-mig</td><td>p2p-weekly-daily-load-epmm-et</td><td style="text-align: center;"><span class="tag-size">XXL</span></td><td class="num-col">79.69 GiB</td><td class="num-col">14.56 GiB</td></tr>
+            <tr><td class="num-col">8</td><td class="font-mono">ext-s2p-invoice-extracts</td><td>ext-s2p-invoice-prep-caapsap</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">75.98 GiB</td><td class="num-col">15.54 GiB</td></tr>
+            <tr><td class="num-col">9</td><td class="font-mono">epricer-component-extended-f...</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">47.97 GiB</td><td class="num-col">27.17 GiB</td></tr>
+            <tr><td class="num-col">10</td><td class="font-mono">dim-engagesupport-sr</td><td>eid-open</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">46.12 GiB</td><td class="num-col">31.37 GiB</td></tr>
+            <tr><td class="num-col">11</td><td class="font-mono">ctmtcpr-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">31.71 GiB</td><td class="num-col">7.14 GiB</td></tr>
+            <tr><td class="num-col">12</td><td class="font-mono">ctmtfpr-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">28.04 GiB</td><td class="num-col">7.14 GiB</td></tr>
+            <tr><td class="num-col">13</td><td class="font-mono">ctmtfet-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">27.87 GiB</td><td class="num-col">7.14 GiB</td></tr>
+            <tr><td class="num-col">14</td><td class="font-mono">epricer-component-fact</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">25.49 GiB</td><td class="num-col">8.40 GiB</td></tr>
+            <tr><td class="num-col">15</td><td class="font-mono">ctmtcom-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">18.76 GiB</td><td class="num-col">8.40 GiB</td></tr>
+            <tr><td class="num-col">16</td><td class="font-mono">location-v2-dimension-val</td><td>eid-dupe-check</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">17.11 GiB</td><td class="num-col">8.40 GiB</td></tr>
+            <tr><td class="num-col">17</td><td class="font-mono">epricer-transaction-brand-fact</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">16.53 GiB</td><td class="num-col">7.28 GiB</td></tr>
+            <tr><td class="num-col">18</td><td class="font-mono">rbk-deal-quote-to-cash-dimen...</td><td>datamart-self-service</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">11.76 GiB</td><td class="num-col">2.94 GiB</td></tr>
+            <tr><td class="num-col">19</td><td class="font-mono">fact-signings</td><td>datamart-stage-5-load-db2-sel...</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">9.21 GiB</td><td class="num-col">3.92 GiB</td></tr>
+            <tr><td class="num-col">20</td><td class="font-mono">consulting-credit-split-allocati...</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">8.09 GiB</td><td class="num-col">3.92 GiB</td></tr>
+            <tr><td class="num-col">21</td><td class="font-mono">epricer-quote-dimension</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">6.26 GiB</td><td class="num-col">2.80 GiB</td></tr>
+            <tr><td class="num-col">22</td><td class="font-mono">epricer-feature-tax-xref-fact</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">5.39 GiB</td><td class="num-col">2.94 GiB</td></tr>
+            <tr><td class="num-col">23</td><td class="font-mono">fact-signings</td><td>datamart-stage-5-p2p-load-db...</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">5.15 GiB</td><td class="num-col">3.92 GiB</td></tr>
+            <tr><td class="num-col">24</td><td class="font-mono">psc-user-changes</td><td>talent-overrides-eid</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">4.41 GiB</td><td class="num-col">3.92 GiB</td></tr>
+            <tr><td class="num-col">25</td><td class="font-mono">fact-marketing-planning-activity</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">3.87 GiB</td><td class="num-col">2.80 GiB</td></tr>
+            <tr><td class="num-col">26</td><td class="font-mono">ctmtlg2-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">3.04 GiB</td><td class="num-col">8.40 GiB</td></tr>
+            <tr><td class="num-col">27</td><td class="font-mono">ierp-source-validation</td><td>ierp-changes-validation</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">3.02 GiB</td><td class="num-col">2.80 GiB</td></tr>
+            <tr><td class="num-col">28</td><td class="font-mono">fact-contract-forecast-ibp-daily</td><td>contract-forecast-ibp-eid</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">2.87 GiB</td><td class="num-col">2.80 GiB</td></tr>
+            <tr><td class="num-col">29</td><td class="font-mono">epricer-header-fact</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">2.82 GiB</td><td class="num-col">1.12 GiB</td></tr>
+            <tr><td class="num-col">30</td><td class="font-mono">dim-o2c-status</td><td>datamart-self-serve</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">2.62 GiB</td><td class="num-col">1.12 GiB</td></tr>
+            <tr><td class="num-col">31</td><td class="font-mono">location-v2-dimension-val</td><td>eid-dupe-check</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">2.68 GiB</td><td class="num-col">8.40 GiB</td></tr>
+            <tr><td class="num-col">32</td><td class="font-mono">ctmtlg2-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">2.30 GiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">33</td><td class="font-mono">ctmtcu-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">2.27 GiB</td><td class="num-col">1.12 GiB</td></tr>
+            <tr><td class="num-col">34</td><td class="font-mono">ctmtfa-ingestion</td><td>full-load</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">2.13 GiB</td><td class="num-col">1.12 GiB</td></tr>
+            <tr><td class="num-col">35</td><td class="font-mono">ierp-source-validation</td><td>ierp-changes-validation</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">1.70 GiB</td><td class="num-col">7.28 GiB</td></tr>
+            <tr><td class="num-col">36</td><td class="font-mono">email-domain-loc-company-ba...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">1.70 GiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">37</td><td class="font-mono">dim-msac</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">1.68 GiB</td><td class="num-col">2.80 GiB</td></tr>
+            <tr><td class="num-col">38</td><td class="font-mono">location-cust-xref-dim-batch-...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">1.57 GiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">39</td><td class="font-mono">loc-add-in-local-lang-dim-batc...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">1.19 GiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">40</td><td class="font-mono">treasury-financial-deals-delta-f...</td><td>datamart-self-serve</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">1.05 GiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">41</td><td class="font-mono">location-customer-dimension-...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">1.03 GiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">42</td><td class="font-mono">dim-fbc-geo-process</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">996.74 MiB</td><td class="num-col">2.80 GiB</td></tr>
+            <tr><td class="num-col">43</td><td class="font-mono">company-rep-loc-xref-dim-bat...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">952.32 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">44</td><td class="font-mono">location-extension-dim-batch-...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">873.26 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">45</td><td class="font-mono">slims-tsupplier</td><td>eid</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">752.07 MiB</td><td class="num-col">1.12 GiB</td></tr>
+            <tr><td class="num-col">46</td><td class="font-mono">fact-s2p-supplier-purchase-or...</td><td>parquet-prepare</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">531.60 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">47</td><td class="font-mono">sales-incentives-profile-dim-va...</td><td>dupes-checker</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">519.41 MiB</td><td class="num-col">1.12 GiB</td></tr>
+            <tr><td class="num-col">48</td><td class="font-mono">fact-s2p-purchase-order-item-...</td><td>parquet-prepare</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">484.63 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">49</td><td class="font-mono">loc-detail-in-local-lang-dim-ba...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">481.27 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">50</td><td class="font-mono">dim-fbc-bus-entity</td><td>datamart-self-serve</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">473.71 MiB</td><td class="num-col">615 MiB</td></tr>
+            <tr><td class="num-col">51</td><td class="font-mono">dim-s2p-supplier-purchase-ord...</td><td>parquet-prepare</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">468.38 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">52</td><td class="font-mono">dim-fbc-process</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">407.94 MiB</td><td class="num-col">1.68 GiB / 5.04 GiB</td></tr>
+            <tr><td class="num-col">53</td><td class="font-mono">treasury-cash-flows-fact</td><td>datamart-epmm-table-copy</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">351.67 MiB / 360.10 MiB</td><td class="num-col">615 MiB</td></tr>
+            <tr><td class="num-col">54</td><td class="font-mono">ut35-tech-specialty-incentive-...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">679.21 MiB</td><td class="num-col">574 MiB</td></tr>
+            <tr><td class="num-col">55</td><td class="font-mono">dim-q2c-es-sub-type</td><td>eid</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">640.95 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">56</td><td class="font-mono">ut35-sales-specialties-xref-dup...</td><td>duplicate-checker</td><td style="text-align: center;"><span class="tag-size">S</span></td><td class="num-col">626.06 MiB</td><td class="num-col">574 MiB</td></tr>
+            <tr><td class="num-col">57</td><td class="font-mono">dim-q2c-engagement-workflo...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">503.13 MiB / 460.59 MiB</td><td class="num-col">615 MiB</td></tr>
+            <tr><td class="num-col">58</td><td class="font-mono">dim-q2c-dispute-root-cause</td><td>eid</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">468.33 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">59</td><td class="font-mono">dim-fbc-bus-entity</td><td>datamart-epmm</td><td style="text-align: center;"><span class="tag-size">T</span></td><td class="num-col">301.26 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">60</td><td class="font-mono">dim-s2p-supplier-purchase-ord...</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">526.47 MiB</td><td class="num-col">1.54 GiB</td></tr>
+            <tr><td class="num-col">61</td><td class="font-mono">fact-s2p-purchase-order-item-...</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">500 MiB</td><td class="num-col">1.54 GiB</td></tr>
+            <tr><td class="num-col">62</td><td class="font-mono">fact-s2p-supplier-purchase-or...</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">465.76 MiB</td><td class="num-col">1.54 GiB</td></tr>
+            <tr><td class="num-col">63</td><td class="font-mono">treasury-cash-flows-fact</td><td>delta-fdd-datamart-epmm</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">454.19 MiB</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">64</td><td class="font-mono">dim-s2p-supplier-purchase-ord...</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">405.77 MiB</td><td class="num-col">1.68 GiB</td></tr>
+            <tr><td class="num-col">65</td><td class="font-mono">location-v2-dimension-batch-p...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">66</td><td class="font-mono">treasury-cash-flows-fact</td><td>delta-datamart-parquet</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">67</td><td class="font-mono">support-servicenow-case-dime...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">L</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">68</td><td class="font-mono">unit-metrics-fact</td><td>eid-part-2</td><td style="text-align: center;"><span class="tag-size">XXL</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">69</td><td class="font-mono">dsw-sales-order-line-item-fact</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">70</td><td class="font-mono">rbk-deal-quote-to-cash-dimen...</td><td>eid</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">71</td><td class="font-mono">fact-marketing-planning-activity</td><td>eid-explosion</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">72</td><td class="font-mono">fact-isc-opp-line-item-mig</td><td>trending-load-snapshot-epmm</td><td style="text-align: center;"><span class="tag-size">XL</span></td><td class="num-col">0 B</td><td class="num-col muted-val">--</td></tr>
+            <tr><td class="num-col">73</td><td class="font-mono">dim-fbc-geo-process</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col muted-val">--</td><td class="num-col">7.28 GiB</td></tr>
+            <tr><td class="num-col">74</td><td class="font-mono">dim-fbc-entity-process</td><td>datamart-parquet</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col muted-val">--</td><td class="num-col">6.16 GiB</td></tr>
+            <tr><td class="num-col">75</td><td class="font-mono">psc-user-changes</td><td>talent-overrides-eid</td><td style="text-align: center;"><span class="tag-size">M</span></td><td class="num-col muted-val">--</td><td class="num-col">8.40 GiB</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      6-Hour Resource Metrics Report &bull; Generated from Kubernetes Cluster Telemetry
+    </footer>
+  </div>
+
+  <script>
+    function parseMemory(value) {
+      if (!value || value.includes('--')) return null;
+      const match = value.match(/([\d.]+)\s*(TiB|GiB|MiB|KiB|B)/i);
+      if (!match) return null;
+      const amount = Number(match[1]);
+      const factors = { tib: 1024, gib: 1, mib: 1 / 1024, kib: 1 / (1024 * 1024), b: 1 / (1024 * 1024 * 1024) };
+      return amount * factors[match[2].toLowerCase()];
+    }
+
+    function addUsageShareColumn(source) {
+      const table = document.getElementById(`table-${source}`);
+      const rows = [...table.querySelectorAll('tbody tr')];
+      const memoryIndex = source === 'namespaces' ? 2 : 4;
+      const usages = rows.map(row => parseMemory(row.querySelectorAll('td')[memoryIndex]?.textContent.trim()));
+      const total = usages.reduce((sum, usage) => sum + (usage || 0), 0);
+      const shares = usages.map(usage => usage === null || total === 0 ? null : usage / total * 100);
+      const validIndexes = shares.map((share, index) => share === null ? null : index).filter(index => index !== null);
+      if (validIndexes.length > 0) {
+        const roundedTotal = validIndexes.reduce((sum, index) => sum + Number(shares[index].toFixed(2)), 0);
+        const lastIndex = validIndexes[validIndexes.length - 1];
+        shares[lastIndex] += 100 - roundedTotal;
+      }
+
+      rows.forEach((row, index) => {
+        const cell = document.createElement('td');
+        cell.className = 'num-col usage-share';
+        cell.textContent = shares[index] === null ? '—' : `${shares[index].toFixed(2)}%`;
+        row.querySelectorAll('td')[memoryIndex].after(cell);
+      });
+    }
+
+    addUsageShareColumn('namespaces');
+    addUsageShareColumn('pipelines');
+
+    function switchTab(view) {
+      const btnAll = document.querySelectorAll('.tab-btn')[0];
+      const btnNs = document.querySelectorAll('.tab-btn')[1];
+      const btnPipe = document.querySelectorAll('.tab-btn')[2];
+
+      const secNs = document.getElementById('section-namespaces');
+      const secPipe = document.getElementById('section-pipelines');
+
+      btnAll.classList.remove('active');
+      btnNs.classList.remove('active');
+      btnPipe.classList.remove('active');
+
+      if (view === 'all') {
+        btnAll.classList.add('active');
+        secNs.classList.remove('hidden');
+        secPipe.classList.remove('hidden');
+      } else if (view === 'namespaces') {
+        btnNs.classList.add('active');
+        secNs.classList.remove('hidden');
+        secPipe.classList.add('hidden');
+      } else if (view === 'pipelines') {
+        btnPipe.classList.add('active');
+        secNs.classList.add('hidden');
+        secPipe.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
