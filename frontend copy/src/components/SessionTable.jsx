@@ -18,7 +18,7 @@ export default function SessionTable({ jobId, onSelectSession }) {
   const inspect = async (block) => {
     const response = await fetch(`/api/jobs/${jobId}/blocks/${encodeURIComponent(block.block_id)}`);
     const detail = await response.json();
-    if (response.ok) onSelectSession(detail); else setError(detail.error || 'Could not load block details.');
+    if (response.ok) onSelectSession({ ...detail, job_id: jobId }); else setError(detail.error || 'Could not load block details.');
   };
   const pages = Math.max(1, Math.ceil(data.total / data.limit));
 

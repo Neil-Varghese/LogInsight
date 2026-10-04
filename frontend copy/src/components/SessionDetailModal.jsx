@@ -1,8 +1,26 @@
-import React from 'react';
-import { X, AlertTriangle, CheckCircle, Code, Layers, FileCode } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, AlertTriangle, CheckCircle, Code, Layers, FileCode, Sparkles, Loader2 } from 'lucide-react';
 
 export default function SessionDetailModal({ session, onClose }) {
+  const [explanation, setExplanation] = useState(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [explanationError, setExplanationError] = useState('');
   if (!session) return null;
+
+  const generateExplanation = async () => {
+    setIsExplaining(true);
+    setExplanationError('');
+    try {
+      const response = await fetch(`/api/jobs/${session.job_id}/blocks/${encodeURIComponent(session.block_id)}/explain`, { method: 'POST' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not generate explanation.');
+      setExplanation(result);
+    } catch (error) {
+      setExplanationError(error.message);
+    } finally {
+      setIsExplaining(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm transition-opacity">
@@ -56,6 +74,25 @@ export default function SessionDetailModal({ session, onClose }) {
             ></div>
           </div>
         </div>
+
+        {session.is_anomalous && (
+          <div className="mb-6 p-4 rounded-xl border border-indigo-500/30 bg-indigo-950/20">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h3 className="text-xs font-semibold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> LLM Evidence-Based Explanation
+              </h3>
+              {!explanation && <button onClick={generateExplanation} disabled={isExplaining} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs disabled:opacity-50">
+                {isExplaining ? <><Loader2 className="w-3.5 h-3.5 inline mr-1 animate-spin" />Generating…</> : 'Generate explanation'}
+              </button>}
+            </div>
+            {explanationError && <p className="text-xs text-rose-300">{explanationError}</p>}
+            {explanation && <div className="space-y-3 text-xs text-gray-300">
+              <p>{explanation.explanation}</p>
+              <p><span className="font-semibold text-indigo-300">Possible cause:</span> {explanation.possible_cause}</p>
+              <div><span className="font-semibold text-indigo-300">Evidence:</span><ul className="list-disc ml-5 mt-1 space-y-1">{explanation.evidence.map((item, index) => <li key={index}>{item}</li>)}</ul></div>
+            </div>}
+          </div>
+        )}
 
         {/* Drain Template Sequence Pill Bar */}
         <div className="mb-6">

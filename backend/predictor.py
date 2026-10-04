@@ -121,10 +121,19 @@ def _build_block_sequences(log_file_path, progress_callback):
 
     dataframe["BlockId"] = dataframe["Content"].apply(_extract_block_id)
     dataframe = dataframe[dataframe["BlockId"].notnull()].sort_values(by="LineId")
-    grouped = dataframe.groupby("BlockId")[["EventId", "EventTemplate"]].apply(
-        lambda g: list(zip(g["EventId"], g["EventTemplate"]))
-    )
-    return grouped.index.tolist(), grouped.tolist()
+    block_ids = []
+    raw_sequences = []
+    evidence_sequences = []
+    for block_id, group in dataframe.groupby("BlockId", sort=False):
+        block_ids.append(block_id)
+        raw_sequences.append(list(zip(group["EventId"], group["EventTemplate"])))
+        evidence_sequences.append(
+            group[
+                ["LineId", "Date", "Time", "Pid", "Level", "Component",
+                 "Content", "EventId", "EventTemplate"]
+            ].where(pd.notnull(group), None).to_dict("records")
+        )
+    return block_ids, raw_sequences, evidence_sequences
 
 
 def predict_log_file(log_file_path, progress_callback=None, classification_callback=None):
@@ -135,7 +144,9 @@ def predict_log_file(log_file_path, progress_callback=None, classification_callb
     if progress_callback:
         progress_callback("preprocessing", 0)
     preprocessing_started = datetime.now()
-    block_ids, raw_sequences = _build_block_sequences(log_file_path, progress_callback or (lambda *_: None))
+    block_ids, raw_sequences, evidence_sequences = _build_block_sequences(
+        log_file_path, progress_callback or (lambda *_: None)
+    )
     _timestamped(f"Preprocessing finished in {datetime.now() - preprocessing_started}")
     if progress_callback:
         progress_callback("preprocessing", 100)
@@ -179,8 +190,12 @@ def predict_log_file(log_file_path, progress_callback=None, classification_callb
     predictions = (prediction_probabilities > PREDICTION_THRESHOLD).astype(int)
     if progress_callback:
         progress_callback("classification", 100)
-    for block_id, sequence, prediction, probability in zip(
-        block_ids, clean_sequences, predictions.reshape(-1), prediction_probabilities.reshape(-1)
+    for block_id, sequence, evidence, prediction, probability in zip(
+        block_ids,
+        clean_sequences,
+        evidence_sequences,
+        predictions.reshape(-1),
+        prediction_probabilities.reshape(-1),
     ):
         label = "anomalous" if prediction else "normal"
         _timestamped(f"Block {block_id}: {label} (anomaly confidence: {float(probability) * 100:.1f}%)")
@@ -190,6 +205,7 @@ def predict_log_file(log_file_path, progress_callback=None, classification_callb
                 anomaly_score=float(probability),
                 is_anomalous=bool(prediction),
                 event_ids=sequence,
+                raw_logs=evidence,
             )
     _timestamped(f"Classification finished in {datetime.now() - classification_started}")
     return {

@@ -15,6 +15,39 @@ with `models/lstm_model(v2).keras`. Parsing and prediction progress is printed
 in the terminal that runs `backend/server.py`; the final normal/anomalous totals appear
 in the frontend.
 
+## LLM explanations
+
+The React frontend can request an explanation for an anomalous block. Configure
+the backend before starting it:
+
+Create a `.env` file in the project root:
+
+```dotenv
+# Gemini is used automatically when this is present.
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+If `GEMINI_API_KEY` is not configured, the backend can still use an
+OpenAI-compatible provider such as Groq with these settings:
+
+```dotenv
+GROQ_API_KEY=your-groq-api-key
+LOGINSIGHT_LLM_BASE_URL=https://api.groq.com/openai/v1/responses
+LOGINSIGHT_LLM_MODEL=openai/gpt-oss-20b
+```
+
+Then start the backend normally:
+
+```bash
+python3 backend/server.py
+```
+
+Explanations are generated only for anomalous blocks, returned as structured
+JSON, and cached in the run database. The selected block's raw logs are sent
+to the configured LLM provider, so review privacy requirements before using
+this with sensitive logs.
+
 ---
 
 log-anomaly-explainer/

@@ -11,6 +11,7 @@ import uuid
 from urllib.parse import parse_qs, unquote, urlparse
 
 from predictor import predict_log_file
+from explainer import explain_anomaly
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -45,15 +46,18 @@ def run_prediction(job_id, file_path):
     connection = sqlite3.connect(database_path)
     connection.execute("""CREATE TABLE blocks (
         block_id TEXT PRIMARY KEY, anomaly_score REAL NOT NULL, is_anomalous INTEGER NOT NULL,
-        sequence_len INTEGER NOT NULL, event_ids TEXT NOT NULL)""")
+        sequence_len INTEGER NOT NULL, event_ids TEXT NOT NULL, raw_logs TEXT NOT NULL)""")
+    connection.execute("""CREATE TABLE explanations (
+        block_id TEXT PRIMARY KEY, explanation TEXT NOT NULL)""")
     saved_count = 0
 
     def save_block(**block):
         nonlocal saved_count
         connection.execute(
-            "INSERT INTO blocks VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO blocks VALUES (?, ?, ?, ?, ?, ?)",
             (block["block_id"], block["anomaly_score"], int(block["is_anomalous"]),
-             len(block["event_ids"]), json.dumps(block["event_ids"])),
+             len(block["event_ids"]), json.dumps(block["event_ids"]),
+             json.dumps(block["raw_logs"])),
         )
         saved_count += 1
         if saved_count % 1000 == 0:
@@ -105,7 +109,13 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         return
 
     def do_POST(self):
-        if urlparse(self.path).path != "/api/run":
+        request_path = urlparse(self.path).path
+        path_parts = request_path.strip("/").split("/")
+        if (len(path_parts) == 6 and path_parts[:2] == ["api", "jobs"]
+                and path_parts[3] == "blocks" and path_parts[5] == "explain"):
+            self.generate_explanation(path_parts[2], unquote(path_parts[4]))
+            return
+        if request_path != "/api/run":
             self.send_error(HTTPStatus.NOT_FOUND, "Endpoint not found.")
             return
         try:
@@ -129,6 +139,44 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         except Exception as error:
             print(f"Prediction failed: {error}", flush=True)
             self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Prediction failed: {error}"})
+
+    def generate_explanation(self, job_id, block_id):
+        connection = self._open_run_database(job_id)
+        if connection is None:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Completed run not found."})
+            return
+        try:
+            row = connection.execute(
+                "SELECT block_id, anomaly_score, is_anomalous, event_ids, raw_logs "
+                "FROM blocks WHERE block_id = ?", (block_id,)
+            ).fetchone()
+            if row is None:
+                self.send_json(HTTPStatus.NOT_FOUND, {"error": "Block not found."})
+                return
+            if not row[2]:
+                self.send_json(HTTPStatus.BAD_REQUEST, {
+                    "error": "Explanations are only available for anomalous blocks."
+                })
+                return
+            cached = connection.execute(
+                "SELECT explanation FROM explanations WHERE block_id = ?", (block_id,)
+            ).fetchone()
+            if cached:
+                self.send_json(HTTPStatus.OK, json.loads(cached[0]))
+                return
+            explanation = explain_anomaly(
+                row[0], row[1], json.loads(row[3]), json.loads(row[4])
+            )
+            connection.execute(
+                "INSERT INTO explanations VALUES (?, ?)",
+                (block_id, json.dumps(explanation, ensure_ascii=False)),
+            )
+            connection.commit()
+            self.send_json(HTTPStatus.OK, explanation)
+        except (RuntimeError, ValueError, json.JSONDecodeError) as error:
+            self.send_json(HTTPStatus.BAD_GATEWAY, {"error": str(error)})
+        finally:
+            connection.close()
 
     def send_test_sets(self):
         files = [
@@ -186,11 +234,11 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Completed run not found."})
             return
         try:
-            row = connection.execute("SELECT block_id, anomaly_score, is_anomalous, sequence_len, event_ids FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
+            row = connection.execute("SELECT block_id, anomaly_score, is_anomalous, sequence_len, event_ids, raw_logs FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
             if row is None:
                 self.send_json(HTTPStatus.NOT_FOUND, {"error": "Block not found."})
                 return
-            self.send_json(HTTPStatus.OK, {"block_id": row[0], "anomaly_score": row[1], "is_anomalous": bool(row[2]), "sequence_len": row[3], "event_ids": json.loads(row[4]), "raw_logs": []})
+            self.send_json(HTTPStatus.OK, {"block_id": row[0], "anomaly_score": row[1], "is_anomalous": bool(row[2]), "sequence_len": row[3], "event_ids": json.loads(row[4]), "raw_logs": json.loads(row[5])})
         finally:
             connection.close()
 
