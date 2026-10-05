@@ -5,3 +5,6 @@ research/X_train.npy
 __pycache__/
 *.pyc
 node_modules/
+.env
+backend/runs/
+test sets/live_demo.log

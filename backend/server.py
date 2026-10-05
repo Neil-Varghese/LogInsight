@@ -4,21 +4,65 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
+import re
 import sqlite3
 import sys
 import threading
 import uuid
 from urllib.parse import parse_qs, unquote, urlparse
 
+from explainer import explain
 from predictor import predict_log_file
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TEST_SETS_DIR = PROJECT_ROOT / "test sets"
+DASHBOARD_DIR = PROJECT_ROOT / "dashboard" / "out"  # built with: cd dashboard && npm run build
+FRONTEND_DIR = PROJECT_ROOT / "frontend"  # the old plain-JS page, kept at /frontend/
 JOBS = {}
 JOBS_LOCK = threading.Lock()
 TERMINAL_OUTPUT = sys.__stdout__
 RUNS_DIR = Path(__file__).resolve().parent / "runs"
+LIVE_STOPS = {}  # job_id -> threading.Event that ends that live watcher
+LIVE_POLL_SECONDS = 3
+RAW_LINE_LIMIT = 50  # same cap as the LSTM's 50 events per block
+
+
+def create_run_database(job_id):
+    RUNS_DIR.mkdir(exist_ok=True)
+    database_path = RUNS_DIR / f"{job_id}.sqlite3"
+    connection = sqlite3.connect(database_path)
+    connection.execute("""CREATE TABLE blocks (
+        block_id TEXT PRIMARY KEY, anomaly_score REAL NOT NULL, is_anomalous INTEGER NOT NULL,
+        sequence_len INTEGER NOT NULL, event_ids TEXT NOT NULL)""")
+    # seq_len lets a saved explanation be ignored once a live block has grown.
+    connection.execute("CREATE TABLE explanations (block_id TEXT PRIMARY KEY, seq_len INTEGER NOT NULL, body TEXT NOT NULL)")
+    return connection, database_path
+
+
+def save_block_row(connection, block):
+    """Insert a scored block, or overwrite it when a live re-score sees more events."""
+    connection.execute(
+        """INSERT INTO blocks VALUES (?, ?, ?, ?, ?) ON CONFLICT(block_id) DO UPDATE SET
+           anomaly_score = excluded.anomaly_score, is_anomalous = excluded.is_anomalous,
+           sequence_len = excluded.sequence_len, event_ids = excluded.event_ids""",
+        (block["block_id"], block["anomaly_score"], int(block["is_anomalous"]),
+         len(block["event_ids"]), json.dumps(block["event_ids"])),
+    )
+
+
+def read_block_lines(file_path, block_id, limit=RAW_LINE_LIMIT):
+    """First ``limit`` raw log lines that mention this block."""
+    # ponytail: scans the whole file per request; store line offsets per block if files get huge.
+    pattern = re.compile(re.escape(block_id) + r"(?!\d)")
+    lines = []
+    with open(file_path, encoding="utf-8", errors="replace") as log_file:
+        for line in log_file:
+            if pattern.search(line):
+                lines.append(line.rstrip("\n"))
+                if len(lines) == limit:
+                    break
+    return lines
 
 
 def run_prediction(job_id, file_path):
@@ -40,21 +84,12 @@ def run_prediction(job_id, file_path):
             TERMINAL_OUTPUT.write("\n")
             TERMINAL_OUTPUT.flush()
 
-    database_path = RUNS_DIR / f"{job_id}.sqlite3"
-    RUNS_DIR.mkdir(exist_ok=True)
-    connection = sqlite3.connect(database_path)
-    connection.execute("""CREATE TABLE blocks (
-        block_id TEXT PRIMARY KEY, anomaly_score REAL NOT NULL, is_anomalous INTEGER NOT NULL,
-        sequence_len INTEGER NOT NULL, event_ids TEXT NOT NULL)""")
+    connection, database_path = create_run_database(job_id)
     saved_count = 0
 
     def save_block(**block):
         nonlocal saved_count
-        connection.execute(
-            "INSERT INTO blocks VALUES (?, ?, ?, ?, ?)",
-            (block["block_id"], block["anomaly_score"], int(block["is_anomalous"]),
-             len(block["event_ids"]), json.dumps(block["event_ids"])),
-        )
+        save_block_row(connection, block)
         saved_count += 1
         if saved_count % 1000 == 0:
             connection.commit()
@@ -73,6 +108,38 @@ def run_prediction(job_id, file_path):
         connection.close()
 
 
+def run_live(job_id, file_path, stop):
+    """Re-score the whole file whenever it grows, until ``stop`` is set."""
+    # ponytail: re-parses the full file each time it changes; fine for demo-sized logs,
+    # switch to incremental parsing before pointing it at a multi-GB live feed.
+    connection, database_path = create_run_database(job_id)
+    with JOBS_LOCK:
+        JOBS[job_id]["database"] = str(database_path)
+    last_size = -1
+    try:
+        while not stop.is_set():
+            size = file_path.stat().st_size
+            if size != last_size:
+                last_size = size
+                try:
+                    result = predict_log_file(file_path, None, lambda **block: save_block_row(connection, block))
+                    connection.commit()
+                    with JOBS_LOCK:
+                        JOBS[job_id].update({"result": result, "warning": None})
+                except Exception as error:
+                    # A half-written last line is normal while the file is growing; retry next change.
+                    print(f"Live scoring skipped: {error}", flush=True)
+                    last_size = -1
+                    with JOBS_LOCK:
+                        JOBS[job_id]["warning"] = str(error)
+            stop.wait(LIVE_POLL_SECONDS)
+    finally:
+        connection.close()
+        with JOBS_LOCK:
+            JOBS[job_id]["stage"] = "stopped"
+        LIVE_STOPS.pop(job_id, None)
+
+
 class LogInsightHandler(SimpleHTTPRequestHandler):
     """Serve project files and expose the contents of ``test sets`` as JSON."""
 
@@ -87,27 +154,44 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
                 self.send_blocks(path_parts[2], parse_qs(urlparse(self.path).query))
             elif len(path_parts) == 5:
                 self.send_block_detail(path_parts[2], unquote(path_parts[4]))
+            elif len(path_parts) == 6 and path_parts[5] == "explain":
+                self.send_explanation(path_parts[2], unquote(path_parts[4]))
             else:
                 self.send_error(HTTPStatus.NOT_FOUND, "Endpoint not found.")
             return
         if request_path.startswith("/api/jobs/"):
             self.send_job(request_path.rsplit("/", 1)[-1])
             return
-        if request_path == "/":
-            self.send_response(HTTPStatus.SEE_OTHER)
-            self.send_header("Location", "/frontend/")
-            self.end_headers()
-            return
         super().do_GET()
+
+    def translate_path(self, path):
+        """Serve only the two page folders, never the project root (it holds .env and the source)."""
+        request_path = urlparse(path).path
+        if request_path == "/frontend" or request_path.startswith("/frontend/"):
+            self.directory, request_path = str(FRONTEND_DIR), request_path[len("/frontend"):]
+        else:
+            self.directory = str(DASHBOARD_DIR)
+        return super().translate_path(request_path)
 
     def log_message(self, format, *args):
         """Polling is expected, so do not flood the terminal with GET logs."""
         return
 
     def do_POST(self):
-        if urlparse(self.path).path != "/api/run":
+        request_path = urlparse(self.path).path
+        parts = request_path.strip("/").split("/")
+        if len(parts) == 4 and parts[:2] == ["api", "jobs"] and parts[3] == "stop":
+            stop = LIVE_STOPS.get(parts[2])
+            if stop is None:
+                self.send_json(HTTPStatus.NOT_FOUND, {"error": "No live watcher with that id."})
+                return
+            stop.set()
+            self.send_json(HTTPStatus.OK, {"stopping": True})
+            return
+        if request_path not in ("/api/run", "/api/live"):
             self.send_error(HTTPStatus.NOT_FOUND, "Endpoint not found.")
             return
+        live = request_path == "/api/live"
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(content_length))
@@ -119,8 +203,12 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
                 raise FileNotFoundError("Selected test set no longer exists.")
             job_id = uuid.uuid4().hex
             with JOBS_LOCK:
-                JOBS[job_id] = {"stage": "preprocessing", "progress": 0}
-            threading.Thread(target=run_prediction, args=(job_id, file_path), daemon=True).start()
+                JOBS[job_id] = {"stage": "live" if live else "preprocessing", "progress": 0, "file": str(file_path)}
+            if live:
+                LIVE_STOPS[job_id] = threading.Event()
+                threading.Thread(target=run_live, args=(job_id, file_path, LIVE_STOPS[job_id]), daemon=True).start()
+            else:
+                threading.Thread(target=run_prediction, args=(job_id, file_path), daemon=True).start()
             self.send_json(HTTPStatus.ACCEPTED, {"job_id": job_id})
         except (ValueError, KeyError, json.JSONDecodeError) as error:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
@@ -154,6 +242,11 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         if not database:
             return None
         return sqlite3.connect(database)
+
+    def _raw_lines(self, job_id, block_id):
+        with JOBS_LOCK:
+            source = JOBS.get(job_id, {}).get("file")
+        return read_block_lines(source, block_id) if source else []
 
     def send_blocks(self, job_id, query):
         connection = self._open_run_database(job_id)
@@ -190,7 +283,32 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             if row is None:
                 self.send_json(HTTPStatus.NOT_FOUND, {"error": "Block not found."})
                 return
-            self.send_json(HTTPStatus.OK, {"block_id": row[0], "anomaly_score": row[1], "is_anomalous": bool(row[2]), "sequence_len": row[3], "event_ids": json.loads(row[4]), "raw_logs": []})
+            self.send_json(HTTPStatus.OK, {"block_id": row[0], "anomaly_score": row[1], "is_anomalous": bool(row[2]), "sequence_len": row[3], "event_ids": json.loads(row[4]), "raw_logs": self._raw_lines(job_id, block_id)})
+        finally:
+            connection.close()
+
+    def send_explanation(self, job_id, block_id):
+        connection = self._open_run_database(job_id)
+        if connection is None:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Completed run not found."})
+            return
+        try:
+            row = connection.execute("SELECT anomaly_score, event_ids, sequence_len FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
+            if row is None:
+                self.send_json(HTTPStatus.NOT_FOUND, {"error": "Block not found."})
+                return
+            # Saved per run so a repeat click costs no API quota; ignored once a live block has grown.
+            cached = connection.execute("SELECT body FROM explanations WHERE block_id = ? AND seq_len = ?", (block_id, row[2])).fetchone()
+            if cached:
+                self.send_json(HTTPStatus.OK, {"explanation": json.loads(cached[0])})
+                return
+            explanation = explain(block_id, row[0], json.loads(row[1]), self._raw_lines(job_id, block_id))
+            connection.execute("INSERT OR REPLACE INTO explanations VALUES (?, ?, ?)", (block_id, row[2], json.dumps(explanation)))
+            connection.commit()
+            self.send_json(HTTPStatus.OK, {"explanation": explanation})
+        except Exception as error:
+            print(f"Explanation failed: {error}", flush=True)
+            self.send_json(HTTPStatus.BAD_GATEWAY, {"error": f"Explanation failed: {error}"})
         finally:
             connection.close()
 
@@ -204,8 +322,8 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("", 8000), LogInsightHandler)
-    print("LogInsight is running at http://localhost:8000/frontend/")
+    server = ThreadingHTTPServer(("127.0.0.1", 8000), LogInsightHandler)  # this machine only; "" would expose it to the whole network
+    print("LogInsight is running at http://localhost:8000/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
