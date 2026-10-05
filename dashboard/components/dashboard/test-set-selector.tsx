@@ -5,7 +5,7 @@ export function TestSetSelector({
   files, selected, busy, onSelect, onRun,
 }: { files: string[]; selected: string; busy: boolean; onSelect: (name: string) => void; onRun: () => void }) {
   return (
-    <section className="border border-slate-800 bg-slate-900 p-3">
+    <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm p-3">
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Test Set</h2>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {files.map((name) => (

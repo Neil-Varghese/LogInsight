@@ -1,27 +1,27 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { Status, Summary } from "@/lib/api";
+import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { Summary } from "@/lib/api";
 
-const RED = "#f87171";
-const GREEN = "#34d399";
-const INDIGO = "#818cf8";
-const GRID = "#1e293b";
-const AXIS = { fontSize: 11, fill: "#94a3b8" };
-const TOOLTIP = {
-  contentStyle: { background: "#0f172a", border: "1px solid #1e293b", borderRadius: 2, fontSize: 12 },
-  labelStyle: { color: "#cbd5e1" },
-  cursor: { fill: "rgba(148,163,184,0.08)" },
+const RED = "#d9534f";
+const GREEN = "#5aa469";
+export const INDIGO = "#2f8ac6";
+export const GRID = "#e1e6ea";
+export const AXIS = { fontSize: 11, fill: "#4a5764" };
+export const TOOLTIP = {
+  contentStyle: { background: "#ffffff", border: "1px solid #d5dbe0", borderRadius: 6, fontSize: 12 },
+  labelStyle: { color: "#1f2a33" },
+  cursor: { fill: "rgba(47,138,198,0.08)" },
 };
 
-function ChartCard({ title, note, className = "", empty, children }: {
+export function ChartCard({ title, note, className = "", empty, children }: {
   title: string; note?: string; className?: string; empty?: boolean; children: ReactNode;
 }) {
   return (
-    <section className={`border border-slate-800 bg-slate-900 ${className}`}>
+    <section className={`rounded-lg border border-slate-800 bg-slate-900 shadow-sm ${className}`}>
       <div className="flex items-baseline justify-between border-b border-slate-800 px-3 py-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
+        <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
         {note && <span className="text-[11px] text-slate-500">{note}</span>}
       </div>
       <div className="h-52 p-2">
@@ -32,7 +32,7 @@ function ChartCard({ title, note, className = "", empty, children }: {
 }
 
 // Log timestamps are UTC (HDFS logs carry no timezone).
-function logTime(t: number, bucket: number) {
+export function logTime(t: number, bucket: number) {
   const iso = new Date(t * 1000).toISOString();
   if (bucket < 60) return iso.slice(11, 19);
   if (bucket < 3600) return iso.slice(11, 16);
@@ -41,10 +41,9 @@ function logTime(t: number, bucket: number) {
 
 const short = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
-export function Charts({ summary, status, threshold }: { summary: Summary | null; status: Status | null; threshold: number }) {
+export function Charts({ summary, threshold }: { summary: Summary | null; threshold: number }) {
   const empty = !summary || summary.total === 0;
   const bucket = summary?.bucket_seconds ?? 60;
-  const rates = (status?.rates ?? []).map((r) => ({ t: r.t, rate: r.rate }));
   return (
     <div className="grid gap-2 lg:grid-cols-3">
       <ChartCard title="Blocks over time" note={`log time (UTC), ${bucket}s buckets`} empty={empty} className="lg:col-span-2">
@@ -72,25 +71,13 @@ export function Charts({ summary, status, threshold }: { summary: Summary | null
             <YAxis tick={AXIS} stroke={GRID} scale="sqrt" allowDecimals={false} />
             <Tooltip {...TOOLTIP} />
             <Bar dataKey="count" name="Blocks" isAnimationActive={false}>
-              {(summary?.histogram ?? []).map((h) => <Cell key={h.bin} fill={h.bin / 10 >= threshold ? RED : "#64748b"} />)}
+              {(summary?.histogram ?? []).map((h) => <Cell key={h.bin} fill={h.bin / 10 >= threshold ? RED : "#9aa7b3"} />)}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
-      <ChartCard title="Ingest throughput" note="lines per second">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={rates} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-            <CartesianGrid stroke={GRID} vertical={false} />
-            <XAxis dataKey="t" tickFormatter={(t) => new Date(t * 1000).toLocaleTimeString([], { minute: "2-digit", second: "2-digit" })} tick={AXIS} stroke={GRID} minTickGap={32} />
-            <YAxis tick={AXIS} stroke={GRID} allowDecimals={false} />
-            <Tooltip {...TOOLTIP} labelFormatter={(t) => new Date(Number(t) * 1000).toLocaleTimeString()} />
-            <Area type="monotone" dataKey="rate" name="Lines/s" stroke={INDIGO} fill={INDIGO} fillOpacity={0.15} isAnimationActive={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      <ChartCard title="Events that stand out in flagged blocks" note="% of blocks containing the event" empty={!summary || summary.top_events.length === 0} className="lg:col-span-2">
+      <ChartCard title="Events that stand out in flagged blocks" note="% of blocks containing the event" empty={!summary || summary.top_events.length === 0} className="lg:col-span-3">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={summary?.top_events ?? []} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke={GRID} horizontal={false} />
@@ -99,7 +86,7 @@ export function Charts({ summary, status, threshold }: { summary: Summary | null
             <Tooltip {...TOOLTIP} formatter={(v) => `${Number(v).toFixed(1)}%`} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="anomalous_pct" name="Flagged blocks" fill={RED} isAnimationActive={false} />
-            <Bar dataKey="normal_pct" name="Normal blocks" fill="#64748b" isAnimationActive={false} />
+            <Bar dataKey="normal_pct" name="Normal blocks" fill="#9aa7b3" isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>

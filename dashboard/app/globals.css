@@ -117,6 +117,54 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Light, ServiceNow-style palette. The components keep their Tailwind class names; these re-point the shades:
+   slate 950 = page grey, 900 = white card, 800/700 = borders, 500-100 = text from light to dark.
+   Status colours are darkened (their old values were made for a dark page); indigo becomes ServiceNow navy. */
+@theme {
+  --color-slate-950: #e8ecef;
+  --color-slate-900: #ffffff;
+  --color-slate-800: #d5dbe0;
+  --color-slate-700: #b9c2ca;
+  --color-slate-600: #8d99a5;
+  --color-slate-500: #5f6d7a;
+  --color-slate-400: #4a5764;
+  --color-slate-300: #34414c;
+  --color-slate-200: #1f2a33;
+  --color-slate-100: #0f1a22;
+  --color-red-200: #8c1c1c;
+  --color-red-300: #a52121;
+  --color-red-400: #c62d2d;
+  --color-red-700: #e08a8a;
+  --color-red-900: #efb4b4;
+  --color-red-950: #fbe6e6;
+  --color-emerald-400: #1f8a4c;
+  --color-emerald-600: #25904f;
+  --color-emerald-700: #1e7e46;
+  --color-emerald-800: #9fd6b4;
+  --color-emerald-900: #b9e2c8;
+  --color-emerald-950: #e0f4e8;
+  --color-amber-300: #8a5a00;
+  --color-amber-400: #b7791f;
+  --color-amber-600: #d99a2b;
+  --color-amber-800: #e6c27a;
+  --color-amber-900: #efd9a3;
+  --color-amber-950: #fdf2d8;
+  --color-orange-300: #b4540a;
+  --color-orange-700: #e3a06a;
+  --color-orange-950: #fdebdc;
+  --color-violet-300: #6b3fb3;
+  --color-violet-700: #b7a0e0;
+  --color-violet-950: #efe7fb;
+  --color-indigo-400: #2f46b8;
+  --color-indigo-500: #2d3a8c;
+  --color-indigo-600: #2d3a8c;
+  --color-indigo-950: #e4e8f8;
+}
+
+:root {
+  color-scheme: light;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

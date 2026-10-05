@@ -40,8 +40,6 @@ export function Monitor({ status, threshold, onThreshold }: {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [threshold, filter]);
 
-  const recent = (status?.rates ?? []).slice(-10);
-  const ingestRate = recent.length ? recent.reduce((sum, r) => sum + r.rate, 0) / recent.length : 0;
   const idleFor = status?.last_ingest ? status.now - status.last_ingest : null;
   const live = status?.model_loaded && !status.error && !error;
 
@@ -57,7 +55,7 @@ export function Monitor({ status, threshold, onThreshold }: {
 
   return (
     <div className="space-y-2">
-      <section className="flex flex-wrap items-center gap-x-6 gap-y-2 border border-slate-800 bg-slate-900 px-3 py-2 text-xs">
+      <section className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-slate-800 bg-slate-900 shadow-sm px-3 py-2 text-xs">
         <span className="flex items-center gap-2 font-medium text-slate-200">
           <span className={`size-2 rounded-full ${live ? "animate-pulse bg-emerald-400" : "bg-amber-400"}`} />
           {live ? "LIVE" : "STARTING"}
@@ -84,9 +82,9 @@ export function Monitor({ status, threshold, onThreshold }: {
 
       <KpiCards
         k={{ total: summary?.total ?? 0, anomalous: summary?.anomalous ?? 0, normal: summary?.normal ?? 0, rate: summary?.rate ?? 0 }}
-        last={{ label: "Ingest Rate", value: `${ingestRate.toFixed(1)}/s`, sub: "log lines per second, last 10s" }}
+        last={{ label: "Blocks Tracked", value: status ? status.blocks.toLocaleString() : "–", sub: "distinct HDFS blocks seen so far" }}
       />
-      <Charts summary={summary} status={status} threshold={threshold / 100} />
+      <Charts summary={summary} threshold={threshold / 100} />
       <SessionsTable
         title="Live Block Sessions"
         rows={rows}

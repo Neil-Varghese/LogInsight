@@ -8,7 +8,7 @@ export function SessionsTable({ rows, onInspect, title = "Classified Block Sessi
   rows: Session[]; onInspect: (blockId: string) => void; title?: string; toolbar?: ReactNode;
 }) {
   return (
-    <section className="border border-slate-800 bg-slate-900">
+    <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
         {toolbar}
@@ -16,10 +16,10 @@ export function SessionsTable({ rows, onInspect, title = "Classified Block Sessi
       <Table>
         <TableHeader>
           <TableRow className="border-slate-800 hover:bg-transparent">
-            <TableHead className="h-8 px-3 text-xs text-slate-400">Block ID</TableHead>
-            <TableHead className="h-8 px-3 text-xs text-slate-400">Status</TableHead>
-            <TableHead className="h-8 px-3 text-right text-xs text-slate-400">Anomaly Confidence (%)</TableHead>
-            <TableHead className="h-8 px-3 text-right text-xs text-slate-400">Events</TableHead>
+            <TableHead className="h-8 px-3 text-xs font-semibold text-slate-200">Block ID</TableHead>
+            <TableHead className="h-8 px-3 text-xs font-semibold text-slate-200">Status</TableHead>
+            <TableHead className="h-8 px-3 text-right text-xs font-semibold text-slate-200">Anomaly Confidence (%)</TableHead>
+            <TableHead className="h-8 px-3 text-right text-xs font-semibold text-slate-200">Events</TableHead>
             <TableHead className="h-8 px-3" />
           </TableRow>
         </TableHeader>
@@ -31,7 +31,7 @@ export function SessionsTable({ rows, onInspect, title = "Classified Block Sessi
           )}
           {rows.map((r) => (
             <TableRow key={r.blockId} className="border-slate-800 hover:bg-slate-800/50">
-              <TableCell className="px-3 py-1.5 font-mono text-xs">{r.blockId}</TableCell>
+              <TableCell className="px-3 py-1.5 font-mono text-xs text-indigo-400">{r.blockId}</TableCell>
               <TableCell className="px-3 py-1.5">
                 <span
                   className={
@@ -49,7 +49,7 @@ export function SessionsTable({ rows, onInspect, title = "Classified Block Sessi
                 <button
                   type="button"
                   onClick={() => onInspect(r.blockId)}
-                  className="inline-flex items-center gap-0.5 rounded-sm border border-slate-700 px-2 py-0.5 text-xs text-slate-300 hover:border-indigo-500 hover:text-white"
+                  className="inline-flex items-center gap-0.5 rounded-sm border border-slate-700 px-2 py-0.5 text-xs text-slate-300 hover:border-indigo-500 hover:text-slate-100"
                 >
                   Inspect <ChevronRight className="size-3" />
                 </button>

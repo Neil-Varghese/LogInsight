@@ -2,8 +2,10 @@
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { About } from "@/components/dashboard/about";
 import { useInspector } from "@/components/dashboard/inspect-drawer";
 import { KpiCards, type Kpis } from "@/components/dashboard/kpi-cards";
+import { Performance } from "@/components/dashboard/performance";
 import { SessionsTable, type Session } from "@/components/dashboard/sessions-table";
 import { TestSetSelector } from "@/components/dashboard/test-set-selector";
 import { getTestSets, resetMonitor, runDetection, type Status } from "@/lib/api";
@@ -14,7 +16,7 @@ export function Settings({ status }: { status: Status | null }) {
   const [developer, setDeveloper] = useState(false);
   return (
     <div className="space-y-2">
-      <section className="border border-slate-800 bg-slate-900 p-3">
+      <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm p-3">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Log source</h2>
         <dl className="grid grid-cols-[10rem_1fr] gap-y-1 text-xs">
           <dt className="text-slate-500">Watched file</dt>
@@ -28,7 +30,17 @@ export function Settings({ status }: { status: Status | null }) {
         </dl>
       </section>
 
-      <section className="border border-slate-800 bg-slate-900">
+      <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm p-3">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Performance</h2>
+        <Performance status={status} />
+      </section>
+
+      <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm p-3">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">About</h2>
+        <About />
+      </section>
+
+      <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm">
         <button
           type="button"
           aria-expanded={developer}
@@ -92,7 +104,7 @@ function DeveloperSettings() {
           type="button"
           onClick={reset}
           onBlur={() => setConfirmReset(false)}
-          className={`rounded-sm border px-2 py-0.5 ${confirmReset ? "border-red-700 bg-red-950 text-red-300" : "border-slate-700 text-slate-300 hover:border-slate-500"}`}
+          className={`rounded-sm border px-2 py-0.5 ${confirmReset ? "border-red-700 bg-red-950 text-red-300" : "border-slate-700 text-slate-300 hover:border-indigo-500"}`}
         >
           {confirmReset ? "Click again to confirm" : "Reset & reprocess"}
         </button>

@@ -13,7 +13,7 @@ export function InspectDrawer({ data, onClose }: { data: Inspection; onClose: ()
       <aside className="fixed inset-y-0 right-0 flex w-full max-w-lg flex-col border-l border-slate-800 bg-slate-900">
         <div className="flex h-11 items-center justify-between border-b border-slate-800 px-4">
           <span className="truncate font-mono text-xs text-slate-200">{data.blockId}</span>
-          <button type="button" onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-white">
+          <button type="button" onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-100">
             <X className="size-4" />
           </button>
         </div>

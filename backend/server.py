@@ -7,13 +7,15 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import subprocess
 import sys
 import threading
+import time
 import uuid
 from urllib.parse import parse_qs, unquote, urlparse
 
 from explainer import explain
-from monitor import Monitor, summary
+from monitor import IPV4, Monitor, ip_summary, search_log, summary, traffic_summary
 from predictor import predict_log_file
 
 
@@ -29,6 +31,61 @@ LIVE_STOPS = {}  # job_id -> threading.Event that ends that live watcher
 LIVE_POLL_SECONDS = 3
 RAW_LINE_LIMIT = 50  # same cap as the LSTM's 50 events per block
 MONITOR = Monitor(PROJECT_ROOT / os.environ.get("LOGINSIGHT_WATCH", "test sets/live_demo.log"), Path(__file__).resolve().parent / "monitor.sqlite3")
+
+
+SIM = {"proc": None, "mode": None, "started": None}  # the one simulator process this server started
+SIM_LOCK = threading.Lock()
+
+
+def sim_running():
+    return SIM["proc"] is not None and SIM["proc"].poll() is None
+
+
+def sim_info():
+    """Simulator state, its settings from docker-compose.yml, and the newest lines in whatever file the monitor is watching."""
+    compose = (PROJECT_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    setting = lambda name: (re.search(rf'{name}:\s*"?([\d.]+)', compose) or [None, None])[1]
+    log, tail = MONITOR.log_path, []
+    if log.exists():
+        with log.open("rb") as log_file:
+            log_file.seek(max(0, log.stat().st_size - 8192))
+            tail = log_file.read().decode("utf-8", "replace").splitlines()[-15:]
+    proc = SIM["proc"]
+    return {"containers": setting("scale"), "lines_per_second": setting("LINES_PER_SECOND"), "anomaly_rate": setting("ANOMALY_RATE"),
+            "running": sim_running(), "mode": SIM["mode"], "elapsed_s": time.time() - SIM["started"] if SIM["started"] else None,
+            "exit_code": proc.poll() if proc else None, "file": log.name, "tail": tail}
+
+
+def sim_start(mode):
+    """Start the replay (no Docker needed) or the Docker cluster, and point the monitor at its output. Returns (status, body)."""
+    with SIM_LOCK:
+        if sim_running():
+            return HTTPStatus.CONFLICT, {"error": "A simulation is already running. Stop it first."}
+        if mode == "docker":
+            try:
+                subprocess.run(["docker", "info"], capture_output=True, timeout=20, check=True)
+            except (OSError, subprocess.SubprocessError):
+                return HTTPStatus.BAD_REQUEST, {"error": "Docker Desktop is not running. Start it and try again, or use the Replay source."}
+            target, command = PROJECT_ROOT / "sim" / "cluster.log", [sys.executable, str(PROJECT_ROOT / "sim" / "collect.py")]
+        elif mode == "replay":
+            target, command = TEST_SETS_DIR / "live_demo.log", [sys.executable, str(PROJECT_ROOT / "backend" / "simulate_live.py")]
+        else:
+            return HTTPStatus.BAD_REQUEST, {"error": "Source must be replay or docker."}
+        MONITOR.watch(target)
+        SIM.update(proc=subprocess.Popen(command, cwd=PROJECT_ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL), mode=mode, started=time.time())
+    return HTTPStatus.OK, sim_info()
+
+
+def sim_stop():
+    with SIM_LOCK:
+        if sim_running():
+            SIM["proc"].terminate()
+            if SIM["mode"] == "docker":  # collect.py cannot clean up when killed, so take the containers down here
+                try:
+                    subprocess.run(["docker", "compose", "down"], cwd=PROJECT_ROOT, capture_output=True, timeout=90)
+                except (OSError, subprocess.SubprocessError):
+                    pass
+    return sim_info()
 
 
 def parse_threshold(query):
@@ -169,6 +226,33 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             finally:
                 connection.close()
             return
+        if request_path == "/api/monitor/traffic":
+            connection = sqlite3.connect(MONITOR.db_path)
+            try:
+                self.send_json(HTTPStatus.OK, traffic_summary(connection))
+            finally:
+                connection.close()
+            return
+        if request_path == "/api/monitor/feed":
+            try:
+                after = int(parse_qs(urlparse(self.path).query).get("after", ["-1"])[0])
+            except ValueError:
+                after = -1
+            self.send_json(HTTPStatus.OK, MONITOR.feed_since(after))
+            return
+        if request_path == "/api/monitor/ips":
+            connection = sqlite3.connect(MONITOR.db_path)
+            try:
+                self.send_json(HTTPStatus.OK, ip_summary(connection))
+            finally:
+                connection.close()
+            return
+        if request_path == "/api/monitor/search":
+            self.send_search(parse_qs(urlparse(self.path).query))
+            return
+        if request_path == "/api/sim/info":
+            self.send_json(HTTPStatus.OK, sim_info())
+            return
         path_parts = request_path.strip("/").split("/")
         if len(path_parts) >= 4 and path_parts[:2] == ["api", "jobs"] and path_parts[3] == "blocks":
             if len(path_parts) == 4:
@@ -212,6 +296,17 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
                 return
             stop.set()
             self.send_json(HTTPStatus.OK, {"stopping": True})
+            return
+        if request_path == "/api/sim/start":
+            try:
+                mode = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))) or b"{}").get("mode")
+            except (ValueError, AttributeError):
+                mode = None
+            status, body = sim_start(mode)
+            self.send_json(status, body)
+            return
+        if request_path == "/api/sim/stop":
+            self.send_json(HTTPStatus.OK, sim_stop())
             return
         if request_path not in ("/api/run", "/api/live"):
             self.send_error(HTTPStatus.NOT_FOUND, "Endpoint not found.")
@@ -267,6 +362,25 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         if not database:
             return None
         return sqlite3.connect(database)
+
+    def send_search(self, query):
+        ip = query.get("ip", [""])[0].strip()
+        try:
+            start, end = (int(query[k][0]) if query.get(k, [""])[0] else None for k in ("from", "to"))
+        except ValueError:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Times must be whole epoch seconds."})
+            return
+        if ip and not IPV4.match(ip):
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Enter a full IPv4 address, e.g. 10.250.19.102."})
+            return
+        if not ip and start is None and end is None:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Give an IP address, a time range, or both."})
+            return
+        connection = sqlite3.connect(MONITOR.db_path)
+        try:
+            self.send_json(HTTPStatus.OK, search_log(MONITOR.log_path, connection, ip, start, end))
+        finally:
+            connection.close()
 
     def _raw_lines(self, job_id, block_id):
         with JOBS_LOCK:

@@ -20,6 +20,16 @@ from explainer import _templates
 
 HEADER = re.compile(r"^(\d{6}) (\d{6}) \d+ \w+ [^:]+: (.*)$")  # <Date> <Time> <Pid> <Level> <Component>: <Content>
 BLOCK = re.compile(r"(blk_-?\d+)")
+FEED = re.compile(r"^(\d{6}) (\d{6}) \d+ (\w+) ([^:]+): (.*)$")  # same header as HEADER, but keeps level and component for the live feed
+# Threat ranking: HDFS logs with Log4j levels, which map onto the RFC 5424 syslog severity numbers (lower = worse):
+# 2 Critical (FATAL), 3 Error, 4 Warning, 5 Notice (a level we do not recognise: needs a look, never ignored), 6 Informational, 7 Debug.
+SEVERITY = {"FATAL": 2, "ERROR": 3, "WARN": 4, "WARNING": 4, "INFO": 6, "DEBUG": 7, "TRACE": 7}
+UNKNOWN_SEVERITY = 5
+FEED_SIZE = 5000
+# One block copied over the network: "Received block blk_1 of size 67108864 from /10.1.1.1" (or "... src: /10.1.1.1:5000 dest: ... of size N").
+TRANSFER = re.compile(r"^Received block \S+ .*?of size (\d+)")
+IPADDR = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d)")  # any IPv4 in a line, port excluded
+SOURCE = re.compile(r"(?:from|src:) /([\d.]+)")
 WINDOW = predictor.MAX_SEQUENCE_LENGTH  # the model sees the last 50 events of a block
 POLL_SECONDS = 1
 MAX_CHUNK = 8 * 1024 * 1024  # bytes read per tick, so a huge backlog is worked through in slices
@@ -31,8 +41,11 @@ CREATE TABLE IF NOT EXISTS blocks (
     block_id TEXT PRIMARY KEY, anomaly_score REAL NOT NULL, is_anomalous INTEGER NOT NULL,
     sequence_len INTEGER NOT NULL, event_ids TEXT NOT NULL, first_seen INTEGER, last_seen INTEGER);
 CREATE TABLE IF NOT EXISTS explanations (block_id TEXT PRIMARY KEY, seq_len INTEGER NOT NULL, body TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS traffic (t INTEGER NOT NULL, src TEXT NOT NULL, bytes INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS ip_activity (t INTEGER NOT NULL, ip TEXT NOT NULL, n INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS blocks_last_seen ON blocks(last_seen);
+CREATE INDEX IF NOT EXISTS traffic_t ON traffic(t);
 """
 
 
@@ -70,6 +83,12 @@ class Monitor:
         # ponytail: every block ever seen stays in memory; evict idle blocks if a feed has millions of them.
         self.state = {}  # block_id -> {"events": last 50 event ids, "n": total events, "first": t, "last": t}
         self.offset = self.lines = self.unmatched = 0
+        self.feed = deque(maxlen=FEED_SIZE)  # the newest processed lines, for the live log view
+        self.feed_seq = 0  # never reset, so a reader's "give me lines after N" stays valid across a reset
+        self.generation = 0  # bumped on reset so readers know to clear what they show
+        self.severity_counts = Counter()
+        self.timings = deque(maxlen=200)  # per busy tick: (unix time, lines, blocks scored, total seconds, scoring seconds)
+        self.model_load_s = None
         self.rates = deque(maxlen=120)  # (unix time, lines/sec) per tick, for the throughput chart
         self.info = {"model_loaded": scorer is not None, "error": None, "last_ingest": None, "started": time.time()}
         self.patterns = []
@@ -90,7 +109,9 @@ class Monitor:
         self.patterns = [(p, i) for p, i in predictor._load_master_template_patterns()
                          if i in event2idx and "blk_" not in p.pattern]
         if self.scorer is None:
+            loading = time.perf_counter()
             self.scorer = model_scorer()
+            self.model_load_s = time.perf_counter() - loading
         self.info["model_loaded"] = True
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self.log_path.touch()
@@ -142,6 +163,7 @@ class Monitor:
         return None
 
     def _tick(self, db):
+        began = time.perf_counter()
         size = self.log_path.stat().st_size
         if size < self.offset:
             self.offset = 0  # file was truncated or rotated: read the new one from the top
@@ -154,7 +176,7 @@ class Monitor:
         if not end:
             return 0
         lines = chunk[:end].decode("utf-8", "replace").splitlines()
-        event2idx, dirty, unmatched = _event2idx(), set(), 0
+        event2idx, dirty, unmatched, transfers, activity = _event2idx(), set(), 0, [], Counter()
         for line in lines:
             header = HEADER.match(line)
             if not header:
@@ -162,6 +184,11 @@ class Monitor:
                 continue
             date, clock, content = header.groups()
             block = BLOCK.search(content)
+            for ip in set(IPADDR.findall(content)):
+                activity[(_epoch(date, clock), ip)] += 1  # once per line, so a src/dest pair on the same IP is not double counted
+            sent = TRANSFER.match(content)
+            if sent and (source := SOURCE.search(content)):
+                transfers.append((_epoch(date, clock), source.group(1), int(sent.group(1))))
             if not block:
                 continue  # not about a block (the training pipeline ignores these too)
             event = self.match_event(content.strip())
@@ -175,7 +202,9 @@ class Monitor:
             entry["first"], entry["last"] = min(entry["first"], when), max(entry["last"], when)
             dirty.add(block.group(1))
         ids = sorted(dirty)
+        scoring = time.perf_counter()
         scores = self.scorer([[event2idx[e] for e in self.state[b]["events"]] for b in ids]) if ids else []
+        score_s = time.perf_counter() - scoring
         db.executemany(
             """INSERT INTO blocks VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(block_id) DO UPDATE SET
                anomaly_score = excluded.anomaly_score, is_anomalous = excluded.is_anomalous,
@@ -183,31 +212,81 @@ class Monitor:
             [(b, s, int(s > predictor.PREDICTION_THRESHOLD), self.state[b]["n"], json.dumps(list(self.state[b]["events"])),
               self.state[b]["first"], self.state[b]["last"]) for b, s in zip(ids, scores)],
         )
+        db.executemany("INSERT INTO traffic VALUES (?, ?, ?)", transfers)
+        db.executemany("INSERT INTO ip_activity VALUES (?, ?, ?)", [(t, ip, n) for (t, ip), n in activity.items()])
         new = {"offset": self.offset + end, "lines": self.lines + len(lines), "unmatched": self.unmatched + unmatched,
                "file": str(self.log_path)}
         db.executemany("INSERT OR REPLACE INTO meta VALUES (?, ?)", [(k, str(v)) for k, v in new.items()])
         db.commit()  # blocks and offset land together, so a crash can never double-count lines
         self.offset, self.lines, self.unmatched = new["offset"], new["lines"], new["unmatched"]
+        for line in lines:
+            self._feed(line)  # only after the save above: a line shows up once it has been processed
+        self.timings.append((time.time(), len(lines), len(ids), time.perf_counter() - began, score_s))
         return len(lines)
+
+    def _feed(self, line):
+        header = FEED.match(line)
+        level = header.group(3).upper() if header else "UNKNOWN"
+        severity = SEVERITY.get(level, UNKNOWN_SEVERITY)
+        block = BLOCK.search(line)
+        self.feed_seq += 1
+        self.severity_counts[severity] += 1
+        self.feed.append({
+            "seq": self.feed_seq, "t": _epoch(header.group(1), header.group(2)) if header else None, "level": level, "sev": severity,
+            "src": header.group(4).rsplit(".", 1)[-1] if header else "", "text": header.group(5) if header else line,
+            "block": block.group(1) if block else None})
+
+    def feed_since(self, after, limit=500):
+        """Lines processed after sequence number ``after`` (oldest first). A negative ``after`` means "just show me the latest 100"."""
+        lines = list(self.feed)
+        fresh = lines[-100:] if after < 0 else [entry for entry in lines if entry["seq"] > after]
+        # ponytail: a reader more than `limit` lines behind skips the middle; page by seq if gap-free history matters
+        return {"generation": self.generation, "latest": self.feed_seq, "counts": dict(self.severity_counts), "lines": fresh[-limit:]}
+
+    def watch(self, path):
+        """Switch to another log file and start from zero (a no-op if it is already the watched file)."""
+        path = Path(path)
+        if path == self.log_path:
+            return
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+        with self.lock:
+            self.log_path = path
+        self.reset()
 
     def reset(self):
         """Forget everything and re-read the file from the top."""
         with self.lock:
             db = self._connect()
             try:
-                for table in ("blocks", "explanations", "meta"):
+                for table in ("blocks", "explanations", "traffic", "ip_activity", "meta"):
                     db.execute(f"DELETE FROM {table}")
                 db.commit()
             finally:
                 db.close()
             self.state, self.offset, self.lines, self.unmatched = {}, 0, 0, 0
             self.rates.clear()
+            self.feed.clear()
+            self.severity_counts.clear()
+            self.generation += 1
+
+    def perf(self):
+        """Speed numbers over the last ~200 busy ticks (ticks that found new lines)."""
+        ticks = list(self.timings)
+        busy = sorted(t[3] for t in ticks)
+        lines, blocks, seconds, scoring = (sum(t[i] for t in ticks) for i in (1, 2, 3, 4))
+        return {"model_load_s": self.model_load_s, "ticks": len(ticks),
+                "tick_avg_ms": 1000 * seconds / len(ticks) if ticks else 0,
+                "tick_p95_ms": 1000 * busy[int(0.95 * (len(busy) - 1))] if ticks else 0,
+                "capacity_lines_per_s": lines / seconds if seconds else 0,  # lines handled per busy second = the most it could keep up with
+                "score_ms_per_block": 1000 * scoring / blocks if blocks else 0,
+                "db_bytes": self.db_path.stat().st_size if self.db_path.exists() else 0, "uptime_s": time.time() - self.info["started"]}
 
     def snapshot(self):
         size = self.log_path.stat().st_size if self.log_path.exists() else 0
         return {**self.info, "file": self.log_path.name, "lines": self.lines, "unmatched": self.unmatched,
                 "blocks": len(self.state), "backlog_bytes": max(0, size - self.offset), "now": time.time(),
-                "rates": [{"t": t, "rate": round(r, 1)} for t, r in self.rates]}
+                "rates": [{"t": t, "rate": round(r, 1)} for t, r in self.rates], "perf": self.perf()}
 
 
 def summary(connection, threshold):
@@ -241,3 +320,62 @@ def summary(connection, threshold):
         key=lambda row: row["normal_pct"] - row["anomalous_pct"])[:8]
     return {"total": total, "anomalous": anomalous, "normal": total - anomalous, "rate": 100 * anomalous / total if total else 0.0,
             "bucket_seconds": bucket, "series": series, "histogram": histogram, "top_events": top}
+
+
+def traffic_summary(connection):
+    """Network traffic from block-copy lines: bytes over time and the busiest source machines."""
+    total, count, first, last = connection.execute("SELECT COALESCE(SUM(bytes), 0), COUNT(*), MIN(t), MAX(t) FROM traffic").fetchone()
+    bucket = next((b for b in BUCKETS if ((last - first) if count else 0) / b <= 60), BUCKETS[-1])
+    series = [{"t": t, "bytes": size} for t, size in connection.execute(
+        "SELECT (t / ?) * ? AS b, SUM(bytes) FROM traffic GROUP BY b ORDER BY b", (bucket, bucket))]
+    sources = [{"ip": ip, "bytes": size, "transfers": n} for ip, size, n in connection.execute(
+        "SELECT src, SUM(bytes) AS s, COUNT(*) FROM traffic GROUP BY src ORDER BY s DESC LIMIT 8")]
+    return {"total_bytes": total, "transfers": count, "bucket_seconds": bucket, "series": series, "top_sources": sources}
+
+
+def ip_summary(connection, window=60):
+    """Every IP seen in the log. "Active" = it appeared within ``window`` seconds of the newest log line (log time, not wall clock)."""
+    (newest,) = connection.execute("SELECT MAX(t) FROM ip_activity").fetchone()
+    rows = connection.execute(
+        "SELECT ip, SUM(n), MIN(t), MAX(t), (SELECT COALESCE(SUM(bytes), 0) FROM traffic WHERE src = ip_activity.ip) "
+        "FROM ip_activity GROUP BY ip ORDER BY MAX(t) DESC, SUM(n) DESC LIMIT 200").fetchall()
+    ips = [{"ip": ip, "lines": n, "first": first, "last": last, "bytes_sent": sent, "active": newest - last <= window}
+           for ip, n, first, last, sent in rows]
+    return {"newest": newest, "window": window, "active_count": sum(i["active"] for i in ips), "ips": ips}
+
+
+IPV4 = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
+
+
+def search_log(path, connection, ip="", start=None, end=None, limit=1000):
+    """Every raw line mentioning ``ip`` (whole address, so 10.1.1.1 never matches 10.1.1.10) inside [start, end] (UTC epoch seconds).
+
+    Also lists the blocks those lines belong to, with their saved anomaly scores.
+    ponytail: re-reads the whole file on each search; index lines by IP if logs get huge.
+    """
+    pattern = re.compile(rf"(?<![\d.]){re.escape(ip)}(?!\d)") if ip else None
+    lines, per_block, total = [], Counter(), 0
+    with Path(path).open(encoding="utf-8", errors="replace") as log_file:
+        for line in log_file:
+            if pattern and not pattern.search(line):
+                continue
+            if start is not None or end is not None:
+                header = HEADER.match(line)
+                if not header:
+                    continue
+                when = _epoch(header.group(1), header.group(2))
+                if (start is not None and when < start) or (end is not None and when > end):
+                    continue
+            total += 1
+            if len(lines) < limit:
+                lines.append(line.rstrip("\n"))
+            if block := BLOCK.search(line):
+                per_block[block.group(1)] += 1
+    scores, ids = {}, list(per_block)
+    for i in range(0, len(ids), 500):
+        chunk = ids[i:i + 500]
+        scores.update(connection.execute(
+            f"SELECT block_id, anomaly_score FROM blocks WHERE block_id IN ({','.join('?' * len(chunk))})", chunk))
+    blocks = sorted(({"block_id": b, "lines": n, "score": scores.get(b)} for b, n in per_block.items()),
+                    key=lambda row: (row["score"] is None, -(row["score"] or 0)))
+    return {"total_lines": total, "truncated": total > len(lines), "lines": lines, "total_blocks": len(blocks), "blocks": blocks[:200]}

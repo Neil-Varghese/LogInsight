@@ -4,16 +4,16 @@ import type { ReactNode } from "react";
 export type Kpis = { total: number; anomalous: number; normal: number; rate: number };
 export type LastCard = { label: string; value: string; sub?: string };
 
-function Card({ label, value, icon, tone = "text-slate-100", sub }: {
+function Card({ label, value, icon, tone = "text-indigo-500", sub }: {
   label: string; value: string; icon: ReactNode; tone?: string; sub?: string;
 }) {
   return (
-    <div className="border border-slate-800 bg-slate-900 px-3 py-2.5">
+    <div className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm px-3 py-2.5">
       <div className="flex items-center justify-between text-xs text-slate-400">
         <span>{label}</span>
         {icon}
       </div>
-      <div className={`mt-1 font-mono text-2xl font-semibold tabular-nums ${tone}`}>{value}</div>
+      <div className={`mt-1 font-mono text-3xl font-light tabular-nums ${tone}`}>{value}</div>
       {sub && <div className="mt-0.5 text-[11px] text-slate-500">{sub}</div>}
     </div>
   );
