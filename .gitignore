@@ -10,3 +10,4 @@ backend/runs/
 test sets/live_demo.log
 
 backend/monitor.sqlite3*
+sim/cluster.log

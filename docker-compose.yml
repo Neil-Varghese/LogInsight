@@ -1,0 +1,13 @@
+# Fake HDFS cluster: 3 datanode containers, each printing HDFS-style logs.
+# Start: python sim/collect.py   (brings it up and copies the logs into sim/cluster.log)
+services:
+  datanode:
+    image: python:3.12-slim
+    command: python -u /sim/datanode.py
+    scale: 3
+    environment:
+      LINES_PER_SECOND: "5"   # per container
+      ANOMALY_RATE: "0.05"
+    volumes:
+      - ./sim:/sim:ro
+      - "./test sets:/samples:ro"
