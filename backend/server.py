@@ -14,6 +14,7 @@ import time
 import uuid
 from urllib.parse import parse_qs, unquote, urlparse
 
+from auth import Auth, AuthError, SESSION_SECONDS
 from explainer import explain
 from monitor import IPV4, Monitor, ip_summary, search_log, summary, traffic_summary
 from predictor import predict_log_file
@@ -35,6 +36,10 @@ MONITOR = Monitor(PROJECT_ROOT / os.environ.get("LOGINSIGHT_WATCH", "test sets/l
 
 SIM = {"proc": None, "mode": None, "started": None}  # the one simulator process this server started
 SIM_LOCK = threading.Lock()
+AUTH = Auth()
+ALLOW_SIGNUP = os.environ.get("LOGINSIGHT_ALLOW_SIGNUP", "1") != "0"  # set to 0 once your accounts exist
+MAX_BODY = 64 * 1024
+COOKIE = "loginsight_session"
 
 
 def sim_running():
@@ -94,6 +99,25 @@ def parse_threshold(query):
         return min(1.0, max(0.0, float(query.get("threshold", ["0.5"])[0])))
     except ValueError:
         return 0.5
+
+
+def public_stats():
+    """Headline numbers for the landing page: the biggest analysis so far (most blocks scored) across the live monitor and every saved run."""
+    best = {"total": 0, "anomalous": 0}
+    for path in [MONITOR.db_path, *RUNS_DIR.glob("*.sqlite3")]:
+        try:  # ponytail: opens every run file per request; cache by file mtime if the history grows to hundreds
+            connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            try:
+                total, anomalous = connection.execute("SELECT COUNT(*), COALESCE(SUM(anomaly_score >= 0.5), 0) FROM blocks").fetchone()
+                if total > best["total"]:
+                    best = {"total": total, "anomalous": anomalous}
+            finally:
+                connection.close()
+        except sqlite3.Error:
+            continue  # a file that is mid-creation or has no blocks table
+    best["rate"] = 100 * best["anomalous"] / best["total"] if best["total"] else 0.0
+    best["model_loaded"] = bool(MONITOR.info.get("model_loaded"))
+    return best
 
 
 def create_run_database(job_id):
@@ -211,8 +235,73 @@ def run_live(job_id, file_path, stop):
 class LogInsightHandler(SimpleHTTPRequestHandler):
     """Serve project files and expose the contents of ``test sets`` as JSON."""
 
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        super().end_headers()
+
+    def session_token(self):
+        for part in self.headers.get("Cookie", "").split(";"):
+            name, _, value = part.strip().partition("=")
+            if name == COOKIE:
+                return value
+        return None
+
+    def read_json(self):
+        length = int(self.headers.get("Content-Length", "0"))
+        if not 0 <= length <= MAX_BODY:
+            raise ValueError("Request body too large.")
+        data = json.loads(self.rfile.read(length) or b"{}")
+        if not isinstance(data, dict):
+            raise ValueError("Expected a JSON object.")
+        return data
+
+    def api_allowed(self, request_path):
+        """Every /api/ route except the auth ones needs a signed-in session; answer 401 and return False otherwise."""
+        if not request_path.startswith("/api/") or request_path.startswith(("/api/auth/", "/api/public/")) or AUTH.user(self.session_token()):
+            return True
+        self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "Sign in required."})
+        return False
+
+    def same_origin(self):
+        """Browsers send Origin on POSTs; refuse ones from another site (CSRF). Scripts without an Origin header pass."""
+        origin = self.headers.get("Origin")
+        return origin is None or urlparse(origin).netloc == self.headers.get("Host")
+
+    def handle_auth(self, request_path):
+        """POST /api/auth/signup|login|logout. Returns True when it answered."""
+        action = request_path.rsplit("/", 1)[-1]
+        try:
+            if action == "logout":
+                AUTH.logout(self.session_token())
+                self.send_json(HTTPStatus.OK, {"ok": True}, f"{COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0")
+                return
+            body = self.read_json()
+            email, password = body.get("email"), body.get("password")
+            if action == "signup":
+                if not ALLOW_SIGNUP:
+                    raise AuthError(403, "Sign-up is turned off on this server.")
+                AUTH.signup(email, password)
+            token = AUTH.login(email, password, self.client_address[0])
+            # ponytail: no Secure flag because this serves plain http on localhost; add it behind https
+            cookie = f"{COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_SECONDS}"
+            self.send_json(HTTPStatus.OK, {"email": email.strip().lower()}, cookie)
+        except AuthError as error:
+            self.send_json(error.status, {"error": str(error)})
+        except (ValueError, AttributeError):
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Bad request."})
+
     def do_GET(self):
         request_path = urlparse(self.path).path
+        if request_path == "/api/auth/me":
+            user = AUTH.user(self.session_token())
+            self.send_json(HTTPStatus.OK if user else HTTPStatus.UNAUTHORIZED, user or {"error": "Not signed in."})
+            return
+        if not self.api_allowed(request_path):
+            return
+        if request_path == "/api/public/stats":  # the landing page's numbers; totals only, no log content
+            self.send_json(HTTPStatus.OK, public_stats())
+            return
         if request_path == "/api/test-sets":
             self.send_test_sets()
             return
@@ -223,6 +312,15 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             connection = sqlite3.connect(MONITOR.db_path)
             try:
                 self.send_json(HTTPStatus.OK, summary(connection, parse_threshold(parse_qs(urlparse(self.path).query))))
+            finally:
+                connection.close()
+            return
+        if request_path == "/api/monitor/scores":
+            # Every block as [id, score, events, last_seen] so the dashboard can apply the threshold itself, with no round trip per slider move.
+            connection = sqlite3.connect(MONITOR.db_path)
+            try:  # ponytail: capped at 50k blocks (~3 MB of JSON); switch to a delta feed past that
+                rows = connection.execute("SELECT block_id, anomaly_score, sequence_len, last_seen FROM blocks ORDER BY anomaly_score DESC LIMIT 50000").fetchall()
+                self.send_json(HTTPStatus.OK, {"scores": rows})
             finally:
                 connection.close()
             return
@@ -285,6 +383,14 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         request_path = urlparse(self.path).path
         parts = request_path.strip("/").split("/")
+        if not self.same_origin():
+            self.send_json(HTTPStatus.FORBIDDEN, {"error": "Cross-site request refused."})
+            return
+        if request_path in ("/api/auth/signup", "/api/auth/login", "/api/auth/logout"):
+            self.handle_auth(request_path)
+            return
+        if not self.api_allowed(request_path):
+            return
         if request_path == "/api/monitor/reset":
             MONITOR.reset()
             self.send_json(HTTPStatus.OK, {"reset": True})
@@ -299,7 +405,7 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             return
         if request_path == "/api/sim/start":
             try:
-                mode = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))) or b"{}").get("mode")
+                mode = self.read_json().get("mode")
             except (ValueError, AttributeError):
                 mode = None
             status, body = sim_start(mode)
@@ -313,8 +419,7 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             return
         live = request_path == "/api/live"
         try:
-            content_length = int(self.headers.get("Content-Length", "0"))
-            payload = json.loads(self.rfile.read(content_length))
+            payload = self.read_json()
             filename = payload["filename"]
             if not isinstance(filename, str) or Path(filename).name != filename:
                 raise ValueError("Invalid test-set filename.")
@@ -452,10 +557,12 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         finally:
             connection.close()
 
-    def send_json(self, status, payload):
+    def send_json(self, status, payload, cookie=None):
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        if cookie:
+            self.send_header("Set-Cookie", cookie)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

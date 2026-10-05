@@ -1,17 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Brush, CartesianGrid, Cell, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Summary } from "@/lib/api";
 
 const RED = "#d9534f";
 const GREEN = "#5aa469";
 export const INDIGO = "#2f8ac6";
-export const GRID = "#e1e6ea";
-export const AXIS = { fontSize: 11, fill: "#4a5764" };
+// Theme-dependent colours come from CSS variables in globals.css, so charts follow the dark/light toggle.
+export const GRID = "var(--chart-grid)";
+export const AXIS = { fontSize: 11, fill: "var(--chart-axis)" };
 export const TOOLTIP = {
-  contentStyle: { background: "#ffffff", border: "1px solid #d5dbe0", borderRadius: 6, fontSize: 12 },
-  labelStyle: { color: "#1f2a33" },
+  contentStyle: { background: "var(--chart-tip-bg)", border: "1px solid var(--chart-tip-border)", borderRadius: 6, fontSize: 12, color: "var(--chart-tip-text)" },
+  labelStyle: { color: "var(--chart-tip-text)" },
   cursor: { fill: "rgba(47,138,198,0.08)" },
 };
 
@@ -24,7 +25,7 @@ export function ChartCard({ title, note, className = "", empty, children }: {
         <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
         {note && <span className="text-[11px] text-slate-500">{note}</span>}
       </div>
-      <div className="h-52 p-2">
+      <div className="h-56 p-2">
         {empty ? <div className="flex h-full items-center justify-center text-xs text-slate-500">Waiting for log lines…</div> : children}
       </div>
     </section>
@@ -48,15 +49,19 @@ export function Charts({ summary, threshold }: { summary: Summary | null; thresh
     <div className="grid gap-2 lg:grid-cols-3">
       <ChartCard title="Blocks over time" note={`log time (UTC), ${bucket}s buckets`} empty={empty} className="lg:col-span-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={summary?.series ?? []} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+          {/* Left axis = how many blocks arrived, right axis = what share of them were anomalous. Drag the strip at the bottom to zoom. */}
+          <ComposedChart data={summary?.series ?? []} margin={{ top: 4, right: 0, left: -12, bottom: 0 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
             <XAxis dataKey="t" tickFormatter={(t) => logTime(t, bucket)} tick={AXIS} stroke={GRID} minTickGap={24} />
-            <YAxis tick={AXIS} stroke={GRID} allowDecimals={false} />
-            <Tooltip {...TOOLTIP} labelFormatter={(t) => logTime(Number(t), bucket)} />
+            <YAxis yAxisId="vol" tick={AXIS} stroke={GRID} allowDecimals={false} />
+            <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} unit="%" tick={AXIS} stroke={GRID} width={40} />
+            <Tooltip {...TOOLTIP} labelFormatter={(t) => logTime(Number(t), bucket)} formatter={(v, name) => (name === "Anomaly %" ? `${Number(v).toFixed(1)}%` : v)} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="normal" name="Normal" stackId="a" fill={GREEN} fillOpacity={0.7} isAnimationActive={false} />
-            <Bar dataKey="anomalous" name="Anomalous" stackId="a" fill={RED} isAnimationActive={false} />
-          </BarChart>
+            <Bar yAxisId="vol" dataKey="normal" name="Normal" stackId="a" fill={GREEN} fillOpacity={0.7} isAnimationActive={false} />
+            <Bar yAxisId="vol" dataKey="anomalous" name="Anomalous" stackId="a" fill={RED} isAnimationActive={false} />
+            <Line yAxisId="pct" dataKey="rate" name="Anomaly %" stroke="#f5b94a" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+            <Brush dataKey="t" height={18} stroke={GRID} fill="transparent" tickFormatter={(t) => logTime(t, bucket)} />
+          </ComposedChart>
         </ResponsiveContainer>
       </ChartCard>
 

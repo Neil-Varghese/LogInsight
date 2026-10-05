@@ -7,6 +7,8 @@ export type Explanation = {
 };
 
 async function json(response: Response) {
+  // Session ended (or never started): go to the sign-in page. The server enforces this; the redirect is just the friendly part.
+  if (response.status === 401 && typeof window !== "undefined") window.location.replace("/login/");
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
   return data;
@@ -64,7 +66,7 @@ export type Status = {
 };
 export type Summary = {
   total: number; anomalous: number; normal: number; rate: number; bucket_seconds: number;
-  series: { t: number; normal: number; anomalous: number }[];
+  series: { t: number; normal: number; anomalous: number; rate?: number }[];
   histogram: { bin: number; count: number }[];
   top_events: { event_id: string; template: string; anomalous_pct: number; normal_pct: number }[];
 };
@@ -79,6 +81,9 @@ export const getTraffic = (): Promise<Traffic> => fetch("/api/monitor/traffic", 
 export const getStatus = (): Promise<Status> => fetch("/api/monitor/status", { cache: "no-store" }).then(json);
 export const getSummary = (threshold: number): Promise<Summary> =>
   fetch(`/api/monitor/summary?threshold=${threshold}`, { cache: "no-store" }).then(json);
+// Every block: [id, score 0-1, events, last_seen]. The Monitor tab applies the threshold to these itself.
+export type Score = [string, number, number, number | null];
+export const getScores = (): Promise<{ scores: Score[] }> => fetch("/api/monitor/scores", { cache: "no-store" }).then(json);
 export const resetMonitor = () => fetch("/api/monitor/reset", { method: "POST" }).then(json);
 
 // Top 100 blocks by score at the given cut-off (the API caps a page at 100).

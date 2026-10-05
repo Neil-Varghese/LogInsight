@@ -117,10 +117,11 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* Light, ServiceNow-style palette. The components keep their Tailwind class names; these re-point the shades:
+/* Dark is the default (Tailwind's own shades). Adding class "light" to <html> re-points them to a ServiceNow-style palette.
+   The components keep their Tailwind class names; the light palette re-points the shades:
    slate 950 = page grey, 900 = white card, 800/700 = borders, 500-100 = text from light to dark.
    Status colours are darkened (their old values were made for a dark page); indigo becomes ServiceNow navy. */
-@theme {
+html.light {
   --color-slate-950: #e8ecef;
   --color-slate-900: #ffffff;
   --color-slate-800: #d5dbe0;
@@ -161,8 +162,16 @@
   --color-indigo-950: #e4e8f8;
 }
 
+/* Chart colours that depend on the theme (charts.tsx reads these). */
 :root {
+  color-scheme: dark;
+  --chart-grid: #1e293b; --chart-axis: #94a3b8;
+  --chart-tip-bg: #0f172a; --chart-tip-border: #334155; --chart-tip-text: #e2e8f0;
+}
+html.light {
   color-scheme: light;
+  --chart-grid: #e1e6ea; --chart-axis: #4a5764;
+  --chart-tip-bg: #ffffff; --chart-tip-border: #d5dbe0; --chart-tip-text: #1f2a33;
 }
 
 @layer base {

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const dev = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
+  trailingSlash: true, // /app and /login become folders with an index.html, which the Python server can serve
   // Production: a static export that the Python server serves, so /api/* is already same-origin.
   // Dev (port 3000): forward /api/* to the Python server instead (rewrites don't exist in an export).
   ...(dev

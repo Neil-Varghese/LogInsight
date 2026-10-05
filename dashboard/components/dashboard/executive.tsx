@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AXIS, GRID, INDIGO, TOOLTIP } from "@/components/dashboard/charts";
-import { getFeed, getIps, getSummary, getTraffic, type Feed, type Ips, type Status, type Summary, type Traffic } from "@/lib/api";
+import { getFeed, getIps, getSummary, getTraffic, type Feed, type Ips, type Summary, type Traffic } from "@/lib/api";
 import { TIER_ORDER, tierOf } from "@/lib/severity";
 
 // Goals the "Target" and "Gap" lines compare against. Edit these to your own service levels.
-const TARGETS = { anomalyRatePct: 5, criticalLines: 0, backlogKb: 0 };
+const TARGETS = { anomalyRatePct: 5, criticalLines: 0 };
 const TIER_COLOR: Record<number, string> = { 2: "#c62d2d", 3: "#e07a2f", 4: "#f5b94a", 5: "#7e57c2", 6: "#2f8ac6", 7: "#9aa7b3" };
 const POLL_MS = 3000;
 // Two short lines per priority: what it means, and what to do.
@@ -27,8 +27,8 @@ const size = (bytes: number) => (bytes >= 1073741824 ? `${(bytes / 1073741824).t
 function Column({ title, question, children }: { title: string; question: string; children: ReactNode }) {
   return (
     <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-sm">
-      <div className="bg-[#bcd8ee] px-3 py-2.5">
-        <h2 className="border-b border-slate-700 pb-1 text-base font-semibold text-slate-100">{title}</h2>
+      <div className="bg-[#1e2d4d] [html.light_&]:bg-[#bcd8ee] px-3 py-2">
+        <h2 className="border-b border-slate-700 pb-1 text-[clamp(0.9rem,1vw,1rem)] font-semibold text-slate-100">{title}</h2>
         <p className="pt-1 text-xs text-slate-200">{question}</p>
       </div>
       {children}
@@ -42,8 +42,8 @@ function Kpi({ label, value, bad, target, gap, note }: {
 }) {
   return (
     <div className="min-w-0">
-      <div className="min-h-8 text-xs font-medium text-slate-200">{label}</div>
-      <div className={`mt-1 text-2xl ${bad ? "text-red-400" : "text-slate-100"}`}>{value}</div>
+      <div className="min-h-7 text-xs font-medium text-slate-200">{label}</div>
+      <div className={`mt-1 text-[clamp(1.25rem,1.5vw,1.65rem)] ${bad ? "text-red-400" : "text-slate-100"}`}>{value}</div>
       {note && <div className="mt-1 text-[11px] text-slate-500">{note}</div>}
       {target && (
         <div className="mt-2 text-[11px] text-slate-400">
@@ -55,13 +55,13 @@ function Kpi({ label, value, bad, target, gap, note }: {
   );
 }
 
-const Kpis = ({ children }: { children: ReactNode }) => <div className="grid min-h-40 grid-cols-2 gap-3 p-3">{children}</div>;
+const Kpis = ({ children }: { children: ReactNode }) => <div className="grid min-h-[clamp(6rem,11vh,8.5rem)] grid-cols-2 gap-2.5 p-2.5">{children}</div>;
 
 function Sub({ title, empty, children }: { title: string; empty?: boolean; children: ReactNode }) {
   return (
     <div className="border-t border-slate-800 p-3">
       <h3 className="text-xs font-semibold text-slate-200">{title}</h3>
-      <div className="mt-2 h-44">
+      <div className="mt-2 h-[clamp(9rem,17vh,12rem)]">
         {empty ? <div className="flex h-full items-center justify-center text-xs text-slate-500">Waiting for log lines…</div> : children}
       </div>
     </div>
@@ -70,7 +70,7 @@ function Sub({ title, empty, children }: { title: string; empty?: boolean; child
 
 const signed = (n: number, digits = 0) => `${n > 0 ? "+" : ""}${n.toFixed(digits)}`;
 
-export function Executive({ status, threshold }: { status: Status | null; threshold: number }) {
+export function Executive({ threshold }: { threshold: number }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [traffic, setTraffic] = useState<Traffic | null>(null);
   const [ips, setIps] = useState<Ips | null>(null);
@@ -97,14 +97,13 @@ export function Executive({ status, threshold }: { status: Status | null; thresh
   const count = (sev: number) => feed?.counts[String(sev)] ?? 0;
   const urgent = count(2) + count(3); // Critical + Error
   const rate = summary?.rate ?? 0;
-  const backlogKb = status ? status.backlog_bytes / 1024 : 0;
   const noTraffic = !traffic || traffic.transfers === 0;
   const topIps = (ips?.ips ?? []).slice(0, 6).map((r) => ({ ip: r.ip, lines: r.lines }));
 
   return (
     <div className="space-y-2">
       {error && <p className="rounded-lg border border-red-900 bg-red-950 px-3 py-2 text-xs text-red-400">{error}</p>}
-      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         <Column title="Detection" question="Is the model catching problems?">
           <Kpis>
             <Kpi label="Anomalous blocks" value={(summary?.anomalous ?? 0).toLocaleString()} bad={(summary?.anomalous ?? 0) > 0} note={`of ${(summary?.total ?? 0).toLocaleString()} blocks`} />
@@ -184,26 +183,6 @@ export function Executive({ status, threshold }: { status: Status | null; thresh
           </Sub>
         </Column>
 
-        <Column title="Pipeline" question="Is the monitor keeping up?">
-          <Kpis>
-            <Kpi
-              label="Backlog" value={`${backlogKb.toFixed(0)} KB`} bad={backlogKb > TARGETS.backlogKb}
-              target={`${TARGETS.backlogKb} KB`} gap={`${signed(backlogKb - TARGETS.backlogKb)} KB`}
-            />
-            <Kpi label="Capacity" value={status?.perf && status.perf.ticks > 0 ? `${Math.round(status.perf.capacity_lines_per_s).toLocaleString()}/s` : "–"} note="lines per second" />
-          </Kpis>
-          <Sub title="Ingest rate (lines/s)" empty={!status || status.rates.length === 0}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={(status?.rates ?? []).map((r) => ({ t: r.t, rate: r.rate }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
-                <CartesianGrid stroke={GRID} vertical={false} />
-                <XAxis dataKey="t" tickFormatter={(t) => new Date(t * 1000).toLocaleTimeString([], { minute: "2-digit", second: "2-digit" })} tick={AXIS} stroke={GRID} minTickGap={32} />
-                <YAxis tick={AXIS} stroke={GRID} allowDecimals={false} />
-                <Tooltip {...TOOLTIP} labelFormatter={(t) => new Date(Number(t) * 1000).toLocaleTimeString()} />
-                <Area type="monotone" dataKey="rate" name="Lines/s" stroke={INDIGO} fill={INDIGO} fillOpacity={0.2} isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Sub>
-        </Column>
       </div>
       <section className="rounded-lg border border-slate-800 bg-slate-900 p-3 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-100">Priority levels</h2>
