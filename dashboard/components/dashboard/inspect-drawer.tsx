@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import type { Explanation } from "@/lib/api";
+import { useRef, useState } from "react";
+import { inspectBlock, type Explanation } from "@/lib/api";
 
 export type Inspection = { blockId: string; loading: boolean; explanation: Explanation | null; error: string | null; rawLogs: string[] };
 
@@ -49,4 +50,21 @@ function Field({ title, children }: { title: string; children: React.ReactNode }
       <div className="text-slate-200">{children}</div>
     </div>
   );
+}
+
+// Shared by the live view and the batch view: open(jobId, blockId) loads the explanation and shows the drawer.
+export function useInspector() {
+  const [data, setData] = useState<Inspection | null>(null);
+  const latest = useRef(0);
+  async function open(jobId: string, blockId: string) {
+    const mine = ++latest.current; // a slow earlier click must not overwrite a newer one
+    setData({ blockId, loading: true, explanation: null, error: null, rawLogs: [] });
+    try {
+      const result = await inspectBlock(jobId, blockId);
+      if (mine === latest.current) setData({ blockId, loading: false, ...result });
+    } catch (error) {
+      if (mine === latest.current) setData({ blockId, loading: false, explanation: null, rawLogs: [], error: error instanceof Error ? error.message : "Inspect failed." });
+    }
+  }
+  return { open, drawer: data && <InspectDrawer data={data} onClose={() => { latest.current++; setData(null); }} /> };
 }

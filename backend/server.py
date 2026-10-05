@@ -3,6 +3,7 @@
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import re
 import sqlite3
@@ -12,6 +13,7 @@ import uuid
 from urllib.parse import parse_qs, unquote, urlparse
 
 from explainer import explain
+from monitor import Monitor, summary
 from predictor import predict_log_file
 
 
@@ -26,6 +28,15 @@ RUNS_DIR = Path(__file__).resolve().parent / "runs"
 LIVE_STOPS = {}  # job_id -> threading.Event that ends that live watcher
 LIVE_POLL_SECONDS = 3
 RAW_LINE_LIMIT = 50  # same cap as the LSTM's 50 events per block
+MONITOR = Monitor(PROJECT_ROOT / os.environ.get("LOGINSIGHT_WATCH", "test sets/live_demo.log"), Path(__file__).resolve().parent / "monitor.sqlite3")
+
+
+def parse_threshold(query):
+    """Anomaly cut-off from ?threshold=0..1; anything unusable falls back to the model's 0.5."""
+    try:
+        return min(1.0, max(0.0, float(query.get("threshold", ["0.5"])[0])))
+    except ValueError:
+        return 0.5
 
 
 def create_run_database(job_id):
@@ -148,6 +159,16 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         if request_path == "/api/test-sets":
             self.send_test_sets()
             return
+        if request_path == "/api/monitor/status":
+            self.send_json(HTTPStatus.OK, MONITOR.snapshot())
+            return
+        if request_path == "/api/monitor/summary":
+            connection = sqlite3.connect(MONITOR.db_path)
+            try:
+                self.send_json(HTTPStatus.OK, summary(connection, parse_threshold(parse_qs(urlparse(self.path).query))))
+            finally:
+                connection.close()
+            return
         path_parts = request_path.strip("/").split("/")
         if len(path_parts) >= 4 and path_parts[:2] == ["api", "jobs"] and path_parts[3] == "blocks":
             if len(path_parts) == 4:
@@ -180,6 +201,10 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         request_path = urlparse(self.path).path
         parts = request_path.strip("/").split("/")
+        if request_path == "/api/monitor/reset":
+            MONITOR.reset()
+            self.send_json(HTTPStatus.OK, {"reset": True})
+            return
         if len(parts) == 4 and parts[:2] == ["api", "jobs"] and parts[3] == "stop":
             stop = LIVE_STOPS.get(parts[2])
             if stop is None:
@@ -259,15 +284,16 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
             filter_value = query.get("filter", ["all"])[0]
             search = query.get("search", [""])[0]
             where, parameters = ["block_id LIKE ?"], [f"%{search}%"]
-            if filter_value == "anomalous": where.append("is_anomalous = 1")
-            if filter_value == "normal": where.append("is_anomalous = 0")
+            threshold = parse_threshold(query)
+            if filter_value == "anomalous": where.append("anomaly_score >= ?"); parameters.append(threshold)
+            if filter_value == "normal": where.append("anomaly_score < ?"); parameters.append(threshold)
             clause = " WHERE " + " AND ".join(where)
             total = connection.execute("SELECT COUNT(*) FROM blocks" + clause, parameters).fetchone()[0]
             rows = connection.execute(
                 "SELECT block_id, anomaly_score, is_anomalous, sequence_len, event_ids FROM blocks" + clause +
                 " ORDER BY anomaly_score DESC LIMIT ? OFFSET ?", parameters + [limit, (page - 1) * limit]
             ).fetchall()
-            blocks = [{"block_id": row[0], "anomaly_score": row[1], "is_anomalous": bool(row[2]),
+            blocks = [{"block_id": row[0], "anomaly_score": row[1], "is_anomalous": row[1] >= threshold,
                        "sequence_len": row[3], "event_ids": json.loads(row[4])} for row in rows]
             self.send_json(HTTPStatus.OK, {"blocks": blocks, "total": total, "page": page, "limit": limit})
         finally:
@@ -322,8 +348,10 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    JOBS["monitor"] = {"stage": "monitoring", "progress": 100, "file": str(MONITOR.log_path), "database": str(MONITOR.db_path)}
+    MONITOR.start()  # reuses the /api/jobs/monitor/blocks routes for block detail and explanations
     server = ThreadingHTTPServer(("127.0.0.1", 8000), LogInsightHandler)  # this machine only; "" would expose it to the whole network
-    print("LogInsight is running at http://localhost:8000/")
+    print(f"LogInsight is running at http://localhost:8000/  (watching {MONITOR.log_path})")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

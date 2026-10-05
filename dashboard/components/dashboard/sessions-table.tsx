@@ -1,14 +1,18 @@
 import { ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type Session = { blockId: string; anomalous: boolean; confidence: number; events: number };
 
-export function SessionsTable({ rows, onInspect }: { rows: Session[]; onInspect: (blockId: string) => void }) {
+export function SessionsTable({ rows, onInspect, title = "Classified Block Sessions", toolbar }: {
+  rows: Session[]; onInspect: (blockId: string) => void; title?: string; toolbar?: ReactNode;
+}) {
   return (
     <section className="border border-slate-800 bg-slate-900">
-      <h2 className="border-b border-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-        Classified Block Sessions
-      </h2>
+      <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h2>
+        {toolbar}
+      </div>
       <Table>
         <TableHeader>
           <TableRow className="border-slate-800 hover:bg-transparent">
@@ -20,6 +24,11 @@ export function SessionsTable({ rows, onInspect }: { rows: Session[]; onInspect:
           </TableRow>
         </TableHeader>
         <TableBody>
+          {rows.length === 0 && (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={5} className="px-3 py-6 text-center text-xs text-slate-500">No block sessions yet.</TableCell>
+            </TableRow>
+          )}
           {rows.map((r) => (
             <TableRow key={r.blockId} className="border-slate-800 hover:bg-slate-800/50">
               <TableCell className="px-3 py-1.5 font-mono text-xs">{r.blockId}</TableCell>

@@ -1,7 +1,8 @@
 import { AlertTriangle, CheckCircle2, Gauge, Layers, Timer } from "lucide-react";
 import type { ReactNode } from "react";
 
-export type Kpis = { total: number; anomalous: number; normal: number; rate: number; latencySeconds: number };
+export type Kpis = { total: number; anomalous: number; normal: number; rate: number };
+export type LastCard = { label: string; value: string; sub?: string };
 
 function Card({ label, value, icon, tone = "text-slate-100", sub }: {
   label: string; value: string; icon: ReactNode; tone?: string; sub?: string;
@@ -18,14 +19,14 @@ function Card({ label, value, icon, tone = "text-slate-100", sub }: {
   );
 }
 
-export function KpiCards({ k }: { k: Kpis }) {
+export function KpiCards({ k, last }: { k: Kpis; last: LastCard }) {
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
       <Card label="Total Block Sessions" value={k.total.toLocaleString()} icon={<Layers className="size-3.5" />} />
       <Card label="Anomalous Blocks" value={k.anomalous.toLocaleString()} tone="text-red-400" icon={<AlertTriangle className="size-3.5 text-red-400" />} />
       <Card label="Normal Blocks" value={k.normal.toLocaleString()} tone="text-emerald-400" icon={<CheckCircle2 className="size-3.5 text-emerald-400" />} />
       <Card label="Anomaly Rate" value={`${k.rate.toFixed(2)}%`} icon={<Gauge className="size-3.5" />} />
-      <Card label="Pipeline Latency" value={`${k.latencySeconds.toFixed(1)}s`} icon={<Timer className="size-3.5" />} sub="Drain parsing + LSTM inference" />
+      <Card label={last.label} value={last.value} icon={<Timer className="size-3.5" />} sub={last.sub} />
     </div>
   );
 }

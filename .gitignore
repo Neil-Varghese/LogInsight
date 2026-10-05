@@ -8,3 +8,5 @@ node_modules/
 .env
 backend/runs/
 test sets/live_demo.log
+
+backend/monitor.sqlite3*
