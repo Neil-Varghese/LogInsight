@@ -1,0 +1,14 @@
+# LogInsight local research/inference environment
+# Captured on 2026-10-11 with Python 3.9.6.
+# These are the direct packages imported by the backend and research notebooks.
+
+numpy==2.0.2
+pandas==2.3.3
+scikit-learn==1.6.1
+tensorflow==2.20.0
+keras==3.10.0
+logparser3==1.0.4
+regex==2026.1.15
+matplotlib==3.9.4
+seaborn==0.13.2
+ipykernel==6.31.0

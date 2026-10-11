@@ -1,0 +1,38 @@
+{
+  "artifact": "hdfs_block_evidence",
+  "evidence_fields": [
+    "Position",
+    "LineId",
+    "EventId",
+    "EventTemplate",
+    "ParameterList",
+    "ParameterListRaw",
+    "RawLine"
+  ],
+  "labels_input": "research/anomaly_label.csv",
+  "output": "research/data/processed/hdfs_block_evidence.jsonl.gz",
+  "raw_input": "test sets/HDFS.log",
+  "record_fields": [
+    "BlockId",
+    "Sequence",
+    "Evidence",
+    "Label",
+    "LabelId",
+    "FirstLineId",
+    "EventCount",
+    "EvidenceSchemaVersion"
+  ],
+  "schema_version": "1.0",
+  "structured_input": "research/output/HDFS.log_structured.csv",
+  "summary": {
+    "block_count": 575061,
+    "evidence_event_count": 11175629,
+    "input_rows": 11175629,
+    "labelled_block_count": 575061,
+    "partial_input": 0,
+    "raw_rows": 11175629,
+    "raw_source": "test sets/HDFS.log",
+    "rows_with_block_id": 11175629,
+    "rows_without_block_id": 0
+  }
+}

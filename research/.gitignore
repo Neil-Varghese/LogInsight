@@ -1,1 +1,13 @@
 HDFS.log
+data/processed/hdfs_block_sequences.jsonl.gz
+data/processed/hdfs_block_evidence.jsonl.gz
+data/raw/BGL.zip
+data/raw/BGL.log
+data/raw/BGL.zip.part
+data/raw/BGL.log.part
+data/processed/BGL_clean.log
+data/processed/BGL_clean.log.part
+data/processed/BGL_label_audit.jsonl.gz
+data/processed/BGL_label_audit.jsonl.gz.part
+data/processed/BGL_windows.jsonl.gz
+data/processed/BGL_windows.jsonl.gz.part

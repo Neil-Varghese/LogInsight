@@ -1,0 +1,258 @@
+{
+  "config_version": "0.1.0",
+  "protocol_status": "draft_before_registration",
+  "study": {
+    "name": "LogInsight-FV",
+    "title": "Faithfulness-Verified and Uncertainty-Aware Explanations for Block-Level Log Anomaly Detection",
+    "prediction_unit": "block_or_dataset_specific_window",
+    "primary_dataset": "HDFS",
+    "transfer_dataset": "BGL",
+    "primary_endpoint": "macro_human_evidence_recovery_f1",
+    "secondary_endpoints": [
+      "claim_support",
+      "detector_faithfulness",
+      "perturbation_consistency",
+      "execution_cost"
+    ]
+  },
+  "paths": {
+    "data_raw": "research/data/raw",
+    "data_processed": "research/data/processed",
+    "data_manifests": "research/data/manifests",
+    "model_checkpoints": "research/models/checkpoints",
+    "attribution_outputs": "research/models/attributions",
+    "prompt_templates": "research/prompts",
+    "pilot_runs": "research/experiments/pilot",
+    "main_runs": "research/experiments/main",
+    "result_tables": "research/results/tables",
+    "result_figures": "research/results/figures",
+    "scripts": "research/scripts"
+  },
+  "datasets": {
+    "HDFS": {
+      "enabled": true,
+      "dataset_version": "HDFS_v1",
+      "prediction_unit": "BlockId",
+      "group_key": "BlockId",
+      "ordering": "chronological_by_LineId",
+      "raw_path": "research/HDFS.log",
+      "format_report": "research/data/manifests/hdfs_v1_format_report.json",
+      "raw_fields": ["Date", "Time", "Pid", "Level", "Component", "Content"],
+      "block_id_regex": "\\bblk_-?\\d+\\b",
+      "label_file": "research/anomaly_label.csv",
+      "label_mapping": {"Normal": 0, "Anomaly": 1},
+      "provenance_manifest": "research/data/manifests/hdfs_v1_manifest.json",
+      "official_source": "https://github.com/logpai/loghub/tree/master/HDFS",
+      "label_source": "HDFS_block_labels",
+      "split_constraints": ["block_disjoint", "temporal_when_timestamps_permit"]
+    },
+    "BGL": {
+      "enabled": true,
+      "prediction_unit": "BGL_fixed_nonoverlapping_60_second_window",
+      "group_key": "WindowStartEpoch",
+      "raw_path": "research/data/raw/BGL.log",
+      "clean_path": "research/data/processed/BGL_clean.log",
+      "window_manifest": "research/data/manifests/bgl_window_manifest.json",
+      "window_seconds": 60,
+      "window_overlap_seconds": 0,
+      "window_anchor": "unix_epoch",
+      "window_assignment": "floor(epoch_timestamp / 60) * 60",
+      "window_label_rule": "anomaly_if_any_alert_line_in_window",
+      "label_prefix_removal": true,
+      "label_prefix_rule": "remove_alert_label_before_parsing_and_llm_input",
+      "split_constraints": ["window_or_session_disjoint", "temporal_when_timestamps_permit"]
+    }
+  },
+  "splits": {
+    "strategy": "block_disjoint_with_temporal_check",
+    "train_fraction": 0.8,
+    "validation_fraction": 0.1,
+    "test_fraction": 0.1,
+    "fit_parser_and_vocabulary_on_train_only": true,
+    "retrieve_normal_comparisons_from_train_only": true,
+    "test_threshold_tuning": false,
+    "split_seed": 2026,
+    "split_manifest_required": true
+  },
+  "parser": {
+    "name": "Drain",
+    "log_format": "<Date> <Time> <Pid> <Level> <Component>: <Content>",
+    "depth": 4,
+    "similarity_threshold": 0.5,
+    "preserve_raw_lines": true,
+    "preserve_dynamic_parameters": true,
+    "unknown_event_token": "__UNKNOWN_EVENT__",
+    "unknown_event_policy": "map_to_learned_token",
+    "detector_vocabulary": {
+      "fit_scope": "training_only",
+      "pad_token": "__PAD__",
+      "pad_id": 0,
+      "unknown_event_token": "__UNKNOWN_EVENT__",
+      "unknown_event_row_required_during_training": true,
+      "unseen_validation_test_and_perturbation_policy": "map_to_unknown_event_token",
+      "existing_engineering_mapping_is_not_mutated": true
+    },
+    "parser_configuration_is_frozen_for_core_benchmark": true
+  },
+  "detectors": {
+    "loginsight_lstm": {
+      "id": "loginsight_lstm",
+      "status": "repository_foundation_to_retrain",
+      "architecture": "embedding_plus_two_lstm_layers_batch_normalization_dropout_dense",
+      "checkpoint": "models/lstm_model(v2).keras",
+      "event_mapping": "research/event2idx.pkl",
+      "maximum_sequence_length": 50,
+      "initial_reference_threshold": 0.5,
+      "threshold_selection": "validation_only",
+      "unknown_event_token_required_during_training": true
+    },
+    "logrobust_attention_bilstm": {
+      "id": "logrobust_attention_bilstm",
+      "status": "to_implement_or_faithfully_reimplement",
+      "architecture_source": "published_LogRobust_method",
+      "checkpoint": null,
+      "uses_same_parser_vocabulary_splits_and_calibration": true
+    }
+  },
+  "randomness": {
+    "utility": "research/scripts/seed_utils.py",
+    "detector_training_seeds": [13, 42, 73, 101, 202],
+    "split_seed": 2026,
+    "perturbation_seed": 2026,
+    "llm_repeated_generations_per_block_condition": 3,
+    "llm_api_seed": null,
+    "seed_status": "provisional_values_to_freeze_in_registration"
+  },
+  "attribution": {
+    "prompt_visible_method": "integrated_gradients",
+    "verification_only_methods": ["occlusion", "leave_one_event_out"],
+    "baseline": "TO_BE_DEFINED_AND_REGISTERED",
+    "integration_steps": null,
+    "ranking_rule": "absolute_attribution_descending",
+    "occlusion_and_leave_one_out_must_never_reach_llm": true
+  },
+  "normal_block_retrieval": {
+    "enabled": true,
+    "source_split": "train",
+    "comparison_type": "similar_normal_block",
+    "similarity_method": "TO_BE_DEFINED_AND_REGISTERED",
+    "retrieval_k": 1
+  },
+  "llm": {
+    "models": [
+      {
+        "id": "llm_primary",
+        "provider": "TO_BE_SELECTED",
+        "model_name": "TO_BE_REGISTERED",
+        "open_weight": false
+      },
+      {
+        "id": "llm_open_weight",
+        "provider": "TO_BE_SELECTED",
+        "model_name": "TO_BE_REGISTERED",
+        "open_weight": true
+      }
+    ],
+    "decoding": {
+      "temperature": null,
+      "top_p": null,
+      "max_output_tokens": null,
+      "provider_seed": null,
+      "settings_status": "freeze_before_pilot"
+    },
+    "structured_output_schema": "research/experiments/llm_explanation_schema.json",
+    "asynchronous_verification": true,
+    "detector_alert_must_not_wait_for_llm": true
+  },
+  "prompt_conditions": [
+    {
+      "id": "blinded",
+      "description": "Block evidence, normal comparison, and basic detector output without attribution values.",
+      "prompt_visible": ["anomalous_block_evidence", "normal_comparison_block", "detector_output"],
+      "prompt_forbidden": ["integrated_gradients", "occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "unblinded",
+      "description": "Blinded inputs plus Integrated Gradients values and ranked Integrated Gradients events.",
+      "prompt_visible": ["anomalous_block_evidence", "normal_comparison_block", "detector_output", "integrated_gradients"],
+      "prompt_forbidden": ["occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "shuffled_integrated_gradients",
+      "description": "Blinded inputs plus permuted or cross-block Integrated Gradients values.",
+      "prompt_visible": ["anomalous_block_evidence", "normal_comparison_block", "detector_output", "shuffled_integrated_gradients"],
+      "prompt_forbidden": ["occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "attribution_only",
+      "description": "Top-k Integrated Gradients events without an LLM-generated explanation.",
+      "prompt_visible": [],
+      "prompt_forbidden": ["occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "random_event",
+      "description": "Matched random event selections using the same evidence budget.",
+      "prompt_visible": ["anomalous_block_evidence", "normal_comparison_block", "detector_output"],
+      "prompt_forbidden": ["integrated_gradients", "occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "no_detector_context",
+      "description": "Raw block evidence without detector score, normal comparison, or attribution.",
+      "prompt_visible": ["anomalous_block_evidence"],
+      "prompt_forbidden": ["detector_output", "normal_comparison_block", "integrated_gradients", "occlusion", "leave_one_event_out"]
+    }
+  ],
+  "evidence_budget": {
+    "top_k_events": null,
+    "random_control_matches_budget": true,
+    "budget_status": "freeze_before_pilot"
+  },
+  "perturbations": {
+    "interface": "perturb(block, target_events, strategy, seed)",
+    "primary_strategies": [
+      "deletion",
+      "normal_block_event_replacement",
+      "unknown_token_replacement",
+      "normal_block_event_resampling"
+    ],
+    "additional_strategy": "parameter_masking",
+    "matched_random_event_control": true,
+    "record_sequence_length_change": true,
+    "record_vocabulary_change": true,
+    "record_chronology_change": true,
+    "record_parser_status_change": true,
+    "roar_subset_enabled": true,
+    "roar_subset_size": null
+  },
+  "annotation": {
+    "evidence_relevance_is_primary_human_label": true,
+    "claim_support_is_secondary_sampled_label": true,
+    "annotators_per_block": 2,
+    "blind_to_condition_and_attribution": true,
+    "target_pool_size": "200-300_stratified_blocks_or_windows",
+    "minimum_primary_comparison_sample": 100,
+    "llm_judge": "optional_secondary_only",
+    "agreement_metric": "Cohen_kappa_or_Krippendorff_alpha",
+    "guideline_status": "to_write_before_annotation"
+  },
+  "hypothesis_test": {
+    "primary_comparison": "unblinded_minus_blinded_macro_human_evidence_recovery_f1",
+    "secondary_comparison": "unblinded_minus_shuffled_integrated_gradients_macro_human_evidence_recovery_f1",
+    "test": "paired_TOST",
+    "equivalence_margin_absolute_f1": 0.05,
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "assumed_paired_standard_deviation": 0.15,
+    "approximate_minimum_independent_annotated_blocks": 71,
+    "planned_recruitment_buffer": 100,
+    "registration_status": "pending_OSF_or_AsPredicted_registration"
+  },
+  "reporting": {
+    "confidence_interval": "95_percent",
+    "detector_metrics": ["precision", "recall", "f1", "pr_auc", "false_positives_per_1000_blocks", "calibration"],
+    "explanation_metrics": ["human_evidence_recovery", "claim_support", "detector_faithfulness", "perturbation_consistency"],
+    "variance_sources_separated": ["detector_seed", "llm_generation", "block_sampling"],
+    "multiple_comparison_correction": "Holm_or_Benjamini_Hochberg_as_registered",
+    "latency_and_cost_are_secondary": true
+  }
+}

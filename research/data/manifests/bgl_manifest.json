@@ -1,0 +1,47 @@
+{
+  "citation_required": [
+    "Adam J. Oliner and Jon Stearley. What Supercomputers Say: A Study of Five System Logs. DSN, 2007.",
+    "Jieming Zhu, Shilin He, Pinjia He, Jinyang Liu, and Michael R. Lyu. Loghub: A Large Collection of System Logs for AI-driven Log Analytics. ISSRE, 2023."
+  ],
+  "dataset_id": "BGL",
+  "dataset_variant": "LogHub_BGL",
+  "local_materialization": {
+    "archive": {
+      "bytes": 57489019,
+      "md5": "4452953c470f2d95fcb32d5f6e733f7a",
+      "sha256": "d67fd82a711aea0157a9b83175892c6ee60e384a2ddf5bc51f39118453816da8"
+    },
+    "archive_path": "research/data/raw/BGL.zip",
+    "raw_log": {
+      "bytes": 743185031,
+      "first_line": "- 1117838570 2005.06.03 R02-M1-N0-C:J12-U11 2005-06-03-15.42.50.363779 R02-M1-N0-C:J12-U11 RAS KERNEL INFO instruction cache parity error corrected",
+      "line_count": 4747963,
+      "md5": "59be144c165e0c8562aa0bd2eb453885",
+      "sha256": "666130b15ef44eb32fd02bd053e6c6e007c37696b5e7e8b9d8e45b729876a5d2"
+    },
+    "raw_path": "research/data/raw/BGL.log"
+  },
+  "manifest_version": "1.0.0",
+  "official_source": {
+    "archive_md5": "4452953c470f2d95fcb32d5f6e733f7a",
+    "archive_name": "BGL.zip",
+    "archive_url": "https://zenodo.org/records/8196385/files/BGL.zip?download=1",
+    "bgl_readme": "https://github.com/logpai/loghub/blob/master/BGL/README.md",
+    "doi": "https://doi.org/10.5281/zenodo.8196385",
+    "label_definition": "first-column '-' is non-alert; other alert category tags are alert",
+    "loghub_repository": "https://github.com/logpai/loghub",
+    "official_line_count": 4747963,
+    "official_raw_size": "708.76 MiB",
+    "official_time_span": "214.7 days",
+    "published_date": "2023-07-31",
+    "record_version": "v8",
+    "zenodo_record": "https://zenodo.org/records/8196385"
+  },
+  "provenance_status": "downloaded_and_verified",
+  "recorded_at_utc": "2026-10-11T18:04:39Z",
+  "verification": {
+    "archive_md5_matches_official": true,
+    "archive_size_matches_download_metadata": true,
+    "raw_line_count_matches_official": true
+  }
+}

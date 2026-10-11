@@ -1,0 +1,265 @@
+LogInsight-FV Implementation Steps
+
+Use one numbered item as one Codex chat. Do not combine targets until the previous one is verified.
+
+Phase 1: Project setup
+
+[DONE] 1. Create a research implementation branch (isolates research changes from the existing repository).
+
+[DONE] 2. Audit both repository branches (document current LSTM, LLM, parser, data, and configuration differences).
+
+[DONE] 3. Freeze the Python and dependency environment (record local pins and the available Colab training-runtime evidence).
+
+[DONE] 4. Create the research directory structure (separate data, models, prompts, experiments, results, and scripts).
+
+[DONE] 5. Create one central experiment configuration file (stores dataset, model, seed, prompt, and perturbation settings).
+
+[DONE] 6. Create the experiment ledger schema (defines every field that must be saved for each experiment).
+
+[DONE] 7. Add global seed utilities (ensures detector and evaluation runs are reproducible).
+
+Phase 2: Dataset preparation
+
+[DONE] 8. Verify the HDFS dataset source and version (record its checksum and provenance).
+
+[DONE] 9. Inspect the HDFS data format (confirm BlockId, labels, timestamps, and raw log fields).
+
+[DONE] 10. Implement HDFS block construction (groups all events belonging to one BlockId).
+
+[DONE] 11. Preserve raw and parsed evidence together (keeps raw lines, templates, parameters, positions, and event IDs).
+
+[DONE] 12. Download and verify BGL (record source, checksum, and dataset version).
+
+[DONE] 13. Remove BGL alert-label prefixes (prevents label leakage into parsing, detection, or LLM prompts).
+
+[DONE] 14. Define the BGL evaluation unit (freeze the session or fixed-window construction rule).
+
+[DONE] 15. Implement the unknown-event token (adds it to the detector vocabulary during training).
+
+16. Build shared HDFS and BGL preprocessing tests (checks ordering, labels, lengths, and malformed records).
+
+17. Create block-disjoint HDFS splits (ensures one BlockId never appears in multiple splits).
+
+18. Create temporal splits where possible (tests later data against earlier training data).
+
+19. Create leakage-detection checks (automatically detects duplicated blocks, retrieval leakage, and parser leakage).
+
+20. Sample the 200–300 block/window annotation pool (stratifies by label, length, confidence, architecture, and dataset).
+
+Phase 3: Detector implementation
+
+21. Refactor the current LSTM into a reusable training script (supports configuration, seeds, checkpoints, and evaluation).
+
+22. Add detector probability calibration (makes anomaly probabilities comparable).
+
+23. Add validation-based threshold selection (prevents test-set threshold tuning).
+
+24. Train the leakage-free LogInsight LSTM (establishes the first detector).
+
+25. Record LSTM baseline results (stores precision, recall, F1, PR-AUC, and calibration).
+
+26. Integrate a published LogRobust-style attention Bi-LSTM (uses a citable second architecture).
+
+27. Document all LogRobust implementation deviations (makes the comparison reproducible).
+
+28. Create a shared detector interface (allows both detectors to use identical inputs and evaluation code).
+
+29. Train both detectors with multiple seeds (captures detector variability).
+
+30. Add detector inference caching and batching (reduces repeated perturbation cost).
+
+Phase 4: Attribution implementation
+
+31. Implement Integrated Gradients for the LSTM (produces the prompt-visible attribution).
+
+32. Implement Integrated Gradients for LogRobust (keeps attribution conditions consistent).
+
+33. Validate Integrated Gradients outputs (checks attribution completeness and event-index alignment).
+
+34. Implement occlusion scores (stores verification-only attribution values).
+
+35. Implement leave-one-event-out scores (stores another verification-only diagnostic).
+
+36. Enforce attribution separation (occlusion and leave-one-out values must never enter LLM prompts).
+
+37. Create the attribution-only baseline (uses top-k Integrated Gradients events without an LLM).
+
+38. Create the random-event baseline (selects events randomly with the same budget).
+
+39. Store all attribution vectors separately (prevents accidental circularity).
+
+Phase 5: LLM explanation pipeline
+
+40. Define the structured explanation schema (specifies claims, cited lines, events, confidence, and abstention).
+
+41. Implement the blinded prompt (provides block, normal comparison, and detector output without attribution).
+
+42. Implement the unblinded prompt (adds Integrated Gradients only).
+
+43. Implement the shuffled-Integrated-Gradients prompt (uses permuted or cross-block IG values).
+
+44. Implement the no-detector-context prompt (provides raw evidence without detector information).
+
+45. Select and freeze the LLM models (include one API model and one open-weight model).
+
+46. Record model versions and decoding settings (stores temperature, seed, limits, and context size).
+
+47. Implement repeated LLM generation (captures LLM output variance).
+
+48. Implement structured-response parsing (handles invalid JSON, missing citations, and malformed claims).
+
+49. Add prompt leakage tests (confirms every condition receives only permitted information).
+
+50. Save complete prompt and response records (makes every LLM result reproducible).
+
+Phase 6: Annotation and registration
+
+51. Write the evidence-relevance annotation guideline (defines exactly what counts as relevant evidence).
+
+52. Write the claim-support annotation guideline (defines supported, unsupported, and uncertain claims).
+
+53. Decide the annotation workflow (human labels are primary; LLM judge is optional and secondary only).
+
+54. Prepare the annotation interface or export format (shows anonymized event IDs and required evidence).
+
+55. Blind annotators to conditions and attribution values (prevents annotation bias).
+
+56. Collect evidence-relevance labels for every core annotation block (creates the primary human ground truth).
+
+57. Collect claim-support labels for the pre-registered explanation sample (creates the secondary human outcome).
+
+58. Calculate inter-annotator agreement (use Cohen’s kappa or Krippendorff’s alpha).
+
+59. Adjudicate disagreements using the written guideline (records decisions and disagreement reasons).
+
+60. Prepare the ethics documentation (consent, compensation, anonymization, and institutional approval/exemption).
+
+61. Write the power-analysis script (uses Δ = 0.05, paired SD = 0.15, α = 0.05, and 80% power).
+
+62. Register the protocol on OSF or AsPredicted (register H1, TOST, sampling, prompts, exclusions, and analysis).
+
+63. Freeze the registered experiment files (save the exact configuration and code version before the pilot).
+
+Phase 7: Perturbation and faithfulness
+
+64. Implement the pluggable perturbation interface (all strategies use one common function).
+
+65. Implement deletion perturbation (removes cited events).
+
+66. Implement normal-event replacement (replaces events using the normal comparison).
+
+67. Implement unknown-token replacement (preserves sequence length).
+
+68. Implement normal-block resampling (samples compatible normal events).
+
+69. Implement parameter masking (tests changes without removing event templates).
+
+70. Implement matched random perturbations (uses the same strategy and event budget).
+
+71. Record perturbation metadata (length, vocabulary, chronology, parser status, and OOD indicators).
+
+72. Implement multi-strategy detector-faithfulness scoring (keeps detector faithfulness separate from human evidence recovery).
+
+73. Apply multi-strategy checks to sufficiency (does not accept deletion-only sufficiency).
+
+74. Define the attribution-only reference and random floor (makes consistency scores interpretable).
+
+75. Implement the small ROAR-style retraining check (retrain on a limited modified subset).
+
+Phase 8: Pilot and go/no-go decision
+
+76. Build the minimal HDFS pilot dataset (uses a small annotated and synthetic sample).
+
+77. Run the LSTM blinded condition (creates the baseline explanation outputs).
+
+78. Run the LSTM unblinded condition (uses Integrated Gradients only).
+
+79. Run the shuffled and random controls (tests attribution circularity and chance performance).
+
+80. Run deletion and normal-replacement verification (tests at least two perturbation strategies).
+
+81. Calculate pilot human-evidence recovery (measures evidence precision, recall, and F1).
+
+82. Calculate pilot detector faithfulness (measures score changes and perturbation consistency).
+
+83. Apply the registered go/no-go rule (decides whether to continue the attribution hypothesis).
+
+84. Record the pilot decision transparently (continue, pivot to benchmark, or report an inconclusive result).
+
+Phase 9: Main experiment
+
+85. Freeze all main experiment configurations (no unregistered prompt or model changes).
+
+86. Run all HDFS conditions with the LogInsight LSTM (primary block-level experiment).
+
+87. Run all HDFS conditions with LogRobust (tests architecture dependence).
+
+88. Run all BGL conditions with the agreed window/session unit (tests transfer beyond HDFS).
+
+89. Run all LLM conditions across repeated generations (captures stochasticity).
+
+90. Run the registered perturbation sample (uses deletion, replacement, masking, and resampling).
+
+91. Run the ROAR-style subset experiment (reports limited OOD/retraining evidence).
+
+92. Collect secondary claim-support annotations (uses only the registered explanation sample).
+
+93. Record latency and token cost (reports execution feasibility without expanding scope).
+
+94. Run automated experiment-quality checks (detects missing outputs, invalid prompts, leakage, and failed runs).
+
+Phase 10: Analysis
+
+95. Calculate detector metrics (precision, recall, F1, PR-AUC, false positives, and calibration).
+
+96. Calculate human-evidence recovery metrics (precision, recall, macro F1, and event overlap).
+
+97. Calculate claim-support metrics (supported claims divided by total claims).
+
+98. Calculate detector-faithfulness metrics (score deltas and predicted-direction accuracy).
+
+99. Calculate perturbation consistency (compares all strategies against the random floor and attribution-only reference).
+
+100. Run the registered TOST analysis (tests equivalence within the 0.05 margin).
+
+101. Calculate confidence intervals and effect sizes (reports uncertainty instead of only averages).
+
+102. Analyse detector-seed variance (separates training variation from explanation variation).
+
+103. Analyse LLM-run variance (reports repeated-generation instability).
+
+104. Apply multiple-comparison correction (uses the registered correction method).
+
+105. Create the main result tables (separates human evidence from detector faithfulness).
+
+106. Create the main figures (pipeline, condition matrix, perturbation consistency, and outcome comparison).
+
+107. Write the threats-to-validity analysis (covers dataset, annotation, detector, perturbation, and LLM limitations).
+
+Phase 11: Artifact and paper completion
+
+108. Clean and anonymize released outputs (removes secrets and sensitive log content).
+
+109. Package code, configs, prompts, splits, and ledgers (creates a reproducible artifact).
+
+110. Package permissible annotation labels (preserves privacy and consent requirements).
+
+111. Re-run the project from a clean environment (verifies reproducibility).
+
+112. Create a versioned release and DOI (for example, through Zenodo).
+
+113. Write the methodology section (documents the registered protocol exactly).
+
+114. Write the results section (reports positive, negative, or inconclusive findings honestly).
+
+115. Write the related-work and novelty-boundary section (positions against ERASER, ROAR, and log-analysis work).
+
+116. Write limitations and ethics sections (avoids overclaiming real-world root cause).
+
+117. Perform a final registration-versus-results audit (checks that no unregistered analysis became primary).
+
+118. Prepare the final manuscript and supplementary material (includes tables, prompts, annotation protocol, and artifact link).
+
+Suggested opening prompt for each new Codex chat:
+
+Implement Target [number] only. Do not modify unrelated parts of the repository. First inspect the existing code, then implement the change, add tests, and report what changed and how it was verified.

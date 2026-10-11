@@ -1,0 +1,928 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loginsight.local/schemas/experiment-ledger-record.json",
+  "title": "LogInsight-FV experiment ledger record",
+  "description": "One reproducible block/window and explanation-condition record. Store one JSON object per record in JSONL or an equivalent database table.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id",
+    "run_id",
+    "created_at_utc",
+    "code_version",
+    "environment_id",
+    "dataset",
+    "parser",
+    "input",
+    "detector",
+    "attribution",
+    "retrieval",
+    "llm",
+    "explanation",
+    "perturbations",
+    "outcomes",
+    "execution",
+    "quality"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "code_version": {
+      "$ref": "#/$defs/version_reference"
+    },
+    "environment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registration": {
+      "$ref": "#/$defs/registration"
+    },
+    "dataset": {
+      "$ref": "#/$defs/dataset"
+    },
+    "parser": {
+      "$ref": "#/$defs/parser"
+    },
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "detector": {
+      "$ref": "#/$defs/detector"
+    },
+    "attribution": {
+      "$ref": "#/$defs/attribution"
+    },
+    "retrieval": {
+      "$ref": "#/$defs/retrieval"
+    },
+    "llm": {
+      "$ref": "#/$defs/llm"
+    },
+    "explanation": {
+      "$ref": "#/$defs/explanation"
+    },
+    "perturbations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/perturbation"
+      }
+    },
+    "outcomes": {
+      "$ref": "#/$defs/outcomes"
+    },
+    "execution": {
+      "$ref": "#/$defs/execution"
+    },
+    "quality": {
+      "$ref": "#/$defs/quality"
+    }
+  },
+  "$defs": {
+    "nullable_string": {
+      "type": ["string", "null"]
+    },
+    "nullable_number": {
+      "type": ["number", "null"]
+    },
+    "nullable_integer": {
+      "type": ["integer", "null"]
+    },
+    "number_or_null": {
+      "type": ["number", "null"]
+    },
+    "string_array": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "number_array": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "version_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_commit", "config_version"],
+      "properties": {
+        "git_commit": {
+          "type": "string"
+        },
+        "config_version": {
+          "type": "string"
+        },
+        "experiment_config_hash": {
+          "type": ["string", "null"]
+        },
+        "script_version": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "registration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pending", "registered", "amended", "not_applicable"]
+        },
+        "platform": {
+          "type": ["string", "null"],
+          "enum": ["OSF", "AsPredicted", null]
+        },
+        "url": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "registered_at_utc": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "version": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "split_id",
+        "prediction_unit",
+        "unit_id",
+        "label"
+      ],
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "enum": ["HDFS", "BGL"]
+        },
+        "dataset_version": {
+          "type": ["string", "null"]
+        },
+        "source_path": {
+          "type": ["string", "null"]
+        },
+        "source_sha256": {
+          "type": ["string", "null"]
+        },
+        "split_id": {
+          "type": "string",
+          "enum": ["train", "validation", "test", "pilot", "synthetic"]
+        },
+        "split_manifest_id": {
+          "type": ["string", "null"]
+        },
+        "prediction_unit": {
+          "type": "string",
+          "enum": ["HDFS_BlockId", "BGL_window", "BGL_session"]
+        },
+        "unit_id": {
+          "type": "string"
+        },
+        "label": {
+          "type": ["integer", "null"],
+          "enum": [0, 1, null]
+        },
+        "synthetic_edit": {
+          "type": ["boolean", "null"]
+        },
+        "synthetic_edited_event_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "stratum": {
+          "type": ["string", "null"]
+        },
+        "timestamp_start": {
+          "type": ["string", "null"]
+        },
+        "timestamp_end": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "configuration",
+        "fit_split",
+        "unknown_event_policy",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": ["string", "null"]
+        },
+        "configuration": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["log_format", "depth", "similarity_threshold"],
+          "properties": {
+            "log_format": {
+              "type": "string"
+            },
+            "depth": {
+              "type": "integer"
+            },
+            "similarity_threshold": {
+              "type": "number"
+            }
+          }
+        },
+        "fit_split": {
+          "type": "string"
+        },
+        "unknown_event_policy": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["valid", "invalid", "partial", "not_run"]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "event_id", "event_template", "raw_line"],
+      "properties": {
+        "position": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "line_id": {
+          "type": ["integer", "string", "null"]
+        },
+        "timestamp": {
+          "type": ["string", "null"]
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "event_template": {
+          "type": "string"
+        },
+        "raw_line": {
+          "type": "string"
+        },
+        "dynamic_parameters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["events", "event_sequence", "sequence_length"],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/event"
+          }
+        },
+        "event_sequence": {
+          "$ref": "#/$defs/string_array"
+        },
+        "encoded_sequence": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "sequence_length": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_sequence_length": {
+          "type": ["integer", "null"]
+        }
+      }
+    },
+    "detector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detector_id",
+        "model_version",
+        "checkpoint",
+        "seed",
+        "anomaly_score",
+        "predicted_label",
+        "threshold",
+        "threshold_source"
+      ],
+      "properties": {
+        "detector_id": {
+          "type": "string"
+        },
+        "model_version": {
+          "type": ["string", "null"]
+        },
+        "checkpoint": {
+          "type": ["string", "null"]
+        },
+        "checkpoint_sha256": {
+          "type": ["string", "null"]
+        },
+        "architecture": {
+          "type": ["string", "null"]
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "anomaly_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "predicted_label": {
+          "type": "integer",
+          "enum": [0, 1]
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "threshold_source": {
+          "type": "string",
+          "enum": ["validation", "registered", "engineering_reference", "unknown"]
+        },
+        "vocabulary_version": {
+          "type": ["string", "null"]
+        },
+        "unknown_event_count": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "inference_latency_ms": {
+          "$ref": "#/$defs/nullable_number"
+        }
+      }
+    },
+    "attribution_vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "prompt_visible", "event_scores", "ranked_event_ids"],
+      "properties": {
+        "method": {
+          "type": "string"
+        },
+        "prompt_visible": {
+          "type": "boolean"
+        },
+        "baseline": {
+          "type": ["string", "null"]
+        },
+        "integration_steps": {
+          "type": ["integer", "null"]
+        },
+        "event_scores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["event_id", "score"],
+            "properties": {
+              "event_id": {
+                "type": "string"
+              },
+              "score": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "ranked_event_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "completeness_delta": {
+          "$ref": "#/$defs/nullable_number"
+        }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["integrated_gradients", "occlusion", "leave_one_event_out"],
+      "properties": {
+        "integrated_gradients": {
+          "$ref": "#/$defs/attribution_vector"
+        },
+        "occlusion": {
+          "$ref": "#/$defs/attribution_vector"
+        },
+        "leave_one_event_out": {
+          "$ref": "#/$defs/attribution_vector"
+        }
+      }
+    },
+    "retrieval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "source_split", "normal_unit_id", "similarity_score"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "source_split": {
+          "type": ["string", "null"]
+        },
+        "normal_unit_id": {
+          "type": ["string", "null"]
+        },
+        "normal_event_sequence": {
+          "$ref": "#/$defs/string_array"
+        },
+        "similarity_method": {
+          "type": ["string", "null"]
+        },
+        "similarity_score": {
+          "$ref": "#/$defs/nullable_number"
+        }
+      }
+    },
+    "decoding": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "temperature": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "top_p": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "max_output_tokens": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "seed": {
+          "$ref": "#/$defs/nullable_integer"
+        }
+      }
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition_id",
+        "provider",
+        "model_name",
+        "model_version",
+        "prompt_template_id",
+        "prompt_template_version",
+        "exact_prompt",
+        "raw_response",
+        "status"
+      ],
+      "properties": {
+        "condition_id": {
+          "type": "string",
+          "enum": ["blinded", "unblinded", "shuffled_integrated_gradients", "attribution_only", "random_event", "no_detector_context"]
+        },
+        "provider": {
+          "type": ["string", "null"]
+        },
+        "model_name": {
+          "type": ["string", "null"]
+        },
+        "model_version": {
+          "type": ["string", "null"]
+        },
+        "open_weight": {
+          "type": ["boolean", "null"]
+        },
+        "decoding": {
+          "$ref": "#/$defs/decoding"
+        },
+        "prompt_template_id": {
+          "type": "string"
+        },
+        "prompt_template_version": {
+          "type": ["string", "null"]
+        },
+        "exact_prompt": {
+          "type": ["string", "null"]
+        },
+        "prompt_sha256": {
+          "type": ["string", "null"]
+        },
+        "raw_response": {
+          "type": ["string", "null"]
+        },
+        "request_id": {
+          "type": ["string", "null"]
+        },
+        "repetition_index": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "failed", "abstained", "not_called", "not_applicable"]
+        },
+        "error": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "text", "cited_event_ids", "cited_line_ids"],
+      "properties": {
+        "claim_id": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "claim_type": {
+          "type": ["string", "null"]
+        },
+        "cited_event_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "cited_line_ids": {
+          "type": "array",
+          "items": {
+            "type": ["string", "integer"]
+          }
+        },
+        "predicted_effect": {
+          "type": ["string", "null"],
+          "enum": ["increase_anomaly_score", "decrease_anomaly_score", "no_change", "uncertain", null]
+        },
+        "confidence": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "abstained": {
+          "type": ["boolean", "null"]
+        }
+      }
+    },
+    "explanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claims", "cited_event_ids", "cited_line_ids", "abstention_status", "verification_status"],
+      "properties": {
+        "claims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/claim"
+          }
+        },
+        "cited_event_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "cited_line_ids": {
+          "type": "array",
+          "items": {
+            "type": ["string", "integer"]
+          }
+        },
+        "abstention_status": {
+          "type": "string",
+          "enum": ["answered", "partially_abstained", "fully_abstained", "unverified"]
+        },
+        "verification_status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "verified", "failed", "not_applicable"]
+        }
+      }
+    },
+    "perturbation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "perturbation_id",
+        "strategy",
+        "target_event_ids",
+        "seed",
+        "output_event_sequence",
+        "parser_valid",
+        "detector_score_before",
+        "detector_score_after",
+        "detector_score_delta"
+      ],
+      "properties": {
+        "perturbation_id": {
+          "type": "string"
+        },
+        "strategy": {
+          "type": "string",
+          "enum": ["deletion", "normal_block_event_replacement", "unknown_token_replacement", "normal_block_event_resampling", "parameter_masking"]
+        },
+        "target_event_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "output_event_sequence": {
+          "$ref": "#/$defs/string_array"
+        },
+        "output_block_reference": {
+          "type": ["string", "null"]
+        },
+        "sequence_length_change": {
+          "type": ["integer", "null"]
+        },
+        "vocabulary_change": {
+          "type": ["boolean", "null"]
+        },
+        "chronology_change": {
+          "type": ["boolean", "null"]
+        },
+        "unknown_event_used": {
+          "type": ["boolean", "null"]
+        },
+        "parser_valid": {
+          "type": "boolean"
+        },
+        "out_of_distribution_indicator": {
+          "type": ["boolean", "null"]
+        },
+        "detector_score_before": {
+          "type": "number"
+        },
+        "detector_score_after": {
+          "type": "number"
+        },
+        "detector_score_delta": {
+          "type": "number"
+        },
+        "predicted_effect": {
+          "type": ["string", "null"]
+        },
+        "effect_agreement": {
+          "type": ["boolean", "null"]
+        },
+        "inference_calls": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "latency_ms": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "failed", "skipped"]
+        },
+        "error": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "metric": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "human_evidence_recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["annotated", "relevant_event_ids", "precision", "recall", "f1"],
+      "properties": {
+        "annotated": {
+          "type": "boolean"
+        },
+        "relevant_event_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "annotator_ids_or_hashes": {
+          "$ref": "#/$defs/string_array"
+        },
+        "precision": {
+          "$ref": "#/$defs/metric"
+        },
+        "recall": {
+          "$ref": "#/$defs/metric"
+        },
+        "f1": {
+          "$ref": "#/$defs/metric"
+        },
+        "event_set_overlap": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "claim_support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["annotated", "total_claims", "supported_claims", "unsupported_claims", "uncertain_claims", "support_rate", "hallucination_rate"],
+      "properties": {
+        "annotated": {
+          "type": "boolean"
+        },
+        "total_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "supported_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "uncertain_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "support_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "hallucination_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "annotation_source": {
+          "type": ["string", "null"],
+          "enum": ["human", "validated_llm_secondary", null]
+        }
+      }
+    },
+    "detector_faithfulness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluated", "predicted_direction_accuracy", "mean_score_delta", "counterfactual_validity"],
+      "properties": {
+        "evaluated": {
+          "type": "boolean"
+        },
+        "predicted_direction_accuracy": {
+          "$ref": "#/$defs/metric"
+        },
+        "mean_score_delta": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "counterfactual_validity": {
+          "$ref": "#/$defs/metric"
+        },
+        "random_control_delta": {
+          "$ref": "#/$defs/nullable_number"
+        }
+      }
+    },
+    "perturbation_consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluated", "claims_tested", "claims_consistent_across_at_least_two_strategies", "consistency_rate"],
+      "properties": {
+        "evaluated": {
+          "type": "boolean"
+        },
+        "claims_tested": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "claims_consistent_across_at_least_two_strategies": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "consistency_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "deletion_disagreement_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "strategy_agreement": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/metric"
+          }
+        }
+      }
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["human_evidence_recovery", "claim_support", "detector_faithfulness", "perturbation_consistency"],
+      "properties": {
+        "human_evidence_recovery": {
+          "$ref": "#/$defs/human_evidence_recovery"
+        },
+        "claim_support": {
+          "$ref": "#/$defs/claim_support"
+        },
+        "detector_faithfulness": {
+          "$ref": "#/$defs/detector_faithfulness"
+        },
+        "perturbation_consistency": {
+          "$ref": "#/$defs/perturbation_consistency"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detector_latency_ms", "explanation_latency_ms", "verification_latency_ms", "llm_calls", "detector_perturbation_inference_calls"],
+      "properties": {
+        "detector_latency_ms": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "explanation_latency_ms": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "verification_latency_ms": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "llm_latency_ms": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "llm_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "detector_perturbation_inference_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "input_tokens": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "output_tokens": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "prompt_length_chars": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "output_length_chars": {
+          "$ref": "#/$defs/nullable_integer"
+        },
+        "cost_usd": {
+          "$ref": "#/$defs/nullable_number"
+        },
+        "memory_mb": {
+          "$ref": "#/$defs/nullable_number"
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_status", "verification_status", "exclusion_status", "validation_errors"],
+      "properties": {
+        "record_status": {
+          "type": "string",
+          "enum": ["complete", "partial", "failed"]
+        },
+        "verification_status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "complete", "failed", "not_applicable"]
+        },
+        "exclusion_status": {
+          "type": "string",
+          "enum": ["included", "excluded", "pending_review"]
+        },
+        "exclusion_reason": {
+          "type": ["string", "null"]
+        },
+        "validation_errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "leakage_check_passed": {
+          "type": ["boolean", "null"]
+        },
+        "secrets_removed": {
+          "type": ["boolean", "null"]
+        }
+      }
+    }
+  }
+}

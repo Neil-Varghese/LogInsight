@@ -1,0 +1,64 @@
+{
+  "manifest_version": "1.0.0",
+  "recorded_at_utc": "2026-10-11T00:00:00Z",
+  "dataset_id": "HDFS",
+  "dataset_variant": "HDFS_v1",
+  "provenance_status": "confirmed_by_user_and_official_source",
+  "provenance_note": "The user confirmed that the local HDFS_v1 file was obtained from the official LogHub repository and its Zenodo HDFS_v1 archive link. The local raw file checksum is recorded below; the source archive was not redownloaded during this step.",
+  "official_source": {
+    "loghub_repository": "https://github.com/logpai/loghub",
+    "hdfs_readme": "https://github.com/logpai/loghub/tree/master/HDFS",
+    "zenodo_record": "https://zenodo.org/records/8196385",
+    "doi": "https://doi.org/10.5281/zenodo.8196385",
+    "record_version": "v8",
+    "published_date": "2023-07-31",
+    "archive_name": "HDFS_v1.zip",
+    "archive_url": "https://zenodo.org/records/8196385/files/HDFS_v1.zip?download=1",
+    "archive_md5": "76a24b4d9a6164d543fb275f89773260",
+    "official_line_count": 11175629,
+    "official_raw_size": "1.47 GiB",
+    "official_prediction_unit": "HDFS BlockId trace",
+    "official_label_description": "normal/anomaly labels assigned to traces grouped by block ID"
+  },
+  "local_materialization": {
+    "raw_path": "research/HDFS.log",
+    "file_type": "ASCII text",
+    "line_ending": "CRLF",
+    "bytes": 1577982906,
+    "line_count": 11175629,
+    "md5": "203a5f50203972827ec72f9b949b9dd7",
+    "sha256": "0783096174d7832c618337f9609e06e04abd86ddd7089b3c12b407e63bfebc52",
+    "content_match_basis": [
+      "line_count_matches_official_HDFS_v1",
+      "raw_size_is_consistent_with_official_HDFS_v1",
+      "first_record_has_HDFS_block_identifier_and_expected_log_fields"
+    ]
+  },
+  "local_auxiliary_artifacts": [
+    {
+      "path": "research/anomaly_label.csv",
+      "purpose": "HDFS block anomaly labels",
+      "bytes": 18637554,
+      "sha256": "1c711ed6c8848fc3243fb4d092f172f31d128c8a6ec7f26ebba72ab931885ed8"
+    },
+    {
+      "path": "research/output/HDFS.log_templates.csv",
+      "purpose": "parsed HDFS event templates",
+      "bytes": 24061,
+      "sha256": "12d4b3071c1c229147b305e1dee9dffd411363692b344c239860bbb3ed0da598"
+    }
+  ],
+  "citation_required": [
+    "Wei Xu, Ling Huang, Armando Fox, David Patterson, and Michael I. Jordan. Detecting Large-Scale System Problems by Mining Console Logs. SOSP, 2009.",
+    "Jieming Zhu, Shilin He, Pinjia He, Jinyang Liu, and Michael R. Lyu. Loghub: A Large Collection of System Log Datasets for AI-driven Log Analytics. ISSRE, 2023."
+  ],
+  "source_confirmation": {
+    "confirmed_by": "repository owner",
+    "confirmed_at": "2026-10-11",
+    "confirmed_sources": [
+      "https://github.com/logpai/loghub",
+      "https://zenodo.org/records/8196385/files/HDFS_v1.zip?download=1"
+    ]
+  },
+  "next_provenance_action": "Cite the official LogHub repository and Zenodo record in the paper and retain this manifest with the released artifacts."
+}

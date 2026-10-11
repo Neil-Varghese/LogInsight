@@ -1,0 +1,90 @@
+{
+  "report_version": "1.0.0",
+  "recorded_on": "2026-10-11",
+  "dataset": "HDFS_v1",
+  "raw_file": "research/HDFS.log",
+  "raw_format": {
+    "line_pattern": "<Date> <Time> <Pid> <Level> <Component>: <Content>",
+    "fields": ["Date", "Time", "Pid", "Level", "Component", "Content"],
+    "date_encoding": "YYMMDD",
+    "time_encoding": "HHMMSS",
+    "block_id_regex": "\\bblk_-?\\d+\\b",
+    "line_ending": "CRLF"
+  },
+  "observed_statistics": {
+    "raw_line_count": 11175629,
+    "malformed_raw_lines": 0,
+    "lines_without_block_id": 0,
+    "unique_block_ids_in_raw_log": 575061,
+    "first_timestamp": "081109 203518",
+    "last_timestamp": "081111 111628",
+    "levels": {
+      "INFO": 10812836,
+      "WARN": 362793
+    },
+    "distinct_component_count": 9,
+    "event_template_count": 396
+  },
+  "labels": {
+    "file": "research/anomaly_label.csv",
+    "fields": ["BlockId", "Label"],
+    "mapping": {
+      "Normal": 0,
+      "Anomaly": 1
+    },
+    "labelled_block_count": 575061,
+    "label_counts": {
+      "Normal": 558223,
+      "Anomaly": 16838
+    },
+    "raw_block_ids_missing_labels": 0,
+    "labels_without_raw_block_ids": 0
+  },
+  "parsed_representation": {
+    "structured_file": "research/output/HDFS.log_structured.csv",
+    "fields_observed": [
+      "LineId",
+      "Date",
+      "Time",
+      "Pid",
+      "Level",
+      "Component",
+      "Content",
+      "EventId",
+      "EventTemplate",
+      "ParameterList"
+    ],
+    "template_file": "research/output/HDFS.log_templates.csv",
+    "template_fields": ["EventId", "EventTemplate", "Occurrences"],
+    "parser_configuration": {
+      "name": "Drain",
+      "log_format": "<Date> <Time> <Pid> <Level> <Component>: <Content>",
+      "depth": 4,
+      "similarity_threshold": 0.5
+    }
+  },
+  "block_construction_rule": {
+    "extract_block_id_from": "Content",
+    "group_by": "BlockId",
+    "sort_within_block_by": "LineId",
+    "sequence_value": "EventId",
+    "prediction_unit": "complete_BlockId_sequence",
+    "event_evidence_preserved": true
+  },
+  "block_sequence_artifact": {
+    "path": "research/data/processed/hdfs_block_sequences.jsonl.gz",
+    "format": "gzip_compressed_json_lines",
+    "records": 575061,
+    "bytes": 11032106,
+    "sha256": "97afe73f1f87068c3df467b9b54e200e37f14b1ec7d7dba67ae760856379dde6",
+    "gzip_integrity_check": true,
+    "record_fields": ["BlockId", "Sequence", "Label", "LabelId", "FirstLineId", "EventCount"]
+  },
+  "validation_checks": {
+    "raw_format_confirmed": true,
+    "block_id_presence_confirmed": true,
+    "label_coverage_confirmed": true,
+    "timestamp_fields_confirmed": true,
+    "raw_and_parsed_fields_confirmed": true
+  }
+}

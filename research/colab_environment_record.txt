@@ -1,0 +1,64 @@
+LogInsight Colab training environment record
+============================================
+
+Purpose
+-------
+This file records the environment evidence available for the existing LSTM
+training run. The LSTM notebook uses Google Colab and mounts Google Drive at
+/content/drive.
+
+Evidence recovered from research/LSTM.ipynb
+-------------------------------------------
+Python:      3.12.13
+NumPy:       2.0.2
+Pandas:      2.2.2
+Matplotlib:  3.10.0
+Seaborn:     0.13.2
+
+Evidence recovered from models/lstm_model(v2).keras metadata
+------------------------------------------------------------
+Keras:       3.13.2
+Saved at:    2026-08-06 20:04:23 (recorded by the model archive)
+
+Not captured by the original notebook/model
+--------------------------------------------
+TensorFlow version
+scikit-learn version
+Python package lockfile / complete pip freeze
+Colab runtime image identifier
+GPU model, CUDA version, and cuDNN version
+
+Reproducibility status
+----------------------
+The historical Colab run is partially reproducible from the evidence above,
+but it is not a complete dependency lock because TensorFlow and scikit-learn
+were imported without their versions being printed. The saved model can still
+be loaded by the current local environment, whose pinned direct dependencies
+are in requirements-local.txt.
+
+Required capture cell before any new Colab training run
+-------------------------------------------------------
+Run the following in the Colab notebook and save the output alongside the
+experiment artifacts:
+
+    import sys, platform, subprocess
+    print("python:", sys.version)
+    print("platform:", platform.platform())
+    print("tensorflow:", __import__("tensorflow").__version__)
+    print("keras:", __import__("keras").__version__)
+    print("numpy:", __import__("numpy").__version__)
+    print("pandas:", __import__("pandas").__version__)
+    print("scikit-learn:", __import__("sklearn").__version__)
+    print("gpu:")
+    subprocess.run(["nvidia-smi", "--query-gpu=name,driver_version,memory.total",
+                    "--format=csv,noheader"], check=False)
+    subprocess.run([sys.executable, "-m", "pip", "freeze", "--all"], check=False)
+
+Save the complete output as a versioned artifact, for example:
+research/artifacts/colab_freeze_<date>.txt
+
+Interpretation
+--------------
+Do not silently mix the Colab training environment and the local inference
+environment. Record the environment ID with every model, detector seed, and
+experiment result. API keys and secrets must never be included in a freeze.

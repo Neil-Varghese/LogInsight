@@ -1,0 +1,1224 @@
+Research Proposal
+
+Title
+
+How Faithful Are LLM Explanations of Block-Level Log Anomaly Detectors?
+An Empirical Benchmark of Attribution, Independent Ground Truth, and Perturbation Consistency
+
+Proposed system name
+
+LogInsight-FV
+
+Abstract
+
+Modern distributed systems generate large volumes of logs that record execution events, failures, and recovery behavior. Although deep-learning models can detect anomalous log sequences, their predictions are difficult for operators to understand. Existing large-language-model-based log-analysis systems improve readability by generating natural-language explanations, but a readable explanation is not necessarily faithful to the actual reasoning of the anomaly detector.
+
+This proposal introduces LogInsight-FV as an empirical study and evaluation protocol built on the existing LogInsight implementation. A Drain-based preprocessing pipeline groups related log messages using BlockId, converts them into event sequences, and uses a Long Short-Term Memory network to classify an entire block as normal or anomalous. A second, published LogRobust-style attention Bi-LSTM will test whether the findings depend on one architecture. An LLM then generates a structured explanation by comparing the anomalous block with a similar normal block. The explanation identifies influential events, cites supporting log lines, proposes a possible interpretation, and reports uncertainty.
+
+The central research claim under test is that attribution-conditioned LLM explanations may look more faithful while recovering independently annotated relevant events no better than blinded LLM explanations. The study is designed to support or reject this claim rather than assume that attribution access helps. From the first implementation, the LLM will be evaluated in blinded, unblinded, shuffled-attribution, attribution-only, and random controls. Events cited by the LLM will be tested using deletion, normal-event replacement, unknown-token replacement, and resampling. The primary result will be whether faithfulness conclusions remain consistent across perturbation strategies and independent ground truth.
+
+The study will use HDFS as the primary block-level dataset and BGL as a clearly defined window/session-level transfer dataset. It will compare the current LSTM with a published LogRobust-style attention Bi-LSTM and evaluate at least two LLMs, including one open-weight model with a documented version and decoding configuration. Evaluation will measure detection, independent evidence recovery, claim support, detector faithfulness, perturbation consistency, and secondary execution cost. Robustness, usefulness, parser sensitivity, extensive budget optimization, and a full abstention study are explicitly reserved for follow-up work so that the main paper can make one focused and defensible contribution.
+
+1. Introduction
+
+System logs are important sources of evidence for understanding software failures, performance degradation, and abnormal system behavior. However, modern systems produce enormous volumes of semi-structured logs, making manual inspection slow and difficult. LogHub was introduced to support reproducible research by collecting publicly available datasets such as HDFS, BGL, and others for log analytics research [4].
+
+Deep-learning methods have improved automated log anomaly detection. DeepLog models log events as sequences and uses an LSTM to identify unexpected events [1]. LogAnomaly extends this idea by modelling sequential and quantitative anomalies [2]. LogRobust addresses unstable logs and unseen events using semantic representations and an attention-based Bi-LSTM [3].
+
+However, these systems primarily answer:
+
+"Is this sequence anomalous?"
+
+They do not sufficiently answer:
+
+"Why was this entire block classified as anomalous?"
+
+This is important in practical system monitoring. An operator needs more than an anomaly score. They need to know which events contributed to the decision, how the anomalous block differs from normal behavior, and whether the explanation is trustworthy.
+
+Large language models provide a possible solution. LogPrompt uses LLMs for interpretable online log analysis [5]. RAGLog applies retrieval-augmented generation to log anomaly detection [6]. LogRules uses domain rules to reduce hallucinations in log analysis [7]. LogLAA combines log parsing, anomaly detection, and LLM-based anomaly interpretation [9].
+
+Nevertheless, an LLM can generate an explanation that sounds reasonable without reflecting the actual internal decision of the LSTM. Research on neural-network explanations has shown that explanation plausibility and model faithfulness are different properties [10–13].
+
+This proposal therefore focuses on a combined detector–LLM study:
+
+- The LSTM and a second sequence detector detect whether an entire block is anomalous.
+- The LLM explains the block-level decision.
+- Independent annotations and controlled edits test whether the explanation identifies relevant evidence.
+- A multi-strategy verification module tests whether the explanation is supported by the detector’s behavior.
+
+2. Existing LogInsight System
+
+The current LogInsight repository provides a suitable implementation foundation.
+
+2.1 Block-level formulation
+
+LogInsight does not classify individual log lines independently. It groups related messages using the HDFS BlockId.
+
+For a block b_i, the system constructs an event sequence:
+
+X_i = [e_i1, e_i2, ..., e_in]
+
+where each e_ij is a parsed log-event identifier.
+
+The target is:
+
+y_i = 1, if the complete block is anomalous
+y_i = 0, otherwise
+
+Therefore, the research must consistently use the term:
+
+block-level log anomaly detection
+
+The individual events are evidence used to explain the classification of the entire block.
+
+2.2 Current LSTM detector
+
+The current repository:
+
+- parses logs using Drain;
+- extracts event templates;
+- maps templates to event IDs;
+- groups events by HDFS BlockId;
+- converts each block into an event sequence;
+- pads or truncates sequences to a fixed length;
+- classifies the block using an LSTM model.
+
+The main model contains an embedding layer, two LSTM layers, batch normalization, dropout, and fully connected layers. The output is a probability that the block is anomalous.
+
+The detector vocabulary will include an explicit unknown-event token during training. Unseen events in validation, test, and perturbed sequences will therefore be handled by a predefined learned representation rather than by an untrained or silently discarded symbol.
+
+This design is appropriate as the detector backbone because LSTM-based sequence modelling is well established in log anomaly detection research [1–3].
+
+2.3 Current LLM explanation layer
+
+The main branch adds an LLM explainer that receives raw log evidence and generates:
+
+- an explanation;
+- a possible cause;
+- supporting evidence.
+
+This is a useful engineering foundation, but it currently lacks:
+
+- event-level attribution;
+- comparison with a similar normal block;
+- formal explanation-faithfulness testing;
+- uncertainty calibration;
+- abstention evaluation;
+- a benchmark against explanation quality;
+- protection against unsupported causal claims.
+
+The existing LSTM is the repository foundation, not the scientific novelty. The main contribution is the empirical comparison that separates human-evidence recovery from detector faithfulness and tests whether Integrated-Gradients access changes either outcome.
+
+2.4 Design commitments and early viability test
+
+The study will be framed from the beginning as an empirical faithfulness benchmark, not as a software-system paper. Every generated explanation will therefore be stored in a form that supports registered outcome analysis.
+
+Blinded and unblinded conditions
+
+The LLM prompt will be configurable from the first implementation. At minimum, the following conditions will be implemented before large-scale experiments:
+
+1. Blinded condition: the LLM receives the anomalous block, the normal comparison block, and basic detector output, but no attribution values.
+2. Unblinded condition: the LLM receives the same information plus Integrated Gradients values and ranked Integrated Gradients events only.
+3. Shuffled-attribution control: the LLM receives a randomly permuted or cross-block Integrated Gradients ranking. It never receives occlusion or leave-one-out values.
+
+The same blocks, normal comparisons, LLM model, decoding configuration, and output schema will be used across conditions. The only intended difference is access to Integrated Gradients evidence. Occlusion and leave-one-out scores will be computed and stored for detector-faithfulness analysis, but they will never reach an LLM prompt, attribution-only baseline, or condition-selection rule. This prevents the verification signal from being silently copied into the explanation condition.
+
+Primary outcomes fixed before the pilot
+
+The study will treat two outcomes as separate and will never combine them into one faithfulness score:
+
+1. Human-evidence recovery: whether the events cited by an explanation overlap independently annotated relevant events. The primary summary will be macro evidence-recall F1 over the pre-specified annotated explanation test set. Precision, recall, and event-set overlap will be secondary summaries.
+2. Detector faithfulness: whether the detector’s anomaly score changes in the predicted direction when cited events are perturbed. This outcome is based on detector inference and multi-strategy perturbation consistency; it is not a human label and is not used as a substitute for human-evidence recovery.
+
+The ledger will store separate fields for `human_evidence_recovery`, `claim_support`, `detector_faithfulness`, and `perturbation_consistency`. The analysis will report their correlation and disagreement rather than collapsing them into a single score.
+
+Complete experiment ledger
+
+For every block and condition, the system will store:
+
+- dataset and split identifier;
+- block ID and parser configuration;
+- raw evidence and event sequence;
+- model version and detector score;
+- Integrated Gradients vector shown to the LLM, when applicable;
+- occlusion and leave-one-out vectors stored for verification only;
+- normal-block retrieval result and similarity score;
+- exact prompt and model configuration;
+- raw LLM response and parsed claims;
+- cited line IDs and event IDs;
+- perturbation strategy, seed, and output block;
+- verification scores;
+- latency, token usage, LLM calls, inference calls, and cost;
+- abstention and verification status;
+- human-evidence-recovery labels and detector-faithfulness outcomes in separate fields.
+
+This ledger prevents a later blind condition from becoming an afterthought and supports exact reproduction of every reported result.
+
+Pluggable perturbation interface
+
+Perturbation will be implemented as a replaceable function rather than as deletion-specific code:
+
+perturb(block, target_events, strategy, seed) -> perturbed_block
+
+The initial strategies will be:
+
+- deletion;
+- replacement with the corresponding event from the normal block;
+- replacement with an unknown-event token;
+- resampling an event from a normal block;
+- masking or replacing dynamic parameters while preserving the event template.
+
+Deletion will therefore be one perturbation strategy among several. Each strategy will record whether it changes sequence length, event vocabulary, chronology, or parser status.
+
+Early go/no-go pilot
+
+During the first few weeks, a minimal HDFS pipeline will be run before implementing the full benchmark. The pilot will contain:
+
+- the leakage-free LSTM for the first go/no-go smoke test; the published LogRobust-style detector will be integrated before the registered main experiment;
+- Integrated Gradients;
+- one LLM in blinded and unblinded conditions;
+- at least deletion and normal-event-replacement perturbations;
+- a random or shuffled-event control;
+- a small set of controlled synthetic cases and naturally occurring blocks.
+
+The pilot will test whether the unblinded LLM identifies relevant events more accurately than the blinded and shuffled-attribution conditions, and whether cited events outperform random events under at least two perturbation strategies. Integrated Gradients will not be treated as ground truth for this test. Ground truth will come from known synthetic edits and early human evidence annotations.
+
+Pre-registered pilot decision rule and registration
+
+Before the pilot is run, the primary comparison, equivalence margin, power calculation, exclusions, and analysis code version will be fixed. The pre-specified primary endpoint will be macro human-evidence-recovery F1; claim support will be a key secondary endpoint. The primary H1 test will use two one-sided tests (TOST) for the paired difference between unblinded and blinded human-evidence-recovery F1. The equivalence margin will be Δ = 0.05 absolute F1: an unblinded-minus-blinded difference inside [-0.05, +0.05] will be treated as practically equivalent. The same TOST will be repeated against the shuffled-Integrated-Gradients control.
+
+The a priori power calculation will assume a paired standard deviation of 0.15, Δ = 0.05, alpha = 0.05, and 80% power, requiring approximately 71 independent annotated blocks; the study will recruit at least 100 blocks for the primary comparison to allow for unusable cases and annotation loss. The exact calculation script and assumptions will be stored with the registration. Detector-faithfulness and perturbation-consistency analyses are separate secondary outcomes and will not be used to rescue a failed human-evidence endpoint.
+
+For transparency, a positive attribution result will require the lower 95% confidence bound for the unblinded-minus-blinded F1 difference to exceed +0.05, the standardized paired effect to be at least 0.30, and the same direction to hold against the shuffled-Integrated-Gradients control. If the confidence interval lies entirely within [-0.05, +0.05], H1 equivalence will be supported. Intervals that cross either boundary will be treated as inconclusive.
+
+Before any pilot LLM output is generated, this protocol will be registered on OSF Registries or AsPredicted, including the hypotheses, equivalence margin, power calculation, block sampling, condition assignment, prompt templates, exclusion rules, and analysis plan. The registration URL, timestamp, and version will be recorded in the experiment ledger. The proposal does not treat registration as complete until that URL exists.
+
+If the unblinded condition is statistically equivalent to the blinded condition within the pre-registered margin, the project will defend the planned negative/benchmark finding. If equivalence is not established, the result will be reported as inconclusive rather than interpreted as evidence of no benefit. If the unblinded condition shows a meaningful positive effect, the paper will pivot transparently to that positive result.
+
+3. Related Work
+
+3.1 Deep-learning-based log anomaly detection
+
+DeepLog predicts the next log event in a sequence and uses prediction errors to identify anomalies [1]. LogAnomaly models sequential and quantitative anomalies and uses semantic representations of log templates [2]. LogRobust addresses log instability caused by changing logging statements and noisy data [3].
+
+These methods establish the detection context for this study, but their explanations are generally limited to anomaly scores, unexpected events, or importance weights. The core benchmark will not reproduce every published detector. It will compare the repository’s leakage-free LSTM with a published LogRobust-style attention Bi-LSTM so that the explanation claim is tested across two architectures without expanding into a detector-comparison paper.
+
+3.2 LLM-based log analysis
+
+LogPrompt demonstrates that prompting strategies can improve LLM-based log analysis and produce human-readable explanations [5]. However, human readability does not prove that an explanation faithfully represents the underlying detector.
+
+RAGLog uses retrieval-augmented generation and a vector database to support log anomaly detection [6]. This motivates retrieving similar normal blocks as contrastive evidence. However, retrieval alone does not guarantee that every generated claim is supported by the retrieved evidence.
+
+LogRules addresses hallucinations by constructing and applying explicit rules [7]. Its findings support the need for rules, evidence, and uncertainty handling in log analysis.
+
+LogLAA provides an integrated framework combining log parsing, deep-learning anomaly detection, and LLM-based anomaly interpretation [9]. It is an important related system, but its explanation evaluation uses a weighted matching score rather than a detailed causal or faithfulness analysis.
+
+LogEval provides a benchmark for LLM-based log parsing, anomaly detection, fault diagnosis, and summarization [8]. It demonstrates the importance of systematic evaluation, but the proposed research extends evaluation toward explanation faithfulness and detector alignment.
+
+3.3 Faithful machine-learning explanations
+
+Jain and Wallace showed that attention distributions do not necessarily correspond to the features responsible for model predictions [10]. This suggests that simply highlighting important-looking log events is insufficient.
+
+Sundararajan et al. introduced Integrated Gradients, which attributes a model’s prediction to input features using the axioms of Sensitivity and Implementation Invariance [11]. Integrated Gradients can provide event-level attribution for the LSTM.
+
+Jacovi and Goldberg argued that faithfulness should be evaluated independently from explanation plausibility [12]. This distinction is central to the proposed project.
+
+FACTSCORE evaluates generated text by decomposing it into atomic claims and checking whether those claims are supported by reliable evidence [13]. The same principle can be adapted to LLM-generated log explanations.
+
+The ERASER benchmark provides human-rationale and model-based evaluation protocols that separate evidence selection from prediction quality, including sufficiency and comprehensiveness-style analyses [16]. It is a general NLP rationale benchmark, not a direct solution for block-level log detectors. ROAR (RemOve And Retrain) evaluates feature-importance estimates while warning that naive removal can create a distribution shift [17]. These works motivate two requirements in this study: explanation evidence must be evaluated against independent labels, and deletion results must be checked against replacement or masking strategies rather than accepted in isolation.
+
+3.4 Log parsing and explanation reliability
+
+Khan et al. found that log parsing accuracy does not necessarily correlate strongly with anomaly detection accuracy [14]. They argue that distinguishability of parsed log events is particularly important.
+
+This is relevant to LogInsight because an explanation based only on event templates may ignore important parameters in the raw log lines. The proposed system should preserve:
+
+- raw log line identifiers;
+- event templates;
+- dynamic parameters;
+- event positions;
+- detector attribution values.
+
+3.5 Recent systematic perspective
+
+The recent LLM4Log review identifies grounding, faithfulness, robustness under drift, privacy, latency, cost, and reproducibility as important challenges in LLM-based log analysis [15].
+
+This proposal directly addresses three of those challenges:
+
+1. grounding explanations in exact block evidence;
+2. verifying explanation faithfulness;
+3. measuring practical reliability, with execution cost recorded as a secondary result.
+
+4. Research Gap
+
+The reviewed literature suggests the following gaps.
+
+Gap 1: Detection and explanation are usually disconnected
+
+Deep-learning detectors classify log sequences, while LLMs often generate explanations separately. There is no guarantee that the explanation reflects the events that caused the detector’s prediction.
+
+Gap 2: Readability is often confused with faithfulness
+
+An explanation may be fluent and useful to a human while still identifying the wrong events. Existing human evaluation often measures usefulness, readability, or trust rather than whether the explanation reflects model behaviour [5, 12].
+
+Gap 3: There is limited block-level explanation evaluation
+
+Many approaches operate on log messages, templates, or sequences. The proposed work focuses on the complete HDFS block as the prediction unit and the individual events inside the block as explanatory evidence.
+
+Gap 4: LLM hallucinations remain a problem
+
+LLMs may infer causes that are not supported by the supplied logs. Rule-based methods attempt to reduce hallucination [7], but a broader uncertainty-aware explanation mechanism is still needed.
+
+Gap 5: Existing benchmarks focus mainly on detection accuracy
+
+Benchmarks such as LogEval evaluate detection, diagnosis, parsing, and summarization [8]. They do not fully evaluate:
+
+- whether explanation claims are supported;
+- whether cited events affect the detector;
+- whether explanations remain stable under harmless log changes;
+- whether the LLM knows when to abstain.
+
+Proposed gap statement
+
+Existing log-analysis systems can detect anomalous sequences and generate readable LLM explanations, but they do not adequately test whether the explanations recover independently supported evidence for a model’s block-level anomaly decision. This research addresses that gap through a controlled benchmark of blinded and attribution-conditioned LLMs, independent evidence annotations, and perturbation-consistency tests.
+
+This is a defensible research gap. However, it should not be claimed that no related work exists anywhere. A final systematic search must be performed before publication.
+
+Novelty boundary
+
+The proposal is not claiming to invent counterfactual explanation in general. Recent work has already investigated closed-loop counterfactual anomaly explanation [18]. The specific contribution here is an empirical log-analysis protocol built around three structural properties:
+
+1. Block-level granularity: the prediction unit is an HDFS BlockId block, while individual chronological events act as explanatory evidence.
+2. Sequence-detector verification: counterfactual edits are applied to event sequences and evaluated by rerunning two trained sequence detectors.
+3. Circularity control: blinded, unblinded, shuffled-attribution, attribution-only, and random controls separate evidence supplied to the LLM from evidence used to evaluate it.
+
+The additional contribution is perturbation consistency: the study does not present a deletion-only score as decisive when replacement, masking, or resampling gives a contradictory result. A minimal abstention label will be retained, but a full abstention-risk study is reserved for follow-up work.
+
+Novelty-boundary comparison
+
+| Prior direction | What it establishes | What this study adds |
+|---|---|---|
+| LLM log-analysis systems such as LogPrompt, RAGLog, LogRules, and LogLAA [5–9] | Readable, retrieved, or rule-supported log interpretation | Controlled blinded versus attribution-conditioned explanation evaluation |
+| ERASER-style rationale evaluation [16] | Evidence selection and prediction can be evaluated separately | Block-level log evidence, event chronology, and detector-aligned perturbations |
+| ROAR and related removal evaluations [17] | Feature importance should be tested beyond naive removal | Multiple log-valid perturbation strategies and explicit out-of-distribution checks |
+| Closed-loop counterfactual anomaly explanation [18] | Counterfactuals can improve anomaly workflows | Independent block/window annotations, two detector architectures, and LLM attribution-access controls |
+
+5. Aim and Objectives
+
+5.1 Aim
+
+To empirically determine whether LLM explanations recover human-identified evidence for block-level log anomaly decisions and whether detector-faithfulness evidence agrees with that human-evidence outcome.
+
+5.2 Objectives
+
+1. Build a leakage-free block-level LogInsight LSTM detector.
+2. Integrate a published LogRobust-style attention Bi-LSTM as the second detector architecture rather than creating a homemade detector.
+3. Define two separate outcomes before data collection: human-evidence recovery and detector faithfulness.
+4. Compute Integrated Gradients, occlusion, and leave-one-out scores, while exposing only Integrated Gradients to the unblinded LLM.
+5. Retrieve a similar normal block for contrastive explanation.
+6. Compare blinded, unblinded, shuffled-Integrated-Gradients, attribution-only, and random controls from the first experiment.
+7. Verify detector faithfulness using deletion, replacement, masking, resampling, and a small ROAR-style remove-and-retrain check.
+8. Collect blinded, independent evidence annotations with written guidelines and agreement statistics.
+9. Benchmark the findings on HDFS block units and BGL window/session units, with BGL alert-label prefixes removed before LLM input.
+10. Evaluate at least two documented LLMs, including one open-weight model.
+11. Pre-register the primary equivalence test, power assumptions, exclusions, and analysis before the pilot.
+12. Release reproducible prompts, splits, evaluation scripts, configurations, experiment ledgers, and permissible annotations.
+
+6. Research Questions
+
+RQ1
+
+Does giving the LLM detector attributions improve independent evidence recovery and claim support over a blinded LLM?
+
+RQ2
+
+Do contrastive explanations improve evidence accuracy beyond explanations generated from the anomalous block alone?
+
+RQ3
+
+Are faithfulness conclusions consistent across deletion, normal-event replacement, unknown-token replacement, and resampling?
+
+RQ4
+
+Does the conclusion generalize across the current LSTM and the published LogRobust-style attention Bi-LSTM, across two LLMs, and from HDFS to BGL?
+
+RQ5
+
+Does the attribution-only baseline match the LLM’s faithfulness, indicating that the LLM adds readability rather than faithful evidence recovery?
+
+RQ6
+
+What execution time, model-call, and token costs accompany the primary evaluation, and can verification remain an asynchronous secondary operation?
+
+7. Hypotheses
+
+H1: Attribution non-benefit hypothesis
+
+After evaluation against independent annotations and multiple perturbation strategies, the unblinded LLM condition will not show a practically meaningful improvement over the blinded LLM condition and the shuffled-attribution control, even if human raters find it more plausible or readable. The pre-registered pilot rule in Section 2.4 determines whether this expected finding is supported. If attribution does produce the pre-registered positive effect, the paper will pivot transparently to a positive method result rather than defend the negative claim.
+
+H2: Contrastive hypothesis
+
+Comparing an anomalous block with a similar normal block will improve identification of anomaly-specific events.
+
+H3: Attribution-only hypothesis
+
+The attribution-only condition will perform comparably to the unblinded LLM on event-selection and detector-alignment metrics if the LLM adds fluency but not faithful evidence recovery.
+
+H4: Perturbation-consistency hypothesis
+
+Genuinely supported claims—claims whose cited events overlap the blinded human evidence labels or whose synthetic edited events are known in advance—will show the same predicted anomaly-score direction across at least two perturbation strategies more often than unsupported claims.
+
+H5: Cross-model and cross-dataset hypothesis
+
+The direction and size of the attribution-access effect will be reported across both detector architectures, both LLMs, HDFS, and BGL rather than being treated as an LSTM-only case study.
+
+Any abstention and cost results will be reported as secondary analyses. The planned robustness suite, usefulness study, and comparisons against unrelated published LLM systems are removed from the core paper; they will not replace the central attribution-access and perturbation-consistency tests.
+
+8. Study Pipeline
+
+The study pipeline has one mandatory detector stage and one non-blocking explanation/evaluation stage. Raw logs are parsed with the frozen configuration, grouped into HDFS blocks or BGL windows, and passed to either the LogInsight LSTM or the published LogRobust-style attention Bi-LSTM. The explanation stage then retrieves a normal comparison, generates the registered LLM condition, and runs the sampled multi-strategy faithfulness tests. Verification is asynchronous for feasibility, but the paper evaluates outcomes rather than presenting a deployment-tier architecture.
+
+The detector alert must not depend on LLM generation or verification completion. Every explanation is explicitly labelled unverified until the fixed evaluation sample is complete.
+
+8.1 Stage 1: Log parsing
+
+Each log line is converted into:
+
+- timestamp;
+- process ID;
+- severity level;
+- component;
+- raw content;
+- event template;
+- dynamic parameters;
+- block identifier.
+
+Drain will be used initially because the current repository already uses it and Drain is a standard online parser [4]. The parser configuration, depth, similarity threshold, event dictionary, and unknown-event handling will be recorded for reproducibility.
+
+The raw message must be preserved alongside the parsed event. This is important because parsing errors can obscure meaningful information [14]. The core benchmark will freeze and record one parser configuration, preserve raw lines and parameters, and log parser metadata for every case. A full parser-sensitivity benchmark is outside the scope of the main paper and is reserved for follow-up work; the limitation will be stated explicitly rather than hidden.
+
+8.2 Stage 2: Block construction
+
+All messages with the same BlockId are grouped into a block:
+
+B_i = {l_i1, l_i2, ..., l_im}
+
+The block is ordered chronologically and represented as an event sequence:
+
+X_i = [e_i1, e_i2, ..., e_in]
+
+The prediction target is the complete block label, not the label of an individual log line.
+
+8.3 Stage 3: Sequence detectors
+
+The detectors receive the event sequence and return:
+
+p_i = P(y_i = 1 | X_i)
+
+where p_i is the predicted probability that block i is anomalous.
+
+Detector A will use the current LogInsight architecture so that the research contribution remains focused on explanation rather than creating another detector. Detector B will be a published LogRobust-style attention Bi-LSTM [3] using the same leakage-free event vocabulary and input splits. It is intentionally distinct from the repository LSTM while remaining a defensible, citable architecture. The implementation or faithful reimplementation and any deviations from the published method will be documented.
+
+The detector should be retrained using:
+
+- block-disjoint splitting;
+- class weighting or focal loss;
+- validation-based threshold selection;
+- probability calibration;
+- multiple random seeds.
+
+The unknown-event token will be included in the training vocabulary before any test or perturbation sequence can use it.
+
+8.4 Stage 4: Event attribution
+
+The proposed system will compute event importance using:
+
+1. Integrated Gradients;
+2. event occlusion;
+3. leave-one-event-out testing.
+
+Integrated Gradients is the only attribution signal permitted in the unblinded or shuffled LLM prompts. Occlusion and leave-one-event-out values are diagnostic signals stored in the ledger for detector-faithfulness analysis only.
+
+For an event e_j, the occlusion importance can be defined as:
+
+I(e_j) = p(X_i) - p(X_i \ e_j)
+
+A large positive value means that removing the event reduces the anomaly probability.
+
+Integrated Gradients will provide the prompt-visible attribution method [11]. Agreement with occlusion and leave-one-event-out scores can be reported as a secondary detector diagnostic, but it cannot change the registered LLM condition or be passed to the LLM.
+
+8.5 Stage 5: Contrastive retrieval
+
+For each anomalous block, retrieve a similar normal block from the training set.
+
+Similarity can be based on:
+
+- event-sequence similarity;
+- template-frequency similarity;
+- component identity;
+- block length;
+- embedding similarity.
+
+The retrieved block must come only from the training set to avoid test leakage.
+
+The same retrieved normal block and detector outputs will be used across all explanation conditions. The base condition will be blinded: it receives the anomalous block, the normal block, the detector verdict/score, and exact line identifiers, but not attribution values. The unblinded condition additionally receives the attribution ranking and values. A shuffled-attribution condition receives a permuted or cross-block attribution ranking. These conditions are implemented in the base prompt configuration, not added after the main system is built.
+
+8.6 Stage 6: Structured LLM explanation
+
+The LLM should return a structured response containing:
+
+- block ID;
+- verdict;
+- contrastive summary;
+- claims;
+- supporting line IDs;
+- supporting event IDs;
+- confidence;
+- possible cause;
+- uncertainty;
+- abstention decision.
+
+The prompt should explicitly require:
+
+- no unsupported claims;
+- no invented log lines;
+- no definite root cause without evidence;
+- exact evidence references;
+- an abstention response when evidence is insufficient.
+
+The system should describe the output as an explanation of the detector decision, not as a definitive root-cause diagnosis.
+
+LLM model conditions
+
+At least two LLMs will be evaluated: the repository’s existing API-accessible model and one open-weight instruction model run locally or in a documented self-hosted environment. The exact model versions, checkpoints, prompts, temperature, decoding limits, context length, and number of repeated generations will be recorded. If resources permit, a third model will be included as a robustness check; it is not required for the core claim.
+
+The following controls are required in the core benchmark:
+
+- blinded LLM: no detector attributions;
+- unblinded LLM: detector attributions supplied;
+- shuffled-attribution LLM: irrelevant or permuted attributions supplied;
+- attribution-only: ranked top-k events are shown directly without an LLM explanation;
+- random-event control: random events are selected with the same budget;
+- no-detector-context LLM: raw block text is provided without detector score, normal comparison, or attribution.
+
+8.7 Stage 7: Multi-strategy faithfulness verification
+
+Faithfulness verification will not run recursively over every possible event combination. Such a design would be unnecessarily expensive and would not be required for the research claim. The core study will verify a pre-registered sample of cited events and matched random events using multiple perturbation strategies. Verification may execute asynchronously so that it does not block the detector alert, but the main paper will not claim a complete cost-optimization contribution.
+
+Step 1: Detector-only outcome
+
+The selected detector produces the block-level anomaly outcome used by the study.
+
+Step 2: Explanation condition
+
+The system computes event attributions, retrieves a normal comparison block, and requests a structured LLM explanation. This tier is triggered on demand by an operator or by a configurable alert policy.
+
+Step 3: Sampled faithfulness verification
+
+A background worker verifies only the top-k cited events and event groups. Single-event deletions are the default. Pairwise or group deletions are performed only for a sampled subset of blocks or when the explanation explicitly claims that an interaction between events is important.
+
+The verification sample will define:
+
+- maximum number of LLM calls per block;
+- maximum number of event perturbations per block;
+- maximum number of event groups tested;
+- maximum background execution time for the recorded secondary cost analysis;
+- percentage of blocks receiving verification.
+
+The system will cache the original detector representation and batch perturbation inferences where possible. Since both detectors are already trained, verification uses inference only and does not retrain the model.
+
+Perturbation interface
+
+For each selected explanation claim, the system will call a common perturbation interface:
+
+perturb(block, target_events, strategy, seed) -> perturbed_block
+
+The supported strategies will be:
+
+1. Deletion: remove the cited event or event group.
+2. Normal replacement: replace the cited event with the corresponding event from the retrieved normal block.
+3. Unknown-token replacement: replace the event with the detector’s unknown-event token while preserving sequence length.
+4. Normal-block resampling: sample a compatible event from a normal block.
+5. Parameter masking: preserve the template while changing or masking dynamic parameters.
+
+Deletion is useful but may create an unrealistic sequence that the detector never encountered during training. Therefore, a faithfulness conclusion will not rely on deletion alone. The study will report sequence-length change, vocabulary change, parser validity, and out-of-distribution indicators for every perturbation.
+
+The default core-verification sample will use at least two strategies for each selected claim. A claim will be considered perturbation-consistent when the predicted direction of the anomaly-score change agrees across strategies. If strategies disagree, the claim will be marked uncertain rather than forced into a binary faithful/unfaithful label.
+
+Small ROAR-style retraining check
+
+Because post-hoc deletion can be confounded by distribution shift, a small remove-and-retrain diagnostic will be run on a pre-specified subset of the training and evaluation data. The top-k events selected by Integrated Gradients, attribution-only, and random selection will be replaced with the same neutral representation in both training and evaluation sequences; each modified detector will then be retrained and evaluated. The change in detection performance will be compared across selections. This is a limited OOD diagnostic, not a claim that the study reproduces the full ROAR benchmark. If the subset cannot be completed, all ROAR-level claims will be removed from the paper.
+
+Deletion test
+
+Remove the cited event or event group and rerun the selected detector.
+
+Delta_delete = p(X_i) - p(X_i \ C)
+
+where C is the set of events cited by the explanation.
+
+A faithful explanation should generally produce a larger score decrease than random event deletion for the same detector.
+
+Restoration or insertion test
+
+If the explanation states that an event is missing or that a recovery event would normalize the block, insert the corresponding event pattern or restore it from the normal counterpart.
+
+The anomaly score should change in the predicted direction.
+
+Sufficiency
+
+Measure whether the cited events alone preserve the anomaly decision:
+
+Sufficiency gap(C) = p(X_i) - p(C)
+
+where p(C) is the detector score when only the cited evidence is retained. A lower sufficiency gap indicates that the cited evidence preserves more of the original decision. When p(X_i) is positive, a normalized form will also be reported: 1 - p(C) / p(X_i).
+
+Sufficiency will also be evaluated under the same multi-strategy construction used for detector faithfulness: retain the cited event set while neutralizing the complement by deletion, normal replacement, unknown-token replacement, and resampling. Report one sufficiency gap per strategy and the proportion of claims whose sufficiency conclusion agrees across at least two strategies. A low gap under deletion alone will not be treated as sufficient evidence.
+
+Comprehensiveness
+
+Measure how much the prediction changes when cited evidence is removed:
+
+Comprehensiveness(C) = p(X_i) - p(X_i \ C)
+
+These measures follow the distinction between plausibility and faithfulness [12] and are positioned against rationale and removal-based evaluation [16, 17]. Jain and Wallace [10] will be used only to motivate caution about treating attention-like weights as explanations, not as support for the erasure metric. The paper will report pre-registered multi-strategy verification results on the sampled evaluation set.
+
+The central scientific question is not whether verification is free. It is whether a claim that appears faithful under deletion remains supported when the perturbation is made more log-valid. Detailed multi-budget optimization and industrial latency targets are reserved for a follow-up paper.
+
+8.8 Stage 8: Minimal uncertainty reporting
+
+The system will include a simple abstention label for the core benchmark. It should abstain when:
+
+- the LLM cites events that have low attribution;
+- cited evidence does not change the anomaly score;
+- different explanation generations contradict each other;
+- the contrastive normal block is not sufficiently similar;
+- the block contains unseen templates;
+- claims cannot be linked to exact log lines.
+
+The system should distinguish:
+
+- detector confidence;
+- explanation confidence;
+- causal confidence.
+
+A detector can be highly confident that a block is anomalous while the system remains uncertain about the reason.
+
+An explanation that is not verified within the configured sample will be marked as unverified rather than silently presented as fully faithful. Full risk–coverage optimization, calibrated abstention thresholds, and deployment-scale abstention analysis are reserved for a follow-up study.
+
+9. Experimental Dataset Design
+
+9.1 Primary dataset
+
+The primary dataset will be the HDFS dataset already used by LogInsight.
+
+Advantages:
+
+- existing BlockId labels;
+- compatibility with the current repository;
+- large volume;
+- established use in log anomaly detection research [1–4].
+
+9.2 Secondary dataset
+
+BGL from LogHub will be used for transfer evaluation [4]. Thunderbird is removed from the core study to keep the comparison feasible and to avoid expanding the paper beyond its central claim.
+
+BGL may not naturally contain HDFS-style block identifiers. Therefore:
+
+- HDFS will be used for direct block-level evaluation.
+- BGL will be evaluated using non-overlapping fixed 60-second windows anchored to Unix epoch time. Each cleaned log line is assigned to `floor(epoch_timestamp / 60) * 60`; a window is labelled anomalous if at least one source line has a non-`-` alert prefix, otherwise it is normal. The window label is derived from the audit stream but the removed prefix is excluded from parser, detector, retrieval, attribution, and LLM evidence.
+- Any BGL alert-label prefix or ground-truth marker present in the raw line will be removed before parsing, detector input, retrieval, attribution, or LLM input. The original line and removed prefix will be retained only in a separate audit field.
+- The paper will call the HDFS task block-level and the BGL task window/session-level.
+- The grouping procedure, 60-second window length, zero overlap, Unix-epoch anchor, and label construction are frozen in the experiment configuration and released in the BGL window manifest.
+
+9.3 Synthetic evaluation cases
+
+HDFS labels identify anomalous blocks but do not always identify the exact causal event.
+
+Therefore, controlled synthetic perturbations will be created:
+
+- remove a known failure event;
+- insert a recovery event;
+- duplicate a critical event;
+- swap meaningful event order;
+- replace a template with a normal template.
+
+These perturbations provide objective ground truth for testing explanation behaviour.
+
+Synthetic cases will not replace real evaluation. They will complement:
+
+- naturally occurring anomalies;
+- human annotation;
+- cross-dataset testing.
+
+10. Leakage-Free Data Splitting
+
+This is essential.
+
+The current repository uses a random row-based split. Because blocks and event sequences repeat, this can allow highly similar or identical sequences to appear in both training and testing.
+
+The revised protocol will use:
+
+Block-disjoint split
+
+No BlockId may appear in more than one split.
+
+Temporal split
+
+Earlier blocks are used for training and later blocks for testing where timestamps permit.
+
+Parser isolation
+
+The event dictionary and parsing configuration should be fitted using training data only, with unseen test events mapped to an unknown-event token.
+
+Retrieval isolation
+
+Normal comparison blocks must be retrieved only from training data.
+
+The current test F1 should be reported as an engineering baseline, not as final evidence of generalization.
+
+11. Benchmarking Plan
+
+The core benchmark compares the two selected detector architectures and the registered explanation conditions under one leakage-free protocol. Published methods remain contextual references, not additional reproduced baselines.
+
+11.1 Selected detector architectures
+
+Detector A: Corrected LogInsight LSTM
+
+Purpose: Repository foundation with block-disjoint and temporal evaluation.
+
+Detector B: Published LogRobust-style attention Bi-LSTM [3]
+
+Purpose: Architecture check using a published robust sequence detector rather than a homemade Transformer. The implementation or faithful reimplementation, configuration, and any deviations will be documented.
+
+11.2 Explanation baselines
+
+Category: Free-form LLM
+Baseline: Current explainer
+Purpose: Measures ordinary LLM explanation
+
+Category: Blinded LLM
+Baseline: LogInsight explainer without attribution values
+Purpose: Tests whether the LLM can recover relevant events from the block and contrastive context without being handed the proposed explanation evidence
+
+Category: Unblinded LLM
+Baseline: LogInsight explainer with Integrated Gradients and ranked event attribution
+Purpose: Tests the proposed attribution-guided condition
+
+Category: Shuffled-attribution control
+Baseline: LogInsight explainer with randomly permuted or cross-block attribution values
+Purpose: Tests whether any apparent gain is caused by meaningful attribution rather than simply providing extra structured tokens
+
+Category: Attribution-only
+Baseline: Top-k Integrated Gradients events without an LLM-generated explanation
+Purpose: Tests whether the LLM adds faithful evidence recovery or primarily adds readable language
+
+Category: Random-event control
+Baseline: Randomly selected events with the same evidence budget
+Purpose: Provides a chance baseline for evidence selection and perturbation effects
+
+Category: No-detector-context LLM
+Baseline: LLM given raw block text without detector score, normal comparison, or attribution
+Purpose: Measures how much explanation quality depends on detector context
+
+Category: Study conditions
+Baseline: LogInsight-FV conditions defined above
+Purpose: Attribution-access, human-evidence-recovery, and detector-faithfulness comparison.
+
+Published LLM systems such as LogPrompt, RAGLog, LogRules, and LogLAA remain in the related-work discussion but will not be reimplemented in the core paper. Reproducing them is a follow-up study because their data interfaces, prompts, and evaluation units are not directly comparable to this block/window protocol.
+
+11.3 Ablation study
+
+The proposed method should be evaluated incrementally for each selected detector:
+
+1. LSTM detector only.
+2. LSTM plus blinded free-form LLM.
+3. LSTM plus blinded contrastive normal-block retrieval.
+4. LSTM plus unblinded event attribution.
+5. LSTM plus shuffled-attribution control.
+6. LSTM plus attribution-only top-k events.
+7. LSTM plus random-event and no-detector-context controls.
+8. LSTM plus correct attribution and contrastive retrieval.
+9. LSTM plus deletion verification.
+10. LSTM plus replacement, masking, or resampling verification.
+11. Complete system with minimal uncertainty labels and multi-strategy verification.
+
+This shows which component changes the result and whether the central finding survives removal of attribution information.
+
+11.4 Fair comparison rules
+
+The LogInsight LSTM and LogRobust-style attention Bi-LSTM will use the same parser, event vocabulary, block/window units, leakage-free splits, calibration protocol, seeds, and evaluation scripts. Their detection scores are reported only to establish that the explanation findings are not tied to one detector. Published F1 values from other papers will be used as literature context and will not be placed in the main comparison table unless the data protocol is genuinely comparable.
+
+11.5 Primary perturbation-consistency experiment
+
+The primary faithfulness result will compare the same explanation claims under at least four strategies:
+
+1. deletion;
+2. replacement with the corresponding event from a normal block;
+3. unknown-token replacement with sequence length preserved;
+4. resampling from a compatible normal block.
+
+For each cited event or event group, a matched random-event control will use the same perturbation strategy and budget. The primary analysis will report the direction and magnitude of detector-score change, the difference from random controls, the proportion of claims supported by at least two strategies, and the rate at which deletion disagrees with replacement or resampling. This makes perturbation consistency, rather than deletion alone, the central verification result.
+
+Reference levels for interpretation
+
+Two reference levels will be reported for every detector and perturbation strategy:
+
+- attribution-only reference: the faithfulness of the top-k Integrated Gradients events without an LLM-generated explanation; this is an evidence-alignment reference, not a theoretical upper bound;
+- random floor: the mean result from matched random-event selections with confidence intervals.
+
+LLM conditions will be interpreted relative to these references. A low perturbation-consistency value is meaningful only if it is compared with the random floor and the attribution-only reference under the same event budget and strategy.
+
+11.6 Secondary execution logging
+
+The detector alert must be available without waiting for LLM generation or verification. For every evaluated condition, the ledger will record detector latency, explanation latency, verification latency, LLM calls, input/output tokens, perturbation inference calls, and cost where available. These values will be reported as secondary feasibility measures and used to justify an asynchronous implementation. A full multi-budget optimization study and a parser-sensitivity benchmark are explicitly deferred to follow-up work.
+
+11.7 Early ground-truth annotation protocol
+
+Human annotation will begin during the first month, in parallel with pipeline construction. It will not be postponed until the final system is complete.
+
+The annotation pool will target 200–300 stratified blocks/windows, with a minimum target fixed in the registration if resources are limited. Every block in this core annotation pool will receive evidence-relevance labels before any LLM condition is assigned; no explanation output will define which blocks receive labels. The pool will cover:
+
+- normal and anomalous labels;
+- high- and low-confidence detector predictions;
+- short and long blocks;
+- detector architecture and confidence strata;
+- naturally occurring and synthetic cases.
+
+After evidence-relevance labels are collected, the same core blocks will be evaluated in every primary LLM condition for paired comparison. Condition order, repeated-generation order, and any claim-support subsampling will use a recorded randomization procedure, with stratification by dataset, anomaly label, detector confidence, and block/window length where sample size permits.
+
+At least two annotators with log-analysis, systems, software-engineering, or closely related experience will independently label evidence relevance while blind to the LLM condition, attribution values, detector attribution rankings, and the study hypothesis. They will receive anonymized event IDs and the raw/template evidence required for the task, but no Integrated Gradients, occlusion, or leave-one-out scores.
+
+For every core test block, annotators will label:
+
+- which events are relevant evidence for the block-level anomaly;
+- whether the contrastive difference is meaningful at the event level.
+
+Claim-support annotation will be collected only on a separate, pre-specified stratified sample of generated explanations. Annotators will see the anonymized explanation, its supplied block evidence, and cited lines, but will not see whether it came from the blinded, unblinded, shuffled, attribution-only, or random condition. Claim support is therefore an additional human outcome, not a replacement for the all-block evidence-relevance labels.
+
+Annotators will not be asked to infer the true physical root cause unless independent operational evidence is available. The primary human ground truth is evidence relevance. Human labels, not an unvalidated LLM judge, are primary. A validated LLM judge may be used only as an exploratory secondary measure after calibration against the human labels, with its model, version, prompts, and disagreement cases reported. It cannot define the primary endpoint or adjudicate annotator disagreements.
+
+Disagreements will be adjudicated using a written guideline. Cohen’s kappa or Krippendorff’s alpha will be reported for the relevant label types. Synthetic perturbation cases with known edited events will complement the human labels and provide a more objective test of evidence recovery.
+
+Ethics and participant protection
+
+If external annotators are recruited, participation will require informed consent, clear task instructions, appropriate compensation, and institutional ethics/IRB review or an institutional exemption where required. Logs used for annotation will be public benchmark logs or anonymized before presentation. No private operational logs or directly identifying information will be shown to annotators. Consent, compensation, anonymization, and approval or exemption records will be included in the artifact documentation.
+
+12. Evaluation Metrics
+
+12.1 Detection metrics
+
+For block-level detection:
+
+- precision;
+- recall;
+- F1-score;
+- PR-AUC;
+- false positives per 1,000 blocks;
+- false negatives;
+- detection latency;
+- calibration error.
+
+Because anomalies are imbalanced, PR-AUC and false-positive rate are particularly important.
+
+12.2 Primary explanation outcomes
+
+The primary analysis will keep human-evidence recovery and detector faithfulness separate.
+
+Evidence precision
+
+Evidence Precision = relevant cited events / all cited events
+
+Evidence recall
+
+Evidence Recall = relevant cited events / all known relevant events
+
+Evidence ground truth will come from synthetic edited events and blinded human relevance annotations. Integrated Gradients will be treated as an input condition, not as the gold label used to evaluate the value of Integrated Gradients. The primary human-evidence outcome is macro evidence-recovery F1 over the pre-specified annotated explanation test set.
+
+Detector faithfulness
+
+Detector faithfulness is the separate outcome obtained from score changes under matched perturbations. It includes predicted-direction accuracy, detector-score delta, and multi-strategy perturbation consistency. It is not a human annotation and will not be merged with evidence precision, evidence recall, or claim support.
+
+Attribution gain
+
+Attribution Gain = metric(unblinded) - metric(blinded)
+
+The same calculation will be reported for the shuffled-attribution control. A genuine attribution benefit should produce:
+
+metric(unblinded) > metric(blinded)
+
+and:
+
+metric(unblinded) > metric(shuffled attribution)
+
+These inequalities are descriptive checks only. The registered H1 analysis will use TOST on human-evidence-recovery F1 with Δ = 0.05. Point differences and confidence intervals will also be reported for detector faithfulness, claim support, and perturbation consistency. A positive attribution result must beat both the blinded and shuffled-Integrated-Gradients controls; a failure to establish equivalence will be reported as inconclusive rather than as evidence of no benefit.
+
+Claim support rate
+
+Claim Support = supported claims / total claims
+
+This adapts the atomic-claim idea from FACTSCORE [13].
+
+Faithfulness score
+
+Measure the anomaly-score decrease after removing cited events:
+
+F_faithfulness = p(X_i) - p(X_i \ C)
+
+Compare this against random-event deletion.
+
+Counterfactual validity
+
+Counterfactual Validity = correctly predicted perturbation outcomes / total perturbation cases
+
+Perturbation consistency
+
+Perturbation Consistency = claims with the same predicted effect across at least two strategies / tested claims
+
+This metric identifies explanations that appear faithful only because deletion creates an unrealistic out-of-distribution sequence.
+
+Hallucination rate
+
+Hallucination Rate = unsupported claims / total claims
+
+Abstention reporting
+
+The core paper will report abstention coverage, unsupported-claim rate among answered cases, and the number of unverified cases. Full risk–coverage curves and calibrated abstention thresholds are reserved for follow-up work.
+
+12.3 Perturbation-validity metrics
+
+For every perturbation, record:
+
+- sequence-length change;
+- event-vocabulary change;
+- chronology change;
+- unknown-event usage;
+- parser-validity status;
+- out-of-distribution indicator;
+- detector-score change;
+- agreement with the predicted explanation effect.
+
+Report perturbation consistency as the proportion of claims with the same predicted effect under at least two strategies. Also report the disagreement rate between deletion and each replacement or resampling strategy. A large deletion-only effect accompanied by high out-of-distribution indicators will be treated as weak evidence, not as a successful faithfulness result.
+
+12.4 Deferred robustness analyses
+
+Semantics-preserving transformations, drift robustness, operator usefulness, and trust studies are removed from the core paper. They may be included in a follow-up only after the primary human-evidence and detector-faithfulness results are complete.
+
+12.5 Annotation quality and claim support
+
+Report evidence-relevance agreement using Cohen’s kappa or Krippendorff’s alpha, depending on the label structure. Report claim-support rate only for the pre-specified explanation sample and with annotators blind to condition. Report the number of adjudicated cases and disagreement categories. An optional LLM judge may be compared against human labels as an exploratory analysis, but it will not replace human annotation.
+
+12.6 Secondary execution metrics
+
+Report:
+
+- real-time detector latency;
+- time to produce an unverified explanation;
+- time to produce a verified explanation;
+- average LLM latency;
+- prompt length;
+- output length;
+- number of LLM calls;
+- number of detector perturbation inferences;
+- cost per block;
+- memory usage;
+- detector inference time;
+- percentage of cases requiring the minimal abstention label;
+- percentage of sampled cases verified under the fixed core protocol.
+
+These metrics are important because previous LLM log-analysis work has identified latency and scalability as practical concerns [8, 15]. They are recorded to establish feasibility and reproducibility, not to turn the paper into a full cost-optimization study.
+
+13. Statistical Analysis
+
+Each experiment should use multiple random seeds.
+
+Recommended analysis:
+
+- at least five detector training seeds;
+- at least three repeated LLM generations per block and condition, with the number increased if variance is high;
+- bootstrap confidence intervals;
+- paired block-level comparisons;
+- Wilcoxon signed-rank tests where appropriate;
+- effect sizes;
+- Holm or Benjamini–Hochberg correction for multiple comparisons;
+- confidence intervals for explanation metrics;
+- inter-annotator agreement for human labels.
+
+The paper should report mean, standard deviation, median where appropriate, and 95% confidence intervals rather than a single best score. LLM run variance must be separated from detector-seed variance. The primary hypothesis test and effect-size threshold will be fixed before the pilot; exploratory comparisons will be labelled as such.
+
+14. Expected Contributions
+
+Contribution 1: A block-level detector–LLM evaluation setting
+
+A reproducible setting that detects anomalies at the block level and evaluates LLM explanations against the detector’s decision rather than treating fluent text as evidence of quality.
+
+Contribution 2: Contrastive explanation generation
+
+The LLM compares anomalous blocks with similar normal blocks rather than analyzing an anomalous block in isolation.
+
+Contribution 3: A circularity-controlled faithfulness benchmark
+
+The study compares blinded, unblinded, shuffled-Integrated-Gradients, attribution-only, and random controls, and tests whether cited events actually affect two sequence detectors using a log-specific event-perturbation protocol.
+
+Contribution 4: Perturbation-consistency evidence
+
+The study tests deletion against normal replacement, unknown-token replacement, and resampling so that deletion-induced distribution shift is not mistaken for faithfulness.
+
+Contribution 5: Independent evidence ground truth
+
+The project will collect a few hundred stratified normal and anomalous blocks/windows using written annotation guidelines, at least two annotators with log or systems experience where possible, and Cohen’s kappa or Krippendorff’s alpha.
+
+Contribution 6: Cross-model and cross-dataset evidence
+
+The main claim will be tested with the current LSTM and a published LogRobust-style attention Bi-LSTM, at least two LLMs including one open-weight model, HDFS block units, and BGL window/session units.
+
+Contribution 7: A focused benchmark and artifact release
+
+The benchmark evaluates human-evidence recovery, detector faithfulness, claim support, perturbation consistency, and secondary execution cost. The proposed attribution condition is evaluated as one component of the benchmark rather than being assumed to be successful. Robustness transformations, operator usefulness, parser-sensitivity, extensive budget tiers, and deep abstention analysis are explicitly identified as follow-up studies.
+
+Contribution 8: Reproducible evaluation
+
+The project will release:
+
+- preprocessing code;
+- block construction rules;
+- data splits;
+- prompts;
+- baseline configurations;
+- explanation outputs;
+- evaluation scripts;
+- statistical analysis code;
+- experiment ledgers and model/version metadata;
+- anonymized or legally shareable annotation labels;
+- a versioned release with a DOI, for example through Zenodo.
+
+15. Significance and Impact
+
+Scientific significance
+
+The project connects three areas:
+
+1. deep-learning-based anomaly detection;
+2. LLM-based log interpretation;
+3. faithful explainable AI.
+
+Most existing work emphasizes anomaly detection accuracy or readable explanations. This project treats explanation verification as a measurable research problem.
+
+Practical significance
+
+A trustworthy explanation can help operators:
+
+- prioritize incidents;
+- inspect relevant events faster;
+- distinguish real anomalies from false positives;
+- understand differences between abnormal and normal behaviour;
+- avoid overtrusting unsupported LLM explanations.
+
+Broader implications
+
+The design may apply beyond HDFS to:
+
+- cloud-service logs;
+- distributed storage systems;
+- network logs;
+- cybersecurity event logs;
+- microservice monitoring;
+- industrial control systems.
+
+However, the proposal should not claim that an explanation is a definitive root cause unless the dataset contains verified root-cause labels.
+
+16. Threats to Validity
+
+Dataset limitations
+
+HDFS is a valuable benchmark, but it may not represent all production systems. Results should be tested on at least one additional dataset or clearly described as HDFS-specific.
+
+Ground-truth limitations
+
+An anomaly label does not necessarily identify the exact causal log event. Synthetic perturbations and human annotation can partially address this limitation.
+
+Model dependence
+
+Faithfulness tests measure faithfulness to the implemented LSTM, not necessarily to the real-world system cause.
+
+Circularity between attribution and evaluation
+
+If the LLM is given the same attribution values later used to judge its explanation, apparent faithfulness may be circular. The blinded, unblinded, and shuffled-attribution conditions are therefore part of the core design, not a late ablation. The study will evaluate evidence against synthetic edits and human annotations rather than treating Integrated Gradients as ground truth.
+
+Out-of-distribution perturbations
+
+Event deletion can create an unrealistic sequence and exaggerate score changes. The pluggable perturbation interface will compare deletion with normal-event replacement, unknown-token replacement, resampling, and parameter masking. Conclusions will be labelled perturbation-consistent only when the predicted effect is supported by multiple strategies.
+
+Ground-truth availability
+
+HDFS block labels do not identify every relevant explanatory event. Annotation will begin in Month 1, use stratified sampling, report inter-annotator agreement, and distinguish evidence relevance from definitive physical root cause. If annotation is smaller than planned, the paper will report the limitation and rely on synthetic cases only for claims they objectively support.
+
+LLM stochasticity
+
+LLM outputs may vary across runs and model versions. Prompts, model names, temperatures, timestamps, and seeds should be recorded.
+
+Privacy
+
+Raw logs may contain sensitive information. The system should support anonymization and, where possible, local or self-hosted models.
+
+Parser dependence
+
+The explanation may depend on Drain’s event templates. Raw lines and parameters will remain available and the parser configuration will be recorded. The main paper will use one frozen configuration; a complete parser-sensitivity analysis is a declared follow-up study. If later parser tests cause large changes in explanation faithfulness, the result will be reported as a limitation rather than hidden behind the default configuration.
+
+Operational efficiency
+
+Exhaustively testing every combination of events would be computationally expensive and unnecessary. The proposed system avoids this by using single-event deletion as one strategy, restricting event-group tests to sampled or interaction-sensitive cases, caching detector representations, batching inference, and running verification asynchronously. The paper will report the fixed sample size and observed latency/cost distribution rather than claiming a general budget-optimization solution.
+
+The real-time detector path must not wait for LLM generation or counterfactual verification. An explanation that has not completed verification will be explicitly labelled unverified. The core study records latency and cost but does not claim to solve industrial-scale budget optimization.
+
+Overclaiming novelty
+
+A recent IJCAI paper already investigates closed-loop anomaly explanation using counterfactuals [18]. Therefore, this proposal will not claim generic novelty for counterfactual explanation. Its novelty boundary is:
+
+- block-level HDFS BlockId sequences rather than generic tabular anomaly instances;
+- contrastive retrieval of a similar normal block;
+- event-level provenance from raw lines, templates, positions, and prompt-visible Integrated Gradients from the selected detector;
+- verification by rerunning a trained sequence detector after event-level edits;
+- minimal uncertainty labels;
+- a log-specific benchmark covering independent evidence, faithfulness, perturbation consistency, and reproducibility.
+
+17. Proposed Timeline
+
+Month 1
+
+Freeze the research framing and experiment schema. Audit the repository, create block-disjoint and temporal splits, implement configurable blinded/unblinded prompts with Integrated Gradients-only exposure, create the experiment ledger, write the annotation guideline, calculate power, register the protocol on OSF or AsPredicted, and begin the early HDFS go/no-go pilot.
+
+Month 2
+
+Retrain and calibrate the leakage-free LSTM detector. Integrate the published LogRobust-style attention Bi-LSTM, freeze its implementation/configuration, construct BGL windows, strip BGL alert-label prefixes, and complete the first blinded annotation batch.
+
+Month 3
+
+Implement Integrated Gradients, occlusion, leave-one-out, event-level evidence extraction, shuffled-Integrated-Gradients, attribution-only, and random controls. Confirm that only Integrated Gradients can enter an LLM prompt.
+
+Month 4
+
+Implement normal-block retrieval and structured LLM explanations. Freeze at least two LLM versions, including one open-weight model, and record decoding settings. Complete evidence-relevance labels for the core explanation pool.
+
+Month 5
+
+Implement the fixed multi-strategy verification sample, including deletion, normal replacement, unknown-token replacement, and resampling. Add the small ROAR-style retraining check and validate that the unknown-event token was present during detector training.
+
+Month 6
+
+Run the registered main experiment across both detectors, both LLMs, HDFS, and BGL. Collect claim-support labels on the pre-specified explanation sample.
+
+Month 7
+
+Complete repeated LLM runs, secondary latency/cost logging, core ablations, agreement analysis, and missing-case resolution. Do not expand into the deferred robustness or usefulness suite.
+
+Month 8
+
+Statistical analysis, TOST, confidence intervals, effect sizes, visualizations, and artifact preparation. This month also serves as a compute, annotation, and registration-compliance buffer.
+
+Month 9
+
+Paper writing, final audit of the ledger and registration, versioned release with a DOI, and submission preparation.
+
+18. Expected Paper Structure
+
+1. Introduction
+2. Background and problem definition
+3. Related work
+4. Research questions, hypotheses, and registered outcomes
+5. Dataset, annotation, and leakage-free protocol
+6. Detector and LLM conditions
+7. Human-evidence recovery and detector-faithfulness metrics
+8. Main results and perturbation-consistency analysis
+9. Ablation and cross-dataset analysis
+10. Threats to validity and ethics
+11. Artifact and reproducibility statement
+12. Conclusion
+
+19. Conclusion
+
+This proposal presents a focused detector–LLM study for block-level log anomaly detection and explanation, using the current LSTM as its repository foundation and a published LogRobust-style attention Bi-LSTM as an architecture check.
+
+The selected sequence detector provides the anomaly decision:
+
+"This entire block is anomalous."
+
+The LLM provides a structured explanation:
+
+"These events distinguish the anomalous block from a similar normal block."
+
+The verification module then asks in a bounded background process:
+
+"If these events are removed, does the anomaly score actually change?"
+
+Finally, the uncertainty module asks:
+
+"Is there enough evidence to make this explanation confidently?"
+
+The study will test the riskiest assumption early: whether an LLM with attribution access performs meaningfully better than the same LLM without attribution access and better than a shuffled-attribution control. It will also test at least two perturbation strategies before the full benchmark is built. This protects the project from spending months on a method whose apparent faithfulness depends only on information explicitly handed to the LLM.
+
+The main research contribution is therefore not simply adding an LLM to LogInsight. It is testing, with independent evidence and multiple perturbation strategies, whether an LLM’s explanation is faithful to a block-level anomaly detector and whether attribution values genuinely improve that faithfulness.
+
+The minimum Q1-ready package is:
+
+- a pre-registered blinded versus unblinded comparison;
+- shuffled-attribution, attribution-only, random-event, and no-detector-context controls;
+- two detector architectures—the LogInsight LSTM and published LogRobust-style attention Bi-LSTM—and two LLMs, including one open-weight model;
+- HDFS block-level evaluation plus BGL window/session-level transfer evaluation;
+- a few hundred agreement-checked human evidence annotations;
+- perturbation consistency as the primary verification result;
+- five detector seeds, repeated LLM generations, confidence intervals, paired tests, effect sizes, and multiplicity correction;
+- released splits, prompts, ledgers, annotations where permissible, code, and analysis scripts.
+
+If attribution access fails the pre-registered rule, the paper should honestly report a negative or benchmark result. If it succeeds, the paper can defend a focused empirical finding rather than a broad claim that the entire framework is novel. Parser-sensitivity analysis, multi-budget optimization, and a deep abstention study remain valuable follow-up papers. Q1 publication is not guaranteed, but this narrower design gives the project a clearer research gap, a defensible claim, and a feasible evidence plan.
+
+Follow-up work outside the core paper
+
+The following studies should be planned only after the core claim is established:
+
+1. a systematic parser-sensitivity benchmark across Drain configurations, template merging/splitting, and raw-line versus template-only evidence;
+2. a multi-budget industrial cost and latency study;
+3. calibrated abstention and risk–coverage analysis;
+4. larger cross-domain datasets and verified operational root-cause labels.
+
+Target publication strategy
+
+The study is best framed as an empirical evaluation and benchmark paper. EMSE, JSS, or IST are realistic first journal targets for this scope, while TSE or TOSEM should be treated as stretch targets requiring exceptionally strong evidence, mature artifact release, and a clearly non-incremental result.
+
+References
+
+[1] Min Du, Feifei Li, Guineng Zheng, and Vivek Srikumar. “DeepLog: Anomaly Detection and Diagnosis from System Logs through Deep Learning.” Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications Security, 2017, pp. 1285–1298. DOI: 10.1145/3133956.3134015.
+
+[2] Weibin Meng et al. “LogAnomaly: Unsupervised Detection of Sequential and Quantitative Anomalies in Unstructured Logs.” Proceedings of IJCAI-19, 2019, pp. 4739–4745. DOI: 10.24963/ijcai.2019/658.
+
+[3] Xu Zhang et al. “Robust Log-Based Anomaly Detection on Unstable Log Data.” Proceedings of ESEC/FSE 2019. DOI: 10.1145/3338906.3338931.
+
+[4] Shilin He, Jieming Zhu, Pinjia He, and Michael R. Lyu. “LogHub: A Large Collection of System Log Datasets towards Automated Log Analytics.” 2020.
+
+[5] Yilun Liu et al. “Interpretable Online Log Analysis Using Large Language Models with Prompt Strategies.” Proceedings of ICPC 2024.
+
+[6] Jonathan Pan, Swee Liang Wong, and Yidi Yuan. “RAGLog: Log Anomaly Detection using Retrieval Augmented Generation.” 2023.
+
+[7] Xin Huang, Ting Zhang, and Wen Zhao. “LogRules: Enhancing Log Analysis Capability of Large Language Models through Rules.” Findings of NAACL 2025, pp. 452–470. DOI: 10.18653/v1/2025.findings-naacl.28.
+
+[8] Tianyu Cui et al. “LogEval: A Comprehensive Benchmark Suite for Large Language Models in Log Analysis.” Empirical Software Engineering, 2025. DOI: 10.1007/s10664-025-10701-6.
+
+[9] Yali Gao et al. “LogLAA: An Adaptive Integrated Log Anomaly Analysis Framework.” Cybersecurity, 2026, 9:141. DOI: 10.1186/s42400-026-00573-8.
+
+[10] Sarthak Jain and Byron C. Wallace. “Attention is not Explanation.” NAACL, 2019.
+
+[11] Mukund Sundararajan, Ankur Taly, and Qiqi Yan. “Axiomatic Attribution for Deep Networks.” 2017.
+
+[12] Alon Jacovi and Yoav Goldberg. “Towards Faithfully Interpretable NLP Systems: How Should We Define and Evaluate Faithfulness?” 2020.
+
+[13] Sewon Min et al. “FACTSCORE: Fine-Grained Atomic Evaluation of Factual Precision in Long Form Text Generation.” 2023.
+
+[14] Zanis Ali Khan et al. “Impact of Log Parsing on Deep Learning-Based Anomaly Detection.” Empirical Software Engineering, 2024.
+
+[15] Ze-Yang Ma, Jin-Qiu Yang, and Tse-Hsun Chen. “LLM4Log: A Systematic Review of Large Language Model-Based Log Analysis.” 2026.
+
+[16] Jonathan DeYoung et al. “ERASER: A Benchmark to Evaluate Rationalized NLP Models.” Proceedings of ACL, 2020, pp. 4447–4464. DOI: 10.18653/v1/2020.acl-main.408.
+
+[17] Sara Hooker, Dumitru Erhan, Pieter-Jan Kindermans, and Been Kim. “A Benchmark for Interpretability Methods in Deep Neural Networks.” Advances in Neural Information Processing Systems, 2019. The method is commonly known as ROAR (RemOve And Retrain).
+
+[18] “Detection-Explanation-Improvement: A Closed-Loop Framework of Enhancing Anomaly Detection with Counterfactual Explanations.” IJCAI 2026.

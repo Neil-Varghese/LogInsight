@@ -1,0 +1,45 @@
+{
+  "artifact": "BGL_fixed_windows",
+  "audit_input": "research/data/processed/BGL_label_audit.jsonl.gz",
+  "clean_input": "research/data/processed/BGL_clean.log",
+  "line_range_semantics": "inclusive LineStart and LineEnd refer to BGL_clean.log order",
+  "manifest_version": "1.0.0",
+  "output": "research/data/processed/BGL_windows.jsonl.gz",
+  "prediction_unit": "BGL_window",
+  "record_fields": [
+    "WindowId",
+    "WindowStartEpoch",
+    "WindowEndEpochExclusive",
+    "LineStart",
+    "LineEnd",
+    "EventCount",
+    "Label",
+    "LabelId",
+    "LabelRule",
+    "WindowRule"
+  ],
+  "summary": {
+    "alert_line_count": 348460,
+    "alert_window_count": 1838,
+    "anchor": "unix_epoch",
+    "audit_input": "research/data/processed/BGL_label_audit.jsonl.gz",
+    "clean_input": "research/data/processed/BGL_clean.log",
+    "distinct_label_prefixes": 42,
+    "input_line_count": 4747963,
+    "label_rule": "any_alert_line_in_window",
+    "normal_window_count": 25832,
+    "output": "research/data/processed/BGL_windows.jsonl.gz",
+    "overlap_seconds": 0,
+    "partial_input": 0,
+    "window_count": 27670,
+    "window_seconds": 60
+  },
+  "window_rule": {
+    "anchor": "Unix epoch",
+    "assignment": "floor(epoch_timestamp / duration) * duration",
+    "duration_seconds": 60,
+    "input": "clean BGL lines only; label audit is used to derive targets and is excluded from model/LLM evidence",
+    "label": "Anomaly if any source line in the window has a non '-' BGL alert prefix; otherwise Normal",
+    "overlap_seconds": 0
+  }
+}
