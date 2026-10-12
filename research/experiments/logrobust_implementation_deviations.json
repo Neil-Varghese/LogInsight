@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "step": 27,
+  "detector_id": "logrobust_attention_bilstm",
+  "status": "documented",
+  "reference": {
+    "citation": "Xu Zhang et al., Robust Log-Based Anomaly Detection on Unstable Log Data, ESEC/FSE 2019",
+    "doi": "10.1145/3338906.3338931",
+    "publication_url": "https://doi.org/10.1145/3338906.3338931",
+    "official_summary_url": "https://www.microsoft.com/en-us/research/publication/robust-log-based-anomaly-detection-on-unstable-log-data/",
+    "relevant_published_contribution": "semantic log-event representations followed by an attention-based Bi-LSTM classifier for robust log anomaly detection"
+  },
+  "implementation": {
+    "script": "research/scripts/train_logrobust_attention_bilstm.py",
+    "config": "research/experiments/logrobust_attention_bilstm_training_config.json",
+    "checkpoint": "research/models/checkpoints/logrobust_attention_bilstm/best_seed_13.keras",
+    "run_manifest": "research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_13.json",
+    "dataset": "HDFS",
+    "seed": 13,
+    "test_labels_used_for_training": false
+  },
+  "deviations": [
+    {
+      "id": "representation_shared_event_vocabulary",
+      "category": "input_representation",
+      "published_or_reference_expectation": "The published method represents log events with semantic vectors intended to improve robustness to unstable log data.",
+      "loginsight_implementation": "A trainable embedding maps integer event IDs from the frozen training-only research vocabulary to vectors. Unseen validation/test events map to the learned unknown-event row.",
+      "reason": "Both detectors must consume the same leakage-controlled parser output and vocabulary so architecture, rather than an external embedding corpus, is the principal comparison.",
+      "comparability_impact": "This is an architecture-style comparison, not a claim of exact reproduction of the published semantic-embedding pipeline.",
+      "evidence": [
+        "research/scripts/train_logrobust_attention_bilstm.py",
+        "research/models/vocabularies/event_vocabulary.json",
+        "research/experiments/experiment_config.json"
+      ]
+    },
+    {
+      "id": "prediction_unit_and_split_protocol",
+      "category": "data_protocol",
+      "published_or_reference_expectation": "The publication evaluates log anomaly detection under its own Hadoop and service-log data construction and robustness experiments.",
+      "loginsight_implementation": "The detector is trained and evaluated on labelled HDFS BlockId units with fixed 80/10/10 block-disjoint splits, a validation split, and a training-only vocabulary.",
+      "reason": "The registered LogInsight-FV endpoint is block-level evidence recovery under explicit leakage controls.",
+      "comparability_impact": "Published scores are contextual only; they must not be treated as directly comparable to this run’s metrics.",
+      "evidence": [
+        "research/data/manifests/hdfs_split_manifest.json",
+        "research/experiments/logrobust_attention_bilstm_training_config.json",
+        "research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_13.json"
+      ]
+    },
+    {
+      "id": "sequence_length_and_padding",
+      "category": "sequence_preprocessing",
+      "published_or_reference_expectation": "The paper’s exact sequence-length and padding implementation is not copied into this study’s detector input contract.",
+      "loginsight_implementation": "Sequences are truncated to a maximum length of 50 and post-padded so TensorFlow Metal/cuDNN can apply a valid right-padded mask.",
+      "reason": "The HDFS experiment requires a bounded tensor shape, and right-padding is required by the selected TensorFlow backend when masking is enabled.",
+      "comparability_impact": "Padding is a documented implementation choice; the parser, event order, vocabulary, prediction units, and split assignments remain fixed.",
+      "evidence": [
+        "research/experiments/logrobust_attention_bilstm_training_config.json",
+        "research/scripts/train_logrobust_attention_bilstm.py"
+      ]
+    },
+    {
+      "id": "classifier_hyperparameters_and_optimization",
+      "category": "training_protocol",
+      "published_or_reference_expectation": "The published architecture is an attention-based Bi-LSTM classifier, but this study does not claim the paper’s complete training environment or hyperparameter reproduction.",
+      "loginsight_implementation": "Embedding dimension 128, 128 units per LSTM direction, 64 attention units, 32-unit dense layer, dropout, Adam, balanced class weights, deterministic seed reporting, validation-loss early stopping, and Keras checkpoints.",
+      "reason": "These choices align the detector with the existing LogInsight research runtime and make the experiment reproducible on the shared hardware/software stack.",
+      "comparability_impact": "Results identify a controlled LogRobust-style architecture check, not a reproduction leaderboard claim.",
+      "evidence": [
+        "research/experiments/logrobust_attention_bilstm_training_config.json",
+        "research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_13.json"
+      ]
+    },
+    {
+      "id": "calibration_threshold_and_reporting",
+      "category": "evaluation_protocol",
+      "published_or_reference_expectation": "The published detector’s original decision and reporting protocol is not used as the registered LogInsight-FV evaluation contract.",
+      "loginsight_implementation": "The detector emits probabilities and provisional 0.5 metrics; the shared study pipeline will fit temperature scaling on validation predictions, select the F1 threshold on validation only, and report calibration plus detection metrics.",
+      "reason": "Both architectures must be evaluated under the same no-test-tuning protocol.",
+      "comparability_impact": "Final cross-detector comparisons use the shared calibration and thresholding artifacts, not raw published-paper thresholds.",
+      "evidence": [
+        "research/scripts/calibrate_detector.py",
+        "research/scripts/select_threshold.py",
+        "research/experiments/experiment_config.json"
+      ]
+    },
+    {
+      "id": "attention_not_declared_explanation",
+      "category": "interpretation_and_explanation",
+      "published_or_reference_expectation": "The published attention mechanism learns event importance for classification.",
+      "loginsight_implementation": "The temporal-attention layer is retained as a model component and exposed by name, but its weights are not automatically treated as faithful explanations or shown to the LLM. Integrated Gradients remains the registered prompt-visible attribution method.",
+      "reason": "The study separates predictive attention from faithfulness verification and follows the registered attribution protocol.",
+      "comparability_impact": "This preserves the detector architecture while preventing an attention-plausibility assumption from changing the explanation endpoint.",
+      "evidence": [
+        "research/experiments/experiment_config.json",
+        "research/scripts/train_logrobust_attention_bilstm.py"
+      ]
+    }
+  ],
+  "known_non_deviations": [
+    "The detector is supervised binary classification with a sigmoid output.",
+    "The model contains a bidirectional LSTM and temporal attention, preserving the published architectural idea.",
+    "The same parser, event ordering, prediction-unit identity, and training-only vocabulary policy are used for both study detectors."
+  ],
+  "interpretation_rule": "Do not compare this run’s numerical scores directly with published LogRobust scores unless data construction, unit definition, split policy, preprocessing, and threshold protocol are demonstrably comparable."
+}

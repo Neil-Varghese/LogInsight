@@ -1,0 +1,302 @@
+{
+  "architectures": [
+    "loginsight_lstm",
+    "logrobust_attention_bilstm"
+  ],
+  "registered_seed_set": [
+    13,
+    42,
+    73,
+    101,
+    202
+  ],
+  "schema_version": "1.0",
+  "seeds": [
+    13,
+    42,
+    73,
+    101,
+    202
+  ],
+  "started_at": "2026-10-12T11:45:56.036494+00:00",
+  "status": "running",
+  "step": 29,
+  "targets": {
+    "loginsight_lstm:seed_101": {
+      "architecture": "loginsight_lstm",
+      "artifacts_after_run": {
+        "architecture": "loginsight_lstm",
+        "manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_101.json",
+        "seed": 101,
+        "split_counts": {
+          "test": 57506,
+          "train": 460049,
+          "validation": 57506
+        },
+        "test_metrics": {
+          "accuracy": 0.9993218098980976,
+          "confusion_matrix": [
+            [
+              55785,
+              37
+            ],
+            [
+              2,
+              1682
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9885395239494564,
+          "loss": 0.005471765766908129,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9784758580570099,
+          "recall": 0.998812351543943,
+          "threshold": 0.5
+        }
+      },
+      "command": [
+        "/Users/neilvargheseabraham/Downloads/LogInsight/.venv-metal/bin/python",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/scripts/train_loginsight_lstm.py",
+        "--config",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/lstm_training_config.json",
+        "--seed",
+        "101"
+      ],
+      "finished_at": "2026-10-12T12:18:12.103809+00:00",
+      "return_code": 0,
+      "seed": 101,
+      "started_at": "2026-10-12T12:00:16.284393+00:00",
+      "status": "trained"
+    },
+    "loginsight_lstm:seed_13": {
+      "architecture": "loginsight_lstm",
+      "artifacts_before_run": {
+        "architecture": "loginsight_lstm",
+        "manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_13.json",
+        "seed": 13,
+        "split_counts": {
+          "test": 57506,
+          "train": 460049,
+          "validation": 57506
+        },
+        "test_metrics": {
+          "accuracy": 0.9993739783674747,
+          "confusion_matrix": [
+            [
+              55790,
+              32
+            ],
+            [
+              4,
+              1680
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9893992932862191,
+          "loss": 0.007554808610170586,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9813084112149533,
+          "recall": 0.997624703087886,
+          "threshold": 0.5
+        }
+      },
+      "command": [
+        "/Users/neilvargheseabraham/Downloads/LogInsight/.venv-metal/bin/python",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/scripts/train_loginsight_lstm.py",
+        "--config",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/lstm_training_config.json",
+        "--seed",
+        "13"
+      ],
+      "seed": 13,
+      "status": "reused_existing"
+    },
+    "loginsight_lstm:seed_202": {
+      "architecture": "loginsight_lstm",
+      "artifacts_after_run": {
+        "architecture": "loginsight_lstm",
+        "manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_202.json",
+        "seed": 202,
+        "split_counts": {
+          "test": 57506,
+          "train": 460049,
+          "validation": 57506
+        },
+        "test_metrics": {
+          "accuracy": 0.9992696414287204,
+          "confusion_matrix": [
+            [
+              55784,
+              38
+            ],
+            [
+              4,
+              1680
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9876543209876544,
+          "loss": 0.006085561721459078,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9778812572759022,
+          "recall": 0.997624703087886,
+          "threshold": 0.5
+        }
+      },
+      "command": [
+        "/Users/neilvargheseabraham/Downloads/LogInsight/.venv-metal/bin/python",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/scripts/train_loginsight_lstm.py",
+        "--config",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/lstm_training_config.json",
+        "--seed",
+        "202"
+      ],
+      "finished_at": "2026-10-12T12:25:12.907623+00:00",
+      "return_code": 0,
+      "seed": 202,
+      "started_at": "2026-10-12T12:18:12.105718+00:00",
+      "status": "trained"
+    },
+    "loginsight_lstm:seed_42": {
+      "architecture": "loginsight_lstm",
+      "artifacts_after_run": {
+        "architecture": "loginsight_lstm",
+        "manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_42.json",
+        "seed": 42,
+        "split_counts": {
+          "test": 57506,
+          "train": 460049,
+          "validation": 57506
+        },
+        "test_metrics": {
+          "accuracy": 0.9992870309185129,
+          "confusion_matrix": [
+            [
+              55787,
+              35
+            ],
+            [
+              6,
+              1678
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9879305269355313,
+          "loss": 0.00494327873367756,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9795680093403386,
+          "recall": 0.996437054631829,
+          "threshold": 0.5
+        }
+      },
+      "command": [
+        "/Users/neilvargheseabraham/Downloads/LogInsight/.venv-metal/bin/python",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/scripts/train_loginsight_lstm.py",
+        "--config",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/lstm_training_config.json",
+        "--seed",
+        "42"
+      ],
+      "finished_at": "2026-10-12T11:53:09.093608+00:00",
+      "return_code": 0,
+      "seed": 42,
+      "started_at": "2026-10-12T11:45:56.037297+00:00",
+      "status": "trained"
+    },
+    "loginsight_lstm:seed_73": {
+      "architecture": "loginsight_lstm",
+      "artifacts_after_run": {
+        "architecture": "loginsight_lstm",
+        "manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_73.json",
+        "seed": 73,
+        "split_counts": {
+          "test": 57506,
+          "train": 460049,
+          "validation": 57506
+        },
+        "test_metrics": {
+          "accuracy": 0.9992522519389281,
+          "confusion_matrix": [
+            [
+              55783,
+              39
+            ],
+            [
+              4,
+              1680
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9873640905083749,
+          "loss": 0.007035221698900833,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9773123909249564,
+          "recall": 0.997624703087886,
+          "threshold": 0.5
+        }
+      },
+      "command": [
+        "/Users/neilvargheseabraham/Downloads/LogInsight/.venv-metal/bin/python",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/scripts/train_loginsight_lstm.py",
+        "--config",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/lstm_training_config.json",
+        "--seed",
+        "73"
+      ],
+      "finished_at": "2026-10-12T12:00:16.283172+00:00",
+      "return_code": 0,
+      "seed": 73,
+      "started_at": "2026-10-12T11:53:09.094518+00:00",
+      "status": "trained"
+    },
+    "logrobust_attention_bilstm:seed_13": {
+      "architecture": "logrobust_attention_bilstm",
+      "artifacts_before_run": {
+        "architecture": "logrobust_attention_bilstm",
+        "manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_13.json",
+        "seed": 13,
+        "split_counts": {
+          "test": 57506,
+          "train": 460049,
+          "validation": 57506
+        },
+        "test_metrics": {
+          "accuracy": 0.9995130942858137,
+          "confusion_matrix": [
+            [
+              55797,
+              25
+            ],
+            [
+              3,
+              1681
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9917404129793511,
+          "loss": 0.0009150800397671697,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9853458382180539,
+          "recall": 0.9982185273159145,
+          "threshold": 0.5
+        }
+      },
+      "command": [
+        "/Users/neilvargheseabraham/Downloads/LogInsight/.venv-metal/bin/python",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/scripts/train_logrobust_attention_bilstm.py",
+        "--config",
+        "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/logrobust_attention_bilstm_training_config.json",
+        "--seed",
+        "13"
+      ],
+      "seed": 13,
+      "status": "reused_existing"
+    }
+  }
+}

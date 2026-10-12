@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "description": "Leakage-free LogInsight LSTM training configuration for HDFS block splits.",
+  "data": {
+    "train": "research/data/processed/hdfs_block_evidence_train.jsonl.gz",
+    "validation": "research/data/processed/hdfs_block_evidence_validation.jsonl.gz",
+    "test": "research/data/processed/hdfs_block_evidence_test.jsonl.gz",
+    "vocabulary": "research/models/vocabularies/event_vocabulary.json",
+    "output_dir": "research/models/checkpoints/loginsight_lstm",
+    "seed": 13,
+    "architecture": "loginsight_lstm"
+  },
+  "training": {
+    "max_sequence_length": 50,
+    "padding": "pre",
+    "truncating": "pre",
+    "embedding_dim": 128,
+    "first_lstm_units": 128,
+    "second_lstm_units": 64,
+    "dense_units": 32,
+    "first_lstm_dropout": 0.3,
+    "second_lstm_dropout": 0.3,
+    "dense_dropout": 0.2,
+    "mask_zero": false,
+    "learning_rate": 0.001,
+    "batch_size": 128,
+    "prediction_batch_size": 256,
+    "epochs": 20,
+    "early_stopping_patience": 3,
+    "reduce_lr_patience": 2,
+    "threshold": 0.5,
+    "deterministic": true,
+    "use_class_weights": true
+  }
+}

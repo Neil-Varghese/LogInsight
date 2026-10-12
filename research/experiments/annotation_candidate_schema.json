@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LogInsight-FV annotation candidate",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "dataset",
+    "unit_id",
+    "split",
+    "label",
+    "sequence_length",
+    "confidence",
+    "architecture"
+  ],
+  "properties": {
+    "dataset": {"enum": ["HDFS", "BGL"]},
+    "unit_id": {"type": "string", "minLength": 1},
+    "split": {"type": "string", "minLength": 1},
+    "label": {"enum": ["Normal", "Anomaly"]},
+    "sequence_length": {"type": "integer", "minimum": 1},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "architecture": {"type": "string", "minLength": 1}
+  }
+}

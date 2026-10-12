@@ -1,0 +1,43 @@
+{
+  "assignment_path": "research/data/manifests/hdfs_block_assignments.jsonl.gz",
+  "assignment_sha256": "b6707b9627b809d6f70ad64fa89be709b1db78bb234ab914abed629088d6cc8c",
+  "block_count": 575061,
+  "block_disjoint": true,
+  "fractions": {
+    "test": 0.1,
+    "train": 0.8,
+    "validation": 0.1
+  },
+  "input": "research/data/processed/hdfs_block_evidence.jsonl.gz",
+  "output_dir": "research/data/processed",
+  "seed": 2026,
+  "split_counts": {
+    "test": 57506,
+    "train": 460049,
+    "validation": 57506
+  },
+  "split_label_counts": {
+    "test": {
+      "Anomaly": 1684,
+      "Normal": 55822
+    },
+    "train": {
+      "Anomaly": 13470,
+      "Normal": 446579
+    },
+    "validation": {
+      "Anomaly": 1684,
+      "Normal": 55822
+    }
+  },
+  "split_paths": {
+    "test": "research/data/processed/hdfs_block_evidence_test.jsonl.gz",
+    "train": "research/data/processed/hdfs_block_evidence_train.jsonl.gz",
+    "validation": "research/data/processed/hdfs_block_evidence_validation.jsonl.gz"
+  },
+  "split_sha256": {
+    "test": "fb9d406b13d2bb6c4d042ce817956f513686ea0737694475a9b4046a0903fcfe",
+    "train": "697801bac60c136a6595f7985df28ac61b5d4fca8cd6f87924a1223ec22073e8",
+    "validation": "5f5d8a84944dd07a0ec28ed97468309222946d0e92c21378e17a76bdddcb30b2"
+  }
+}

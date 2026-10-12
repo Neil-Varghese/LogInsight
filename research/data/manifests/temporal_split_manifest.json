@@ -1,0 +1,157 @@
+{
+  "datasets": {
+    "BGL": {
+      "assigned_unit_count": 27670,
+      "assignment_path": "research/data/manifests/bgl_temporal_assignments.jsonl.gz",
+      "assignment_sha256": "ec26ee26ded91e080639d04fd9f75af9e100eacbf986be4ae18ef099156884df",
+      "boundary_policy": "strict_interval_containment_with_boundary_purge",
+      "cutoffs": {
+        "train_validation_epoch": 1131499800,
+        "train_validation_iso": "2005-11-09T01:30:00+00:00",
+        "validation_test_epoch": 1133970480,
+        "validation_test_iso": "2005-12-07T15:48:00+00:00"
+      },
+      "dataset": "BGL",
+      "excluded_unit_count": 0,
+      "fractions": {
+        "test": 0.1,
+        "train": 0.8,
+        "validation": 0.1
+      },
+      "input": "research/data/processed/BGL_windows.jsonl.gz",
+      "prediction_unit": "WindowId",
+      "source_unit_count": 27670,
+      "split_counts": {
+        "test": 2767,
+        "train": 22136,
+        "validation": 2767
+      },
+      "split_label_counts": {
+        "test": {
+          "Anomaly": 106,
+          "Normal": 2661
+        },
+        "train": {
+          "Anomaly": 1453,
+          "Normal": 20683
+        },
+        "validation": {
+          "Anomaly": 279,
+          "Normal": 2488
+        }
+      },
+      "split_paths": {
+        "test": "research/data/processed/BGL_windows_temporal_test.jsonl.gz",
+        "train": "research/data/processed/BGL_windows_temporal_train.jsonl.gz",
+        "validation": "research/data/processed/BGL_windows_temporal_validation.jsonl.gz"
+      },
+      "split_sha256": {
+        "test": "26f7bbefb563b720a35607e68695b7c23138b520e55ff4c74149b0d6c6ee19a0",
+        "train": "f75b2a5c61c97c4e2ad8752af806610965a73e46474890154e861e709d6ad28f",
+        "validation": "6520dbe45a15f3f4b00f25f5db89947a9613c25a0e7ba827870f0fde6d4ba2db"
+      },
+      "split_time_ranges": {
+        "test": {
+          "max_end_exclusive_epoch": 1136390460,
+          "max_end_exclusive_iso": "2006-01-04T16:01:00+00:00",
+          "min_start_epoch": 1133970480,
+          "min_start_iso": "2005-12-07T15:48:00+00:00"
+        },
+        "train": {
+          "max_end_exclusive_epoch": 1131499560,
+          "max_end_exclusive_iso": "2005-11-09T01:26:00+00:00",
+          "min_start_epoch": 1117838520,
+          "min_start_iso": "2005-06-03T22:42:00+00:00"
+        },
+        "validation": {
+          "max_end_exclusive_epoch": 1133970180,
+          "max_end_exclusive_iso": "2005-12-07T15:43:00+00:00",
+          "min_start_epoch": 1131499800,
+          "min_start_iso": "2005-11-09T01:30:00+00:00"
+        }
+      },
+      "strict_temporal_disjoint": true,
+      "timestamp_policy": "WindowStartEpoch/WindowEndEpochExclusive; boundary-crossing windows purged"
+    },
+    "HDFS": {
+      "assigned_unit_count": 507908,
+      "assignment_path": "research/data/manifests/hdfs_temporal_assignments.jsonl.gz",
+      "assignment_sha256": "31858166adaddbbb5905bee744638547b7781cea0fddcb1b4b9fe43ea654dd21",
+      "boundary_policy": "strict_interval_containment_with_boundary_purge",
+      "cutoffs": {
+        "train_validation_epoch": 1226389354,
+        "train_validation_iso": "2008-11-11T07:42:34+00:00",
+        "validation_test_epoch": 1226395453,
+        "validation_test_iso": "2008-11-11T09:24:13+00:00"
+      },
+      "dataset": "HDFS",
+      "excluded_unit_count": 67153,
+      "fractions": {
+        "test": 0.1,
+        "train": 0.8,
+        "validation": 0.1
+      },
+      "input": "research/data/processed/hdfs_block_evidence.jsonl.gz",
+      "prediction_unit": "BlockId",
+      "source_unit_count": 575061,
+      "split_counts": {
+        "test": 57505,
+        "train": 394619,
+        "validation": 55784
+      },
+      "split_label_counts": {
+        "test": {
+          "Anomaly": 793,
+          "Normal": 56712
+        },
+        "train": {
+          "Anomaly": 12367,
+          "Normal": 382252
+        },
+        "validation": {
+          "Anomaly": 878,
+          "Normal": 54906
+        }
+      },
+      "split_paths": {
+        "test": "research/data/processed/hdfs_block_evidence_temporal_test.jsonl.gz",
+        "train": "research/data/processed/hdfs_block_evidence_temporal_train.jsonl.gz",
+        "validation": "research/data/processed/hdfs_block_evidence_temporal_validation.jsonl.gz"
+      },
+      "split_sha256": {
+        "test": "0b431f0f8cf4d0ec8cb4e27594f6d56a01e2bc85c371f6f030f6dfd8394a5142",
+        "train": "8b01d9bd2fcb6f7306aef7a51b3a7c6237f34a46581235c2f5fc428f52d64a0f",
+        "validation": "f7a4c254e05bd6bfd137a8cd2f36c55e317ce4c7de867385adda02e14d0bc7c7"
+      },
+      "split_time_ranges": {
+        "test": {
+          "max_end_exclusive_epoch": 1226402073,
+          "max_end_exclusive_iso": "2008-11-11T11:14:33+00:00",
+          "min_start_epoch": 1226395453,
+          "min_start_iso": "2008-11-11T09:24:13+00:00"
+        },
+        "train": {
+          "max_end_exclusive_epoch": 1226389354,
+          "max_end_exclusive_iso": "2008-11-11T07:42:34+00:00",
+          "min_start_epoch": 1226262918,
+          "min_start_iso": "2008-11-09T20:35:18+00:00"
+        },
+        "validation": {
+          "max_end_exclusive_epoch": 1226395453,
+          "max_end_exclusive_iso": "2008-11-11T09:24:13+00:00",
+          "min_start_epoch": 1226389354,
+          "min_start_iso": "2008-11-11T07:42:34+00:00"
+        }
+      },
+      "strict_temporal_disjoint": true,
+      "timestamp_policy": "min/max Evidence.RawLine HDFS timestamps; boundary-crossing blocks purged"
+    }
+  },
+  "fractions": {
+    "test": 0.1,
+    "train": 0.8,
+    "validation": 0.1
+  },
+  "manifest_version": "1.0.0",
+  "strategy": "strict_temporal_split_with_boundary_purge"
+}

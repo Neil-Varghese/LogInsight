@@ -1,5 +1,7 @@
 LogInsight-FV Implementation Steps
 
+`[TIME-INTENSIVE]` marks steps expected to require substantial runtime, repeated model/LLM execution, human annotation effort, or extensive manuscript/artifact work. This tag does not indicate completion.
+
 Use one numbered item as one Codex chat. Do not combine targets until the previous one is verified.
 
 Phase 1: Project setup
@@ -36,49 +38,49 @@ Phase 2: Dataset preparation
 
 [DONE] 15. Implement the unknown-event token (adds it to the detector vocabulary during training).
 
-16. Build shared HDFS and BGL preprocessing tests (checks ordering, labels, lengths, and malformed records).
+[DONE] 16. Build shared HDFS and BGL preprocessing tests (checks ordering, labels, lengths, and malformed records).
 
-17. Create block-disjoint HDFS splits (ensures one BlockId never appears in multiple splits).
+[DONE] 17. Create block-disjoint HDFS splits (ensures one BlockId never appears in multiple splits).
 
-18. Create temporal splits where possible (tests later data against earlier training data).
+[DONE] 18. Create temporal splits where possible (tests later data against earlier training data).
 
-19. Create leakage-detection checks (automatically detects duplicated blocks, retrieval leakage, and parser leakage).
+[DONE] 19. Create leakage-detection checks (automatically detects duplicated blocks, retrieval leakage, and parser leakage).
 
 20. Sample the 200–300 block/window annotation pool (stratifies by label, length, confidence, architecture, and dataset).
 
 Phase 3: Detector implementation
 
-21. Refactor the current LSTM into a reusable training script (supports configuration, seeds, checkpoints, and evaluation).
+[DONE] 21. Refactor the current LSTM into a reusable training script (supports configuration, seeds, checkpoints, and evaluation).
 
-22. Add detector probability calibration (makes anomaly probabilities comparable).
+[DONE] 22. Add detector probability calibration (makes anomaly probabilities comparable).
 
-23. Add validation-based threshold selection (prevents test-set threshold tuning).
+[DONE] 23. Add validation-based threshold selection (prevents test-set threshold tuning).
 
-24. Train the leakage-free LogInsight LSTM (establishes the first detector).
+[DONE] [TIME-INTENSIVE] 24. Train the leakage-free LogInsight LSTM (establishes the first detector).
 
-25. Record LSTM baseline results (stores precision, recall, F1, PR-AUC, and calibration).
+[DONE] 25. Record LSTM baseline results (stores precision, recall, F1, PR-AUC, and calibration).
 
-26. Integrate a published LogRobust-style attention Bi-LSTM (uses a citable second architecture).
+[DONE] [TIME-INTENSIVE] 26. Integrate a published LogRobust-style attention Bi-LSTM (uses a citable second architecture).
 
-27. Document all LogRobust implementation deviations (makes the comparison reproducible).
+[DONE] 27. Document all LogRobust implementation deviations (makes the comparison reproducible).
 
-28. Create a shared detector interface (allows both detectors to use identical inputs and evaluation code).
+[DONE] 28. Create a shared detector interface (allows both detectors to use identical inputs and evaluation code).
 
-29. Train both detectors with multiple seeds (captures detector variability).
+29. [TIME-INTENSIVE] Train both detectors with multiple seeds (captures detector variability).
 
 30. Add detector inference caching and batching (reduces repeated perturbation cost).
 
 Phase 4: Attribution implementation
 
-31. Implement Integrated Gradients for the LSTM (produces the prompt-visible attribution).
+31. [TIME-INTENSIVE] Implement Integrated Gradients for the LSTM (produces the prompt-visible attribution).
 
-32. Implement Integrated Gradients for LogRobust (keeps attribution conditions consistent).
+32. [TIME-INTENSIVE] Implement Integrated Gradients for LogRobust (keeps attribution conditions consistent).
 
 33. Validate Integrated Gradients outputs (checks attribution completeness and event-index alignment).
 
-34. Implement occlusion scores (stores verification-only attribution values).
+34. [TIME-INTENSIVE] Implement occlusion scores (stores verification-only attribution values).
 
-35. Implement leave-one-event-out scores (stores another verification-only diagnostic).
+35. [TIME-INTENSIVE] Implement leave-one-event-out scores (stores another verification-only diagnostic).
 
 36. Enforce attribution separation (occlusion and leave-one-out values must never enter LLM prompts).
 
@@ -104,7 +106,7 @@ Phase 5: LLM explanation pipeline
 
 46. Record model versions and decoding settings (stores temperature, seed, limits, and context size).
 
-47. Implement repeated LLM generation (captures LLM output variance).
+47. [TIME-INTENSIVE] Implement repeated LLM generation (captures LLM output variance).
 
 48. Implement structured-response parsing (handles invalid JSON, missing citations, and malformed claims).
 
@@ -124,13 +126,13 @@ Phase 6: Annotation and registration
 
 55. Blind annotators to conditions and attribution values (prevents annotation bias).
 
-56. Collect evidence-relevance labels for every core annotation block (creates the primary human ground truth).
+56. [TIME-INTENSIVE] Collect evidence-relevance labels for every core annotation block (creates the primary human ground truth).
 
-57. Collect claim-support labels for the pre-registered explanation sample (creates the secondary human outcome).
+57. [TIME-INTENSIVE] Collect claim-support labels for the pre-registered explanation sample (creates the secondary human outcome).
 
-58. Calculate inter-annotator agreement (use Cohen’s kappa or Krippendorff’s alpha).
+58. [TIME-INTENSIVE] Calculate inter-annotator agreement (use Cohen’s kappa or Krippendorff’s alpha).
 
-59. Adjudicate disagreements using the written guideline (records decisions and disagreement reasons).
+59. [TIME-INTENSIVE] Adjudicate disagreements using the written guideline (records decisions and disagreement reasons).
 
 60. Prepare the ethics documentation (consent, compensation, anonymization, and institutional approval/exemption).
 
@@ -164,23 +166,23 @@ Phase 7: Perturbation and faithfulness
 
 74. Define the attribution-only reference and random floor (makes consistency scores interpretable).
 
-75. Implement the small ROAR-style retraining check (retrain on a limited modified subset).
+75. [TIME-INTENSIVE] Implement the small ROAR-style retraining check (retrain on a limited modified subset).
 
 Phase 8: Pilot and go/no-go decision
 
-76. Build the minimal HDFS pilot dataset (uses a small annotated and synthetic sample).
+76. [TIME-INTENSIVE] Build the minimal HDFS pilot dataset (uses a small annotated and synthetic sample).
 
-77. Run the LSTM blinded condition (creates the baseline explanation outputs).
+77. [TIME-INTENSIVE] Run the LSTM blinded condition (creates the baseline explanation outputs).
 
-78. Run the LSTM unblinded condition (uses Integrated Gradients only).
+78. [TIME-INTENSIVE] Run the LSTM unblinded condition (uses Integrated Gradients only).
 
-79. Run the shuffled and random controls (tests attribution circularity and chance performance).
+79. [TIME-INTENSIVE] Run the shuffled and random controls (tests attribution circularity and chance performance).
 
-80. Run deletion and normal-replacement verification (tests at least two perturbation strategies).
+80. [TIME-INTENSIVE] Run deletion and normal-replacement verification (tests at least two perturbation strategies).
 
-81. Calculate pilot human-evidence recovery (measures evidence precision, recall, and F1).
+81. [TIME-INTENSIVE] Calculate pilot human-evidence recovery (measures evidence precision, recall, and F1).
 
-82. Calculate pilot detector faithfulness (measures score changes and perturbation consistency).
+82. [TIME-INTENSIVE] Calculate pilot detector faithfulness (measures score changes and perturbation consistency).
 
 83. Apply the registered go/no-go rule (decides whether to continue the attribution hypothesis).
 
@@ -190,23 +192,23 @@ Phase 9: Main experiment
 
 85. Freeze all main experiment configurations (no unregistered prompt or model changes).
 
-86. Run all HDFS conditions with the LogInsight LSTM (primary block-level experiment).
+86. [TIME-INTENSIVE] Run all HDFS conditions with the LogInsight LSTM (primary block-level experiment).
 
-87. Run all HDFS conditions with LogRobust (tests architecture dependence).
+87. [TIME-INTENSIVE] Run all HDFS conditions with LogRobust (tests architecture dependence).
 
-88. Run all BGL conditions with the agreed window/session unit (tests transfer beyond HDFS).
+88. [TIME-INTENSIVE] Run all BGL conditions with the agreed window/session unit (tests transfer beyond HDFS).
 
-89. Run all LLM conditions across repeated generations (captures stochasticity).
+89. [TIME-INTENSIVE] Run all LLM conditions across repeated generations (captures stochasticity).
 
-90. Run the registered perturbation sample (uses deletion, replacement, masking, and resampling).
+90. [TIME-INTENSIVE] Run the registered perturbation sample (uses deletion, replacement, masking, and resampling).
 
-91. Run the ROAR-style subset experiment (reports limited OOD/retraining evidence).
+91. [TIME-INTENSIVE] Run the ROAR-style subset experiment (reports limited OOD/retraining evidence).
 
-92. Collect secondary claim-support annotations (uses only the registered explanation sample).
+92. [TIME-INTENSIVE] Collect secondary claim-support annotations (uses only the registered explanation sample).
 
 93. Record latency and token cost (reports execution feasibility without expanding scope).
 
-94. Run automated experiment-quality checks (detects missing outputs, invalid prompts, leakage, and failed runs).
+94. [TIME-INTENSIVE] Run automated experiment-quality checks (detects missing outputs, invalid prompts, leakage, and failed runs).
 
 Phase 10: Analysis
 
@@ -220,19 +222,19 @@ Phase 10: Analysis
 
 99. Calculate perturbation consistency (compares all strategies against the random floor and attribution-only reference).
 
-100. Run the registered TOST analysis (tests equivalence within the 0.05 margin).
+100. [TIME-INTENSIVE] Run the registered TOST analysis (tests equivalence within the 0.05 margin).
 
 101. Calculate confidence intervals and effect sizes (reports uncertainty instead of only averages).
 
-102. Analyse detector-seed variance (separates training variation from explanation variation).
+102. [TIME-INTENSIVE] Analyse detector-seed variance (separates training variation from explanation variation).
 
-103. Analyse LLM-run variance (reports repeated-generation instability).
+103. [TIME-INTENSIVE] Analyse LLM-run variance (reports repeated-generation instability).
 
 104. Apply multiple-comparison correction (uses the registered correction method).
 
-105. Create the main result tables (separates human evidence from detector faithfulness).
+105. [TIME-INTENSIVE] Create the main result tables (separates human evidence from detector faithfulness).
 
-106. Create the main figures (pipeline, condition matrix, perturbation consistency, and outcome comparison).
+106. [TIME-INTENSIVE] Create the main figures (pipeline, condition matrix, perturbation consistency, and outcome comparison).
 
 107. Write the threats-to-validity analysis (covers dataset, annotation, detector, perturbation, and LLM limitations).
 
@@ -240,25 +242,25 @@ Phase 11: Artifact and paper completion
 
 108. Clean and anonymize released outputs (removes secrets and sensitive log content).
 
-109. Package code, configs, prompts, splits, and ledgers (creates a reproducible artifact).
+109. [TIME-INTENSIVE] Package code, configs, prompts, splits, and ledgers (creates a reproducible artifact).
 
 110. Package permissible annotation labels (preserves privacy and consent requirements).
 
-111. Re-run the project from a clean environment (verifies reproducibility).
+111. [TIME-INTENSIVE] Re-run the project from a clean environment (verifies reproducibility).
 
-112. Create a versioned release and DOI (for example, through Zenodo).
+112. [TIME-INTENSIVE] Create a versioned release and DOI (for example, through Zenodo).
 
-113. Write the methodology section (documents the registered protocol exactly).
+113. [TIME-INTENSIVE] Write the methodology section (documents the registered protocol exactly).
 
-114. Write the results section (reports positive, negative, or inconclusive findings honestly).
+114. [TIME-INTENSIVE] Write the results section (reports positive, negative, or inconclusive findings honestly).
 
-115. Write the related-work and novelty-boundary section (positions against ERASER, ROAR, and log-analysis work).
+115. [TIME-INTENSIVE] Write the related-work and novelty-boundary section (positions against ERASER, ROAR, and log-analysis work).
 
-116. Write limitations and ethics sections (avoids overclaiming real-world root cause).
+116. [TIME-INTENSIVE] Write limitations and ethics sections (avoids overclaiming real-world root cause).
 
-117. Perform a final registration-versus-results audit (checks that no unregistered analysis became primary).
+117. [TIME-INTENSIVE] Perform a final registration-versus-results audit (checks that no unregistered analysis became primary).
 
-118. Prepare the final manuscript and supplementary material (includes tables, prompts, annotation protocol, and artifact link).
+118. [TIME-INTENSIVE] Prepare the final manuscript and supplementary material (includes tables, prompts, annotation protocol, and artifact link).
 
 Suggested opening prompt for each new Codex chat:
 
