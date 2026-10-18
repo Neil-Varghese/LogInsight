@@ -1,0 +1,39 @@
+{
+  "analysis": "paired_tost_sample_size_planning",
+  "step": 61,
+  "status": "complete",
+  "planning_convention": "two_sided_95_percent_ci_under_true_difference_zero",
+  "margin_absolute_f1": 0.05,
+  "alpha": 0.05,
+  "target_power": 0.8,
+  "sd_values": [
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35
+  ],
+  "results": [
+    {
+      "paired_sd": 0.15,
+      "required_independent_pairs": 71
+    },
+    {
+      "paired_sd": 0.2,
+      "required_independent_pairs": 126
+    },
+    {
+      "paired_sd": 0.25,
+      "required_independent_pairs": 197
+    },
+    {
+      "paired_sd": 0.3,
+      "required_independent_pairs": 283
+    },
+    {
+      "paired_sd": 0.35,
+      "required_independent_pairs": 385
+    }
+  ],
+  "interpretation": "These are independent paired annotation items required for the primary comparison. The planned recruitment target should exceed the selected SD scenario to allow for unusable cases and annotation loss."
+}

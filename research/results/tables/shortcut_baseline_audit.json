@@ -1,0 +1,241 @@
+{
+  "audit": "shortcut_baselines",
+  "baselines": [
+    {
+      "class_weight": "balanced",
+      "coefficients": 394,
+      "fit_split": "train",
+      "metrics": {
+        "test": {
+          "accuracy": 0.998869683163496,
+          "average_precision": 0.9824122153702461,
+          "confusion_matrix": [
+            [
+              55757,
+              65
+            ],
+            [
+              0,
+              1684
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9810661229245559,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9628359062321327,
+          "recall": 1.0,
+          "threshold": 0.5
+        },
+        "train": {
+          "accuracy": 0.998721875278503,
+          "average_precision": 0.9842058672360653,
+          "confusion_matrix": [
+            [
+              445997,
+              582
+            ],
+            [
+              6,
+              13464
+            ]
+          ],
+          "count": 460049,
+          "f1": 0.9786306149149585,
+          "negative_count": 446579,
+          "positive_count": 13470,
+          "precision": 0.9585647159333618,
+          "recall": 0.999554565701559,
+          "threshold": 0.5
+        },
+        "validation": {
+          "accuracy": 0.998869683163496,
+          "average_precision": 0.9786661009872927,
+          "confusion_matrix": [
+            [
+              55760,
+              62
+            ],
+            [
+              3,
+              1681
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9810329734461629,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9644291451520367,
+          "recall": 0.9982185273159145,
+          "threshold": 0.5
+        }
+      },
+      "name": "event_count_logistic_regression",
+      "threshold_policy": "fixed_0.5_no_test_tuning"
+    },
+    {
+      "class_weight": "balanced",
+      "coefficients": 1,
+      "fit_split": "train",
+      "metrics": {
+        "test": {
+          "accuracy": 0.8046986401418983,
+          "average_precision": 0.38720472947588835,
+          "confusion_matrix": [
+            [
+              45629,
+              10193
+            ],
+            [
+              1038,
+              646
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.10317016689291703,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.05959959405849248,
+          "recall": 0.3836104513064133,
+          "threshold": 0.5
+        },
+        "train": {
+          "accuracy": 0.8045382122339142,
+          "average_precision": 0.38286235778788386,
+          "confusion_matrix": [
+            [
+              364983,
+              81596
+            ],
+            [
+              8326,
+              5144
+            ]
+          ],
+          "count": 460049,
+          "f1": 0.10266440475002495,
+          "negative_count": 446579,
+          "positive_count": 13470,
+          "precision": 0.059303666128660365,
+          "recall": 0.38188567186340017,
+          "threshold": 0.5
+        },
+        "validation": {
+          "accuracy": 0.8064375891211352,
+          "average_precision": 0.39084124678437004,
+          "confusion_matrix": [
+            [
+              45719,
+              10103
+            ],
+            [
+              1028,
+              656
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.10544081009402877,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.06097220931313319,
+          "recall": 0.38954869358669836,
+          "threshold": 0.5
+        }
+      },
+      "name": "length_only_logistic_regression",
+      "threshold_policy": "fixed_0.5_no_test_tuning"
+    }
+  ],
+  "detectors": [
+    {
+      "architecture": "loginsight_lstm",
+      "metrics": {
+        "test": {
+          "accuracy": 0.9970090077557124,
+          "average_precision": 0.9925832357511062,
+          "confusion_matrix": [
+            [
+              55650,
+              172
+            ],
+            [
+              0,
+              1684
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.9514124293785311,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.9073275862068966,
+          "recall": 1.0,
+          "threshold": 0.5
+        }
+      },
+      "name": "detector",
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/predictions_test.jsonl.gz",
+      "seed": 13,
+      "sha256": "1505a3d17d14d4dab1532d6a47bf4aaf3b85c842570c172ddc8b87a69f27bda9"
+    },
+    {
+      "architecture": "logrobust_attention_bilstm",
+      "metrics": {
+        "test": {
+          "accuracy": 0.9998782735714534,
+          "average_precision": 0.9999280472847221,
+          "confusion_matrix": [
+            [
+              55818,
+              4
+            ],
+            [
+              3,
+              1681
+            ]
+          ],
+          "count": 57506,
+          "f1": 0.997922232116355,
+          "negative_count": 55822,
+          "positive_count": 1684,
+          "precision": 0.997626112759644,
+          "recall": 0.9982185273159145,
+          "threshold": 0.5
+        }
+      },
+      "name": "detector",
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/predictions_test.jsonl.gz",
+      "seed": 202,
+      "sha256": "1bc5df891f2ef5071703d299551a857c0b543d48e891bbfc84c4f2ff97301da7"
+    }
+  ],
+  "feature_definition": {
+    "event_count": "training-vocabulary bag-of-event-ID counts from the full unpadded Sequence",
+    "length_only": "number of events in the full unpadded Sequence",
+    "unknown_test_events": "ignored because vocabulary is fitted on training only"
+  },
+  "fit_policy": {
+    "class_weight": "balanced",
+    "fit_split": "train",
+    "test_labels_used_for_fit_or_tuning": false,
+    "threshold": 0.5
+  },
+  "inputs": {
+    "test": {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/data/processed/hdfs_block_evidence_test.jsonl.gz",
+      "sha256": "fb9d406b13d2bb6c4d042ce817956f513686ea0737694475a9b4046a0903fcfe",
+      "unit_count": 57506
+    },
+    "train": {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/data/processed/hdfs_block_evidence_train.jsonl.gz",
+      "sha256": "697801bac60c136a6595f7985df28ac61b5d4fca8cd6f87924a1223ec22073e8",
+      "unit_count": 460049
+    },
+    "validation": {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/data/processed/hdfs_block_evidence_validation.jsonl.gz",
+      "sha256": "5f5d8a84944dd07a0ec28ed97468309222946d0e92c21378e17a76bdddcb30b2",
+      "unit_count": 57506
+    }
+  },
+  "schema_version": "1.0",
+  "training_event_vocabulary_size": 394
+}

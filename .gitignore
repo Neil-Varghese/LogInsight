@@ -1,4 +1,5 @@
 .venv/
+.venv-colab*/
 backend/sample_logs/HDFS.log
 research/output/HDFS.log_structured.csv
 research/X_train.npy

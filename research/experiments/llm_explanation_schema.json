@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loginsight.local/schemas/llm-explanation.json",
+  "title": "LogInsight-FV structured LLM explanation",
+  "description": "The machine-readable explanation payload returned by an LLM. This schema contains claims and their event/line citations, confidence, and explicit abstention state; prompt, model, and raw-response provenance remain in the experiment ledger.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "answer_status",
+    "summary",
+    "claims",
+    "cited_event_ids",
+    "cited_line_ids",
+    "overall_confidence",
+    "abstention"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "answer_status": {
+      "type": "string",
+      "enum": ["answered", "partially_abstained", "fully_abstained"]
+    },
+    "summary": {
+      "type": ["string", "null"]
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "cited_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "cited_line_ids": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {"type": "string", "minLength": 1},
+          {"type": "integer"}
+        ]
+      },
+      "uniqueItems": true
+    },
+    "overall_confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "abstention": {
+      "$ref": "#/$defs/abstention"
+    }
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "claim_type",
+        "text",
+        "cited_event_ids",
+        "cited_line_ids",
+        "confidence",
+        "abstained"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_type": {
+          "type": "string",
+          "enum": [
+            "anomalous_pattern",
+            "contrastive_difference",
+            "detector_behavior",
+            "uncertainty"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cited_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "cited_line_ids": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {"type": "string", "minLength": 1},
+              {"type": "integer"}
+            ]
+          },
+          "uniqueItems": true
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "abstained": {
+          "type": "boolean"
+        },
+        "predicted_effect": {
+          "type": ["string", "null"],
+          "enum": [
+            "increase_anomaly_score",
+            "decrease_anomaly_score",
+            "no_change",
+            "uncertain",
+            null
+          ]
+        }
+      }
+    },
+    "abstention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["none", "partial", "full"]
+        },
+        "reason": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}

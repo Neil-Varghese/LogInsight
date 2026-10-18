@@ -1,0 +1,223 @@
+{
+  "step": 63,
+  "manifest_version": "1.0",
+  "status": "registered",
+  "registration": {
+    "platform": "OSF",
+    "url": "https://osf.io/qrvuy/overview",
+    "registered_at_utc": "2026-10-18T11:09:55.996049+00:00",
+    "version": "step63-v1"
+  },
+  "code_version": {
+    "git_commit": "8c17ea4c28ff3f3693070e7993588e08a9ff99b1",
+    "working_tree_dirty": true,
+    "working_tree_status": [
+      "M .gitignore",
+      " M README.md",
+      " M research/experiments/README.md",
+      " M research/experiments/experiment_config.json",
+      " M research/implementation_steps.txt",
+      " M research/project_knowledge_graph.md",
+      " M research/prompts/README.md",
+      " M research/results/tables/multiseed_training_manifest.json",
+      " M research/scripts/README.md",
+      " M research/scripts/detector_interface.py",
+      " M research/steps_1_to_20_documentation.md",
+      "?? .DS_Store",
+      "?? .colab_cli_settings.json",
+      "?? .colab_cli_settings.json.lock",
+      "?? .venv-metal/",
+      "?? research/Untitled-1.ipynb",
+      "?? research/data/processed/",
+      "?? research/data/raw/",
+      "?? research/experiments/llm_explanation_schema.json",
+      "?? research/experiments/llm_model_selection.md",
+      "?? research/experiments/llm_step46_colab.md",
+      "?? research/experiments/llm_step46_colab_mistral.md",
+      "?? research/experiments/llm_step47a_colab_gpt_oss.md",
+      "?? research/experiments/pilot/annotation_candidates.jsonl",
+      "?? research/experiments/pilot/annotation_pool.jsonl.gz",
+      "?? research/experiments/pilot/annotation_pool_manifest.json",
+      "?? research/experiments/pilot/step47a_cloudflare_gpt_oss_generation.jsonl",
+      "?? research/experiments/pilot/step47a_cloudflare_gpt_oss_generation_full.jsonl",
+      "?? research/experiments/pilot/step47a_cloudflare_gpt_oss_generation_full_2048.jsonl",
+      "?? research/experiments/pilot/step47a_gpt_oss_generation.jsonl",
+      "?? research/experiments/protocol_freeze_step62.json",
+      "?? research/experiments/registration/",
+      "?? research/implementation_summary.md",
+      "?? research/models/checkpoints/loginsight_lstm/",
+      "?? research/models/checkpoints/logrobust_attention_bilstm/",
+      "?? research/results/r4_artifacts/",
+      "?? research/results/tables/primary_explanation_seed_selection.json",
+      "?? research/results/tables/sequence_overlap_audit.json",
+      "?? research/results/tables/shortcut_baseline_audit.json",
+      "?? research/results/tables/step46_llm_smoke_test.json",
+      "?? research/results/tables/step46_mistral_18_smoke_responses.jsonl",
+      "?? research/results/tables/step46_mistral_smoke_test.json",
+      "?? research/results/tables/step46_qwen_smoke_test.json",
+      "?? research/results/tables/step47b_qwen_18_smoke_responses.jsonl",
+      "?? research/results/tables/step47b_qwen_18_smoke_test.json",
+      "?? research/results/tables/step61_tost_power_analysis.json",
+      "?? research/scripts/attribution_only_baseline.py",
+      "?? research/scripts/audit_integrated_gradients.py",
+      "?? research/scripts/blinded_prompt.py",
+      "?? research/scripts/build_annotation_candidates.py",
+      "?? research/scripts/contrastive_prompt.py",
+      "?? research/scripts/explanation_schema.py",
+      "?? research/scripts/integrated_gradients_logrobust.py",
+      "?? research/scripts/integrated_gradients_lstm.py",
+      "?? research/scripts/leave_one_event_out_scores.py",
+      "?? research/scripts/no_detector_context_prompt.py",
+      "?? research/scripts/occlusion_scores.py",
+      "?? research/scripts/power_analysis_tost.py",
+      "?? research/scripts/prepare_registration.py",
+      "?? research/scripts/prompt_attribution_boundary.py",
+      "?? research/scripts/random_event_baseline.py",
+      "?? research/scripts/run_gpt_oss_cloudflare_pilot.py",
+      "?? research/scripts/run_gpt_oss_pilot.py",
+      "?? research/scripts/run_mistral_pilot.py",
+      "?? research/scripts/select_primary_explanation_seeds.py",
+      "?? research/scripts/sequence_overlap_audit.py",
+      "?? research/scripts/shortcut_baseline_audit.py",
+      "?? research/scripts/shuffled_integrated_gradients.py",
+      "?? research/scripts/test_attribution_only_baseline.py",
+      "?? research/scripts/test_audit_integrated_gradients.py",
+      "?? research/scripts/test_blinded_prompt.py",
+      "?? research/scripts/test_contrastive_prompt.py",
+      "?? research/scripts/test_detector_inference_cache.py",
+      "?? research/scripts/test_explanation_schema.py",
+      "?? research/scripts/test_gpt_oss_colab_preflight.py",
+      "?? research/scripts/test_integrated_gradients_logrobust.py",
+      "?? research/scripts/test_integrated_gradients_lstm.py",
+      "?? research/scripts/test_leave_one_event_out_scores.py",
+      "?? research/scripts/test_llm_models.py",
+      "?? research/scripts/test_mistral_colab_preflight.py",
+      "?? research/scripts/test_no_detector_context_prompt.py",
+      "?? research/scripts/test_occlusion_scores.py",
+      "?? research/scripts/test_power_analysis_tost.py",
+      "?? research/scripts/test_prepare_registration.py",
+      "?? research/scripts/test_prompt_attribution_boundary.py",
+      "?? research/scripts/test_qwen_18_smoke.py",
+      "?? research/scripts/test_random_event_baseline.py",
+      "?? research/scripts/test_run_gpt_oss_pilot.py",
+      "?? research/scripts/test_select_primary_explanation_seeds.py",
+      "?? research/scripts/test_sequence_overlap_audit.py",
+      "?? research/scripts/test_shortcut_baseline_audit.py",
+      "?? research/scripts/test_shuffled_integrated_gradients.py",
+      "?? research/scripts/test_training_only_retrieval.py",
+      "?? research/scripts/test_validate_attribution_storage.py",
+      "?? research/scripts/test_validate_integrated_gradients.py",
+      "?? research/scripts/test_validate_protocol_freeze.py",
+      "?? research/scripts/training_only_retrieval.py",
+      "?? research/scripts/validate_attribution_storage.py",
+      "?? research/scripts/validate_integrated_gradients.py",
+      "?? research/scripts/validate_protocol_freeze.py",
+      "?? \"test sets/HDFS.log\"",
+      "?? \"test sets/sample_57k_sessions.log\""
+    ]
+  },
+  "llm_output_guard": {
+    "llm_output_candidates_found": [],
+    "llm_output_generation_allowed": true,
+    "external_registration_required_for_current_run": false
+  },
+  "frozen_files": [
+    {
+      "path": "research/research_proposal.txt",
+      "sha256": "22f6c5e7072e074c97b9f1710065558834e07f757f43e2c742b475ac40103eb8",
+      "bytes": 76528
+    },
+    {
+      "path": "research/experiments/experiment_config.json",
+      "sha256": "8e6e5ff64826b2bbd83ac0175177bbd1f15550341e862ac2aa39852c5ab2260f",
+      "bytes": 27965
+    },
+    {
+      "path": "research/experiments/protocol_freeze_step62.json",
+      "sha256": "240794fc8b11d9b2b9a7cb1911402fa5cfd3b1c053ac917d3a1a5d1fbf58fe87",
+      "bytes": 4221
+    },
+    {
+      "path": "research/experiments/experiment_ledger_schema.json",
+      "sha256": "04ebc353b2290bcc0bd7d971a36b9be8c6ad1043bacb65fbc30a55d7e945b00d",
+      "bytes": 23691
+    },
+    {
+      "path": "research/experiments/llm_explanation_schema.json",
+      "sha256": "6c35c240751403ecc19ed1513efaaffc9fc093843ccae57f46ea73b96a5a0deb",
+      "bytes": 3482
+    },
+    {
+      "path": "research/experiments/annotation_candidate_schema.json",
+      "sha256": "9fc01ea940d41b03434c857feecc2ea620142b19aca9eee85d5c76bdc05dd4c2",
+      "bytes": 692
+    },
+    {
+      "path": "research/experiments/lstm_training_config.json",
+      "sha256": "82ea2f74b8a2f2d24a0f247dea27aff432882040f06743e181076b77798a37c5",
+      "bytes": 1130
+    },
+    {
+      "path": "research/experiments/logrobust_attention_bilstm_training_config.json",
+      "sha256": "80db27fad7a2b4a0e4f95d34e3be758d895bfd18a8feb22c95d911646952d7d6",
+      "bytes": 1128
+    },
+    {
+      "path": "research/experiments/llm_model_selection.md",
+      "sha256": "4378f422d2f4508d1ede404c7b4320c550eea82b854b291913b3be9bbb4aaa63",
+      "bytes": 1749
+    },
+    {
+      "path": "research/results/tables/step61_tost_power_analysis.json",
+      "sha256": "e16cc8b599c46a2543c430f38769e1fb96d4b04f2f6e91a9b771c60fb4107db9",
+      "bytes": 940
+    },
+    {
+      "path": "research/results/tables/primary_explanation_seed_selection.json",
+      "sha256": "d96ceafe91100b53f4ba26288741872d5ef2a27d95da58ef6ae148443422c214",
+      "bytes": 11729
+    },
+    {
+      "path": "research/scripts/prompt_attribution_boundary.py",
+      "sha256": "38f82f1bfe490173f5e73369d028f9de29110f1557941dcc13a258e392adbee8",
+      "bytes": 5198
+    },
+    {
+      "path": "research/scripts/blinded_prompt.py",
+      "sha256": "836d35ba19af43cc0e5037c4922ca8fa15a24ebfa7070f0311e378d5928a9259",
+      "bytes": 3668
+    },
+    {
+      "path": "research/scripts/contrastive_prompt.py",
+      "sha256": "ad070ac1f94f0b7ba056fc61c9f10223e298fdab71117e9fe325982c9b4b3333",
+      "bytes": 6383
+    },
+    {
+      "path": "research/scripts/shuffled_integrated_gradients.py",
+      "sha256": "c237678487a2d2c47a061dfce4781622880db6e1debd34e18d61a6def968d402",
+      "bytes": 11028
+    },
+    {
+      "path": "research/scripts/no_detector_context_prompt.py",
+      "sha256": "5e6bd446ce7ee1a2b3d9268268f3d4d27a64df19ed9e17f0e1f3ea2d22d556f7",
+      "bytes": 2576
+    },
+    {
+      "path": "research/scripts/explanation_schema.py",
+      "sha256": "3ff54d7ff49a9a9c1a7c47d0241dd7b0ea74750fcea3f1d39b8d17e32643ced6",
+      "bytes": 6588
+    },
+    {
+      "path": "research/scripts/power_analysis_tost.py",
+      "sha256": "c50c1718f6a6e0c0e6df10fac4e2a97209237f9ea840de276ca1daaed70cfb37",
+      "bytes": 4853
+    },
+    {
+      "path": "research/experiments/registration/step63_preregistration_packet.md",
+      "sha256": "6bf6fbbb9392fb5b784c5cb36f306fb930e8ea6ac74bf88c1ad8c3442db0e4c9",
+      "bytes": 3683
+    }
+  ],
+  "registration_packet": "research/experiments/registration/step63_preregistration_packet.md",
+  "next_action": "Record the returned registration URL in experiment ledgers and keep the manifest immutable."
+}

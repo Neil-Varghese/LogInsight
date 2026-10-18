@@ -1,0 +1,84 @@
+{
+  "annotation_pool": {
+    "annotation_item_count": 240,
+    "duplicate_sequence_item_count": 138,
+    "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/experiments/pilot/annotation_pool.jsonl.gz",
+    "sha256": "69e4e7c672133c81cb8336ca09bad3352297821a22ab246e56b9558be54f5b0a",
+    "unique_sequence_count": 102,
+    "unique_unit_count": 239
+  },
+  "audit": "hdfs_exact_event_sequence_overlap",
+  "novel_sequence_metrics": [
+    {
+      "accuracy": 0.9067854694996573,
+      "architecture": "loginsight_lstm",
+      "average_precision": 0.974438109865792,
+      "confusion_matrix": [
+        [
+          834,
+          136
+        ],
+        [
+          0,
+          489
+        ]
+      ],
+      "count": 1459,
+      "f1": 0.8779174147217235,
+      "negative_count": 970,
+      "novel_sequence_prediction_count": 1459,
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/predictions_test.jsonl.gz",
+      "positive_count": 489,
+      "precision": 0.7824,
+      "recall": 1.0,
+      "seed": 13,
+      "sha256": "1505a3d17d14d4dab1532d6a47bf4aaf3b85c842570c172ddc8b87a69f27bda9",
+      "total_prediction_count": 57506
+    },
+    {
+      "accuracy": 0.9952021932830706,
+      "architecture": "logrobust_attention_bilstm",
+      "average_precision": 0.99933039964665,
+      "confusion_matrix": [
+        [
+          966,
+          4
+        ],
+        [
+          3,
+          486
+        ]
+      ],
+      "count": 1459,
+      "f1": 0.9928498467824312,
+      "negative_count": 970,
+      "novel_sequence_prediction_count": 1459,
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/predictions_test.jsonl.gz",
+      "positive_count": 489,
+      "precision": 0.9918367346938776,
+      "recall": 0.9938650306748467,
+      "seed": 202,
+      "sha256": "1bc5df891f2ef5071703d299551a857c0b543d48e891bbfc84c4f2ff97301da7",
+      "total_prediction_count": 57506
+    }
+  ],
+  "schema_version": "1.0",
+  "sequence_definition": "exact ordered Sequence event-ID list, without padding",
+  "test": {
+    "novel_unit_fraction": 0.025371265607067088,
+    "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/data/processed/hdfs_block_evidence_test.jsonl.gz",
+    "sha256": "fb9d406b13d2bb6c4d042ce817956f513686ea0737694475a9b4046a0903fcfe",
+    "shared_unique_sequence_count": 3121,
+    "shared_unique_sequence_fraction_of_test_sequences": 0.6838299737072743,
+    "unique_sequence_count": 4564,
+    "unit_count": 57506,
+    "units_with_novel_sequence": 1459,
+    "units_with_sequence_seen_in_train": 56047
+  },
+  "train": {
+    "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/data/processed/hdfs_block_evidence_train.jsonl.gz",
+    "sha256": "697801bac60c136a6595f7985df28ac61b5d4fca8cd6f87924a1223ec22073e8",
+    "unique_sequence_count": 17884,
+    "unit_count": 460049
+  }
+}

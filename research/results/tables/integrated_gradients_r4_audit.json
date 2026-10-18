@@ -1,0 +1,529 @@
+{
+  "audit": "integrated_gradients_r4",
+  "coverage": {
+    "complete": true,
+    "logit_architectures": [
+      "loginsight_lstm",
+      "logrobust_attention_bilstm"
+    ],
+    "probability_architectures": [
+      "loginsight_lstm",
+      "logrobust_attention_bilstm"
+    ],
+    "randomized_model_architectures": [
+      "loginsight_lstm",
+      "logrobust_attention_bilstm"
+    ],
+    "status": "complete",
+    "step_stability_architectures": [
+      "loginsight_lstm",
+      "logrobust_attention_bilstm"
+    ]
+  },
+  "interpretation_constraints": {
+    "coverage_complete_does_not_imply_attribution_quality": true,
+    "no_pre_registered_quality_threshold": true,
+    "randomized_model_sanity_does_not_replace_completeness_or_step_stability": true,
+    "report_distributions_and_architecture_specific_results": true
+  },
+  "logit_artifacts": [
+    {
+      "architecture": "loginsight_lstm",
+      "baseline_probability_distribution": {
+        "count": 16,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "q05": 1.0,
+        "q25": 1.0,
+        "q75": 1.0,
+        "q95": 1.0
+      },
+      "checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_13.keras",
+      "checkpoint_load_mode": null,
+      "completeness_error_distribution": {
+        "count": 16,
+        "max": 0.5459957122802734,
+        "mean": 0.33663010597229004,
+        "median": 0.3505258560180664,
+        "min": 0.022626876831054688,
+        "q05": 0.05832815170288086,
+        "q25": 0.3059663772583008,
+        "q75": 0.4042997360229492,
+        "q95": 0.4750194549560547
+      },
+      "integration_steps": [
+        64
+      ],
+      "manifest_path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_logit64.manifest.json",
+      "output_space": [
+        "logit"
+      ],
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_logit64.jsonl.gz",
+      "randomize_model_seed": null,
+      "records": 16,
+      "seed": 13,
+      "sha256": "723d639ade640c927af042dc0438d9a0f43e0656973be7fac796455fe7ecdc5e",
+      "split": "test",
+      "target": [
+        "anomaly_logit"
+      ]
+    },
+    {
+      "architecture": "logrobust_attention_bilstm",
+      "baseline_probability_distribution": {
+        "count": 16,
+        "max": 0.9914640188217163,
+        "mean": 0.9914418123662472,
+        "median": 0.9914640188217163,
+        "min": 0.9911087155342102,
+        "q05": 0.9913751929998398,
+        "q25": 0.9914640188217163,
+        "q75": 0.9914640188217163,
+        "q95": 0.9914640188217163
+      },
+      "checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_202.keras",
+      "checkpoint_load_mode": "architecture_rebuilt_weights_only",
+      "completeness_error_distribution": {
+        "count": 16,
+        "max": 8.322856903076172,
+        "mean": 2.3354274332523346,
+        "median": 1.6371965408325195,
+        "min": 0.42011499404907227,
+        "q05": 0.7364665269851685,
+        "q25": 1.2503995895385742,
+        "q75": 2.421955108642578,
+        "q95": 6.595999240875244
+      },
+      "integration_steps": [
+        64
+      ],
+      "manifest_path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_logit64.manifest.json",
+      "output_space": [
+        "logit"
+      ],
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_logit64.jsonl.gz",
+      "randomize_model_seed": null,
+      "records": 16,
+      "seed": 202,
+      "sha256": "3b3404993bfb72557683aa448ccec8d24173b3eea1e863e1cca90040b76a1761",
+      "split": "test",
+      "target": [
+        "anomaly_logit"
+      ]
+    }
+  ],
+  "policy": {
+    "baseline_probability_distribution": true,
+    "completeness_error_distribution": true,
+    "logit_space_integrated_gradients_separate_from_probability_space": true,
+    "quality_thresholds_pre_registered": false,
+    "randomized_model_sanity_rule": "mean trained-vs-randomized signed cosine must be lower than mean step-count stability signed cosine",
+    "step_count_stability_metrics": [
+      "signed_cosine",
+      "signed_spearman",
+      "top_k_jaccard"
+    ],
+    "verification_only_methods_accepted": []
+  },
+  "probability_artifacts": [
+    {
+      "architecture": "loginsight_lstm",
+      "baseline_probability_distribution": {
+        "count": 16,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "q05": 1.0,
+        "q25": 1.0,
+        "q75": 1.0,
+        "q95": 1.0
+      },
+      "checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_13.keras",
+      "checkpoint_load_mode": null,
+      "completeness_error_distribution": {
+        "count": 16,
+        "max": 0.07364517450332642,
+        "mean": 0.05875534897495527,
+        "median": 0.06517523527145386,
+        "min": 0.00010173884220421314,
+        "q05": 0.008372782089281827,
+        "q25": 0.062025874853134155,
+        "q75": 0.06913185119628906,
+        "q95": 0.07266116142272949
+      },
+      "integration_steps": [
+        16
+      ],
+      "manifest_path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps16.manifest.json",
+      "output_space": [
+        "probability"
+      ],
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps16.jsonl.gz",
+      "randomize_model_seed": null,
+      "records": 16,
+      "seed": 13,
+      "sha256": "f975c139415db0657de88aa6fb747d99d25e96d03ee6c0837c61ac0655f37b5e",
+      "split": "test",
+      "target": [
+        "anomaly_probability"
+      ]
+    },
+    {
+      "architecture": "loginsight_lstm",
+      "baseline_probability_distribution": {
+        "count": 16,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "q05": 1.0,
+        "q25": 1.0,
+        "q75": 1.0,
+        "q95": 1.0
+      },
+      "checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_13.keras",
+      "checkpoint_load_mode": null,
+      "completeness_error_distribution": {
+        "count": 16,
+        "max": 0.00788348913192749,
+        "mean": 0.002608607926958939,
+        "median": 0.002159029245376587,
+        "min": 6.7864893935620785e-06,
+        "q05": 7.737962005194277e-05,
+        "q25": 0.0009529143571853638,
+        "q75": 0.0035145580768585205,
+        "q95": 0.006291642785072327
+      },
+      "integration_steps": [
+        64
+      ],
+      "manifest_path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps64.manifest.json",
+      "output_space": [
+        "probability"
+      ],
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps64.jsonl.gz",
+      "randomize_model_seed": null,
+      "records": 16,
+      "seed": 13,
+      "sha256": "a772cb44e4a7bba8509e77266e4fe13e7a847d3e89b9ecacb1c501d1b1921c90",
+      "split": "test",
+      "target": [
+        "anomaly_probability"
+      ]
+    },
+    {
+      "architecture": "logrobust_attention_bilstm",
+      "baseline_probability_distribution": {
+        "count": 16,
+        "max": 0.9914640188217163,
+        "mean": 0.9914418123662472,
+        "median": 0.9914640188217163,
+        "min": 0.9911087155342102,
+        "q05": 0.9913751929998398,
+        "q25": 0.9914640188217163,
+        "q75": 0.9914640188217163,
+        "q95": 0.9914640188217163
+      },
+      "checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_202.keras",
+      "checkpoint_load_mode": "architecture_rebuilt_weights_only",
+      "completeness_error_distribution": {
+        "count": 16,
+        "max": 0.9975425004959106,
+        "mean": 0.9112497661262751,
+        "median": 0.9948218762874603,
+        "min": 0.3277660310268402,
+        "q05": 0.5167326405644417,
+        "q25": 0.9910733103752136,
+        "q75": 0.9953619986772537,
+        "q95": 0.997258186340332
+      },
+      "integration_steps": [
+        16
+      ],
+      "manifest_path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps16.manifest.json",
+      "output_space": [
+        "probability"
+      ],
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps16.jsonl.gz",
+      "randomize_model_seed": null,
+      "records": 16,
+      "seed": 202,
+      "sha256": "5d8c5cef3c7803ce3c2d601147a67849cd532aba996360cd40fbd4fb0602e1fc",
+      "split": "test",
+      "target": [
+        "anomaly_probability"
+      ]
+    },
+    {
+      "architecture": "logrobust_attention_bilstm",
+      "baseline_probability_distribution": {
+        "count": 16,
+        "max": 0.9914640188217163,
+        "mean": 0.9914418123662472,
+        "median": 0.9914640188217163,
+        "min": 0.9911087155342102,
+        "q05": 0.9913751929998398,
+        "q25": 0.9914640188217163,
+        "q75": 0.9914640188217163,
+        "q95": 0.9914640188217163
+      },
+      "checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_202.keras",
+      "checkpoint_load_mode": "architecture_rebuilt_weights_only",
+      "completeness_error_distribution": {
+        "count": 16,
+        "max": 0.7529414892196655,
+        "mean": 0.30313903116621077,
+        "median": 0.26735222339630127,
+        "min": 0.0072806477546691895,
+        "q05": 0.020891564898192883,
+        "q25": 0.12710773944854736,
+        "q75": 0.39557430148124695,
+        "q95": 0.7103649079799652
+      },
+      "integration_steps": [
+        64
+      ],
+      "manifest_path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps64.manifest.json",
+      "output_space": [
+        "probability"
+      ],
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps64.jsonl.gz",
+      "randomize_model_seed": null,
+      "records": 16,
+      "seed": 202,
+      "sha256": "f5427a0f51d0fec25721a02b8558a4c07cf5a1cae5f713f64959b4114f243eab",
+      "split": "test",
+      "target": [
+        "anomaly_probability"
+      ]
+    }
+  ],
+  "randomized_model_sanity": {
+    "architecture_findings": [
+      {
+        "architecture": "loginsight_lstm",
+        "mean_step_stability_signed_cosine": 0.9999322696786466,
+        "mean_trained_vs_randomized_signed_cosine": -0.20739652803494407,
+        "pass": true,
+        "status": "pass"
+      },
+      {
+        "architecture": "logrobust_attention_bilstm",
+        "mean_step_stability_signed_cosine": 0.35646416759842403,
+        "mean_trained_vs_randomized_signed_cosine": -0.2944269543108017,
+        "pass": true,
+        "status": "pass"
+      }
+    ],
+    "comparisons": [
+      {
+        "architecture": "loginsight_lstm",
+        "left": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps64.jsonl.gz",
+        "left_integration_steps": 64,
+        "left_randomize_model_seed": null,
+        "metric_distributions": {
+          "signed_cosine": {
+            "count": 16,
+            "max": 0.239798495090575,
+            "mean": -0.20739652803494407,
+            "median": -0.23447217476991228,
+            "min": -0.24992470264095126,
+            "q05": -0.24616874851497003,
+            "q25": -0.23964980117771265,
+            "q75": -0.23339147570863725,
+            "q95": -0.11379967955054317
+          },
+          "signed_spearman": {
+            "count": 16,
+            "max": -0.4261954261954261,
+            "mean": -0.48221188040266977,
+            "median": -0.4733559470401575,
+            "min": -0.612753036437247,
+            "q05": -0.5393081847029214,
+            "q25": -0.4852828537039063,
+            "q75": -0.4675566254513622,
+            "q95": -0.45114345114345106
+          },
+          "top_k_jaccard": {
+            "count": 16,
+            "max": 0.25,
+            "mean": 0.24131944444444445,
+            "median": 0.25,
+            "min": 0.1111111111111111,
+            "q05": 0.2152777777777778,
+            "q25": 0.25,
+            "q75": 0.25,
+            "q95": 0.25
+          }
+        },
+        "output_space": "probability",
+        "right": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_randomized64.jsonl.gz",
+        "right_integration_steps": 64,
+        "right_randomize_model_seed": 44013,
+        "seed": 13,
+        "split": "test",
+        "target": "anomaly_probability",
+        "top_k": 5,
+        "unit_count": 16
+      },
+      {
+        "architecture": "logrobust_attention_bilstm",
+        "left": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps64.jsonl.gz",
+        "left_integration_steps": 64,
+        "left_randomize_model_seed": null,
+        "metric_distributions": {
+          "signed_cosine": {
+            "count": 16,
+            "max": 0.07806965084786084,
+            "mean": -0.2944269543108017,
+            "median": -0.31706084651674327,
+            "min": -0.3679951093746773,
+            "q05": -0.3617494238885688,
+            "q25": -0.32796492766792656,
+            "q75": -0.3035735102207019,
+            "q95": -0.18362925156405163
+          },
+          "signed_spearman": {
+            "count": 16,
+            "max": 0.22955465587044535,
+            "mean": 0.11954877448298498,
+            "median": 0.12747565379144324,
+            "min": 0.02221249589670642,
+            "q05": 0.03123974176605755,
+            "q25": 0.06986541197067511,
+            "q75": 0.1488674909727541,
+            "q95": 0.20157840026261076
+          },
+          "top_k_jaccard": {
+            "count": 16,
+            "max": 0.1111111111111111,
+            "mean": 0.020833333333333332,
+            "median": 0.0,
+            "min": 0.0,
+            "q05": 0.0,
+            "q25": 0.0,
+            "q75": 0.0,
+            "q95": 0.1111111111111111
+          }
+        },
+        "output_space": "probability",
+        "right": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_randomized64.jsonl.gz",
+        "right_integration_steps": 64,
+        "right_randomize_model_seed": 44202,
+        "seed": 202,
+        "split": "test",
+        "target": "anomaly_probability",
+        "top_k": 5,
+        "unit_count": 16
+      }
+    ],
+    "pass": true,
+    "status": "pass"
+  },
+  "schema_version": "1.0",
+  "step_count_stability": [
+    {
+      "architecture": "loginsight_lstm",
+      "left": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps16.jsonl.gz",
+      "left_integration_steps": 16,
+      "left_randomize_model_seed": null,
+      "metric_distributions": {
+        "signed_cosine": {
+          "count": 16,
+          "max": 0.9999558846897383,
+          "mean": 0.9999322696786466,
+          "median": 0.999948787036712,
+          "min": 0.9997346284790098,
+          "q05": 0.999856850234015,
+          "q25": 0.9999437035265205,
+          "q75": 0.9999513980882412,
+          "q95": 0.9999548057936809
+        },
+        "signed_spearman": {
+          "count": 16,
+          "max": 0.9999999999999998,
+          "mean": 0.9992655104497208,
+          "median": 0.9992668782142465,
+          "min": 0.9984681037312614,
+          "q05": 0.9986322354743405,
+          "q25": 0.9990699201225515,
+          "q75": 0.9993981836087097,
+          "q95": 0.9999999999999998
+        },
+        "top_k_jaccard": {
+          "count": 16,
+          "max": 1.0,
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "q05": 1.0,
+          "q25": 1.0,
+          "q75": 1.0,
+          "q95": 1.0
+        }
+      },
+      "output_space": "probability",
+      "right": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/lstm_seed13_steps64.jsonl.gz",
+      "right_integration_steps": 64,
+      "right_randomize_model_seed": null,
+      "seed": 13,
+      "split": "test",
+      "target": "anomaly_probability",
+      "top_k": 5,
+      "unit_count": 16
+    },
+    {
+      "architecture": "logrobust_attention_bilstm",
+      "left": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps16.jsonl.gz",
+      "left_integration_steps": 16,
+      "left_randomize_model_seed": null,
+      "metric_distributions": {
+        "signed_cosine": {
+          "count": 16,
+          "max": 0.9920858341527535,
+          "mean": 0.35646416759842403,
+          "median": 0.30024373076380884,
+          "min": -0.339540432477654,
+          "q05": 0.10138213967323031,
+          "q25": 0.2871215201961211,
+          "q75": 0.3688726124012103,
+          "q95": 0.9881380296392215
+        },
+        "signed_spearman": {
+          "count": 16,
+          "max": 0.9393806762227813,
+          "mean": 0.5685308157347629,
+          "median": 0.5710690447532552,
+          "min": -0.4208502024291498,
+          "q05": 0.3097945617682459,
+          "q25": 0.5578290841448735,
+          "q75": 0.6259437575227048,
+          "q95": 0.9241164241164239
+        },
+        "top_k_jaccard": {
+          "count": 16,
+          "max": 1.0,
+          "mean": 0.15178571428571427,
+          "median": 0.0,
+          "min": 0.0,
+          "q05": 0.0,
+          "q25": 0.0,
+          "q75": 0.0,
+          "q95": 1.0
+        }
+      },
+      "output_space": "probability",
+      "right": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/r4_artifacts/logrobust_seed202_steps64.jsonl.gz",
+      "right_integration_steps": 64,
+      "right_randomize_model_seed": null,
+      "seed": 202,
+      "split": "test",
+      "target": "anomaly_probability",
+      "top_k": 5,
+      "unit_count": 16
+    }
+  ]
+}

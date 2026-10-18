@@ -1,0 +1,99 @@
+{
+  "step": 62,
+  "status": "frozen_for_registration",
+  "freeze_scope": "registration_critical_definitions",
+  "event_unit": {
+    "primary_dataset": "HDFS",
+    "primary_unit": "complete_BlockId_block",
+    "transfer_dataset": "BGL",
+    "transfer_unit": "non_overlapping_60_second_window",
+    "evidence_identity": "zero_based_event_position_within_prediction_unit",
+    "line_citation_identity": "source_LineId"
+  },
+  "normal_replacement": {
+    "strategy": "position_aligned_active_event_replacement",
+    "alignment": "match_each_target_event_to_the_same_zero_based_active_position_in_the_retrieved_normal_block",
+    "counterpart_eligibility": [
+      "normal_comparison_exists",
+      "same_active_position_exists",
+      "counterpart_is_not_padding"
+    ],
+    "no_counterpart_rule": "leave_the_target_event_unchanged_and_record_replacement_unavailable",
+    "fallback_alignment": "none",
+    "sequence_length_preserved": true,
+    "chronology_preserved": true
+  },
+  "evidence_budget": {
+    "top_k_events": 5,
+    "selection": "top_5_non_padding_events_by_registered_attribution_or_condition_selection",
+    "random_control": "sample_5_non_padding_events_without_replacement_per_unit",
+    "shorter_sequence_rule": "use_all_available_non_padding_events_when_fewer_than_5_exist",
+    "budget_is_fixed_across_conditions": true
+  },
+  "human_evidence_f1": {
+    "unit_of_aggregation": "prediction_unit",
+    "primary_summary": "macro_average_of_per_unit_evidence_f1",
+    "empty_prediction_and_empty_reference": "f1_1.0",
+    "empty_prediction_nonempty_reference": "f1_0.0",
+    "nonempty_prediction_empty_reference": "f1_0.0",
+    "empty_units_retained_in_macro": true,
+    "event_matching": "exact_event_position_match_after_line_and_position_validation"
+  },
+  "false_positive_handling": {
+    "detector_false_positives": "report_separately_as_detector_metric_and_never_add_to_human_evidence_f1",
+    "unsupported_citations": "count_as_human_evidence_false_positives",
+    "missing_relevant_events": "count_as_human_evidence_false_negatives",
+    "abstention": "zero_cited_events_for_an_answered_or_abstained_explanation_is_scored_by_the_empty_set_rules",
+    "invalid_or_unparseable_explanation": "exclude_from_primary_metric_only_if_pre_registered_quality_exclusion_applies_and_report_exclusion_count"
+  },
+  "primary_strata": {
+    "dataset": {
+      "primary": "HDFS",
+      "secondary_transfer": "BGL"
+    },
+    "detector": {
+      "primary": "loginsight_lstm",
+      "secondary_architecture_check": "logrobust_attention_bilstm"
+    },
+    "llm": {
+      "primary": "llm_primary",
+      "secondary_model_check": "llm_open_weight"
+    },
+    "primary_comparison": "unblinded_minus_blinded_within_the_primary_HDFS_LSTM_primary_LLM_stratum",
+    "secondary_architecture_and_transfer_results": "report_LogRobust_and_BGL_separately_before_any_descriptive_pooling"
+  },
+  "mixed_effects_analysis": {
+    "primary_role": "secondary_sensitivity_analysis_and_joint_model_when_multiple_strata_are_combined",
+    "outcome": "per_unit_evidence_recovery_indicator_or_per_unit_evidence_f1_as_predeclared_by_analysis_script",
+    "fixed_effects": [
+      "condition",
+      "detector",
+      "llm",
+      "dataset",
+      "condition_by_detector",
+      "condition_by_dataset"
+    ],
+    "random_effects": [
+      "random_intercept_for_prediction_unit_block_or_window_id"
+    ],
+    "pairing": "compare_conditions_within_the_same_prediction_unit",
+    "pooling_rule": "do_not_pool_primary_and_transfer_strata_into_the_primary_TOST",
+    "missing_or_invalid_records": "retain_as_missing_with_exclusion_reason_and_report_count"
+  },
+  "primary_shuffle": {
+    "method": "within_block_permutation",
+    "source": "same_block_integrated_gradients_event_scores",
+    "preserve": [
+      "active_event_count",
+      "event_positions",
+      "attribution_score_multiset"
+    ],
+    "seed": 2026,
+    "cross_block_donor_is_secondary_only": true
+  },
+  "registration_dependencies": {
+    "power_analysis": "research/results/tables/step61_tost_power_analysis.json",
+    "experiment_config": "research/experiments/experiment_config.json",
+    "protocol_status_remains": "draft_before_registration_until_step_63_is_complete"
+  }
+}

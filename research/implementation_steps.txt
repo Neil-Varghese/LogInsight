@@ -1,4 +1,4 @@
-LogInsight-FV Implementation Steps
+LogInsight Implementation Steps
 
 `[TIME-INTENSIVE]` marks steps expected to require substantial runtime, repeated model/LLM execution, human annotation effort, or extensive manuscript/artifact work. This tag does not indicate completion.
 
@@ -44,9 +44,9 @@ Phase 2: Dataset preparation
 
 [DONE] 18. Create temporal splits where possible (tests later data against earlier training data).
 
-[DONE] 19. Create leakage-detection checks (automatically detects duplicated blocks, retrieval leakage, and parser leakage).
+[DONE] 19. Create leakage-detection checks (automatically detects duplicated blocks, retrieval leakage, and parser leakage; activate the runtime retrieval-ledger check after retrieval is implemented).
 
-20. Sample the 200–300 block/window annotation pool (stratifies by label, length, confidence, architecture, and dataset).
+[DONE] 20. Sample the 200–300 block/window annotation pool (stratifies by label, length, confidence, architecture, and dataset).
 
 Phase 3: Detector implementation
 
@@ -62,115 +62,213 @@ Phase 3: Detector implementation
 
 [DONE] [TIME-INTENSIVE] 26. Integrate a published LogRobust-style attention Bi-LSTM (uses a citable second architecture).
 
-[DONE] 27. Document all LogRobust implementation deviations (makes the comparison reproducible).
+[DONE] 27. Document all LogRobust implementation deviations (makes the comparison reproducible; use “LogRobust-inspired” naming in the paper).
 
 [DONE] 28. Create a shared detector interface (allows both detectors to use identical inputs and evaluation code).
 
-29. [TIME-INTENSIVE] Train both detectors with multiple seeds (captures detector variability).
+[DONE] 29. [TIME-INTENSIVE] Train both detectors with multiple seeds (captures detector variability).
 
-30. Add detector inference caching and batching (reduces repeated perturbation cost).
+[DONE] 30. Add detector inference caching and batching (reduces repeated perturbation cost).
 
 Phase 4: Attribution implementation
 
-31. [TIME-INTENSIVE] Implement Integrated Gradients for the LSTM (produces the prompt-visible attribution).
+[DONE] 31. [TIME-INTENSIVE] Implement Integrated Gradients for the LSTM (produces the prompt-visible attribution).
 
-32. [TIME-INTENSIVE] Implement Integrated Gradients for LogRobust (keeps attribution conditions consistent).
+[DONE] 32. [TIME-INTENSIVE] Implement Integrated Gradients for LogRobust (keeps attribution conditions consistent).
 
-33. Validate Integrated Gradients outputs (checks attribution completeness and event-index alignment).
+[DONE] 33. Validate Integrated Gradients outputs (checks attribution completeness and event-index alignment).
 
-34. [TIME-INTENSIVE] Implement occlusion scores (stores verification-only attribution values).
+[DONE] 34. [TIME-INTENSIVE] Implement occlusion scores (stores verification-only attribution values).
 
-35. [TIME-INTENSIVE] Implement leave-one-event-out scores (stores another verification-only diagnostic).
+[DONE] 35. [TIME-INTENSIVE] Implement leave-one-event-out scores (stores another verification-only diagnostic).
 
-36. Enforce attribution separation (occlusion and leave-one-out values must never enter LLM prompts).
+[DONE] 36. Enforce attribution separation (occlusion and leave-one-out values must never enter LLM prompts).
 
-37. Create the attribution-only baseline (uses top-k Integrated Gradients events without an LLM).
+[DONE] 37. Create the attribution-only baseline (uses top-k Integrated Gradients events without an LLM).
 
-38. Create the random-event baseline (selects events randomly with the same budget).
+[DONE] 38. Create the random-event baseline (selects events randomly with the same budget).
 
-39. Store all attribution vectors separately (prevents accidental circularity).
+[DONE] 39. Store all attribution vectors separately (prevents accidental circularity).
+
+Required pre-pilot checks from reviewer feedback (must be completed before
+Step 76 and before interpreting explanation results):
+
+[DONE] R1. Measure identical event-sequence overlap across train/test, report
+novel-sequence metrics, and count unique sequences in the annotation pool.
+Report: `research/results/tables/sequence_overlap_audit.json`.
+
+[DONE] R2. Run event-count logistic-regression and length-only shortcut
+baselines; compare them with both detectors before interpreting evidence
+relevance. Report: `research/results/tables/shortcut_baseline_audit.json`.
+
+[DONE] R3. Register one primary explained seed per architecture, selected using
+validation performance before viewing explanations; treat other seeds as
+secondary attribution-stability analyses. Report:
+`research/results/tables/primary_explanation_seed_selection.json`.
+
+[DONE] R4. Extend attribution auditing with baseline-probability and completeness
+distributions, step-count stability, logit-space Integrated Gradients, and a
+randomized-model sanity check. Report:
+`research/results/tables/integrated_gradients_r4_audit.json`.
 
 Phase 5: LLM explanation pipeline
 
-40. Define the structured explanation schema (specifies claims, cited lines, events, confidence, and abstention).
+[DONE] 40. Define the structured explanation schema (specifies claims, cited lines, events, confidence, and abstention).
 
-41. Implement the blinded prompt (provides block, normal comparison, and detector output without attribution).
+[DONE] 41. Implement training-only contrastive retrieval and the blinded prompt
+(retrieves a normal comparison block, logs similarity and provenance, and
+exposes no attribution).
 
-42. Implement the unblinded prompt (adds Integrated Gradients only).
+[DONE] 42. Implement the unblinded prompt and the contrastive-only factor (normal
+block {yes, no} × attribution {none, Integrated Gradients, shuffled}).
 
-43. Implement the shuffled-Integrated-Gradients prompt (uses permuted or cross-block IG values).
+[DONE] 43. Implement the shuffled-Integrated-Gradients prompt (uses permuted or cross-block IG values).
 
-44. Implement the no-detector-context prompt (provides raw evidence without detector information).
+[DONE] 44. Implement the no-detector-context prompt (provides raw evidence without detector information).
 
-45. Select and freeze the LLM models (include one API model and one open-weight model).
+[DONE] 45. Select and freeze the LLM models: Mistral-7B-Instruct-v0.3 and
+Qwen2.5-7B-Instruct as publicly downloadable open-weight local/Colab models,
+with Colab GPU as the default runtime target, licenses recorded, and exact
+checkpoint metadata captured before pilot. GPT-OSS is retained only as a
+historical exploratory API run and is no longer part of the selected pair.
 
-46. Record model versions and decoding settings (stores temperature, seed, limits, and context size).
+[DONE] 46. Record model versions and decoding settings (stores temperature, seed,
+limits, context size, token-budget policy, and any HDFS/BGL evidence-length
+cap). Mistral and Qwen synthetic smoke-test reports are stored under
+`research/results/tables/`, with both pinned to exact Hugging Face commits and
+Colab T4 runtime metadata.
 
-47. [TIME-INTENSIVE] Implement repeated LLM generation (captures LLM output variance).
+Registration gate: the confirmatory main experiment and confirmatory TOST may
+proceed only under the exact protocol, prompts, models, exclusions, and analysis
+plan archived at https://osf.io/qrvuy/overview. The pilot remains a descriptive
+go/no-go stage and must not change the registered protocol.
 
-48. Implement structured-response parsing (handles invalid JSON, missing citations, and malformed claims).
+47A. [DEFERRED; IMPLEMENTED; FULL RUN BLOCKED] Implement and run the repeated Mistral
+generation pilot first. The resumable runner is
+`research/scripts/run_mistral_pilot.py`, and its status/output contract is
+documented in `research/experiments/step47a_execution_failures.md`. The
+historical GPT-OSS API output remains
+`research/experiments/pilot/step47a_gpt_oss_generation.jsonl` for provenance.
+The selected 120-unit LSTM Integrated Gradients prerequisite is available at
+`research/models/attributions/loginsight_lstm/seed_13_annotation_pool_test_integrated_gradients.jsonl.gz`.
+The 2,520-call Mistral run is not complete: the Colab T4 attempt reached
+3 complete and 1 failed call before CUDA OOM, and the local Apple-MPS smoke
+test was stopped after stalling with 0 complete calls. Do not mark 47A or any
+downstream generation/analysis step complete until a new runtime passes a
+bounded real-record generation and the full run is explicitly authorized.
 
-49. Add prompt leakage tests (confirms every condition receives only permitted information).
+47B. [DEFERRED; IMPLEMENTED; 18-CALL SMOKE COMPLETE] Run the matched 18-call Qwen
+smoke test second using the same synthetic prompt and decoding conditions as
+the Mistral smoke test. All 18 calls completed with valid JSON and valid
+schema responses on a free Colab T4. The runner is
+`research/scripts/test_qwen_18_smoke.py`; the full repeated Qwen generation
+pilot remains time-intensive and follows after this gate. Results are stored
+in `research/results/tables/step47b_qwen_18_smoke_test.json` and
+`research/results/tables/step47b_qwen_18_smoke_responses.jsonl`.
 
-50. Save complete prompt and response records (makes every LLM result reproducible).
+48. [IMPLEMENTED] Implement structured-response parsing (handles invalid JSON,
+missing citations, malformed claims, non-object payloads, and valid abstentions)
+for both 47A and 47B. The deterministic parser is
+`research/scripts/parse_explanation_responses.py`; focused tests are in
+`research/scripts/test_parse_explanation_responses.py`. It preserves each raw
+response and classifies, rather than repairs, invalid outputs.
+
+49. [IMPLEMENTED] Add prompt leakage tests for all nine registered conditions.
+`research/scripts/test_prompt_leakage.py` checks the condition allowlists,
+forbidden fields, nested verification fields, nested cross-condition fields,
+the six-factor prompt matrix, and rendered prompt contents. The boundary now
+rejects condition-specific fields nested under another visible root field.
+
+50. [IMPLEMENTED] Save complete prompt and response records. The pilot
+runners now record the exact user prompt, complete system/user message list,
+prompt hash, raw response, response hash, decoding settings, run ID, request
+ID, model metadata, provider payload, and repetition/condition provenance.
+`research/scripts/pilot_record.py` validates the record contract and
+`research/scripts/test_pilot_record.py` tests tamper detection.
 
 Phase 6: Annotation and registration
 
-51. Write the evidence-relevance annotation guideline (defines exactly what counts as relevant evidence).
+[DONE] 51. Write the evidence-relevance annotation guideline (defines exactly what counts as relevant evidence).
 
-52. Write the claim-support annotation guideline (defines supported, unsupported, and uncertain claims).
+[DONE] 52. Write the claim-support annotation guideline (defines supported, unsupported, and uncertain claims).
 
-53. Decide the annotation workflow (human labels are primary; LLM judge is optional and secondary only).
+[DONE] 53. Decide the annotation workflow (human labels are primary; LLM judge is optional and secondary only).
 
-54. Prepare the annotation interface or export format (shows anonymized event IDs and required evidence).
+[DONE] 54. Prepare the annotation interface or export format (shows anonymized event IDs,
+removes hostnames/identifiers, enforces the context-length policy, and exports
+the required evidence fields).
 
-55. Blind annotators to conditions and attribution values (prevents annotation bias).
+[DONE] 55. Blind annotators to conditions and attribution values (prevents annotation
+bias) and run a simple ID-memorization probe.
 
-56. [TIME-INTENSIVE] Collect evidence-relevance labels for every core annotation block (creates the primary human ground truth).
+[DONE] 56. Prepare the ethics documentation before recruitment or labeling
+(consent, compensation, anonymization, and institutional approval/exemption).
+The documentation artifact is complete, but recruitment and labeling remain
+blocked until the institution records approval or exemption and the consent,
+compensation, and anonymization checks are signed off.
 
-57. [TIME-INTENSIVE] Collect claim-support labels for the pre-registered explanation sample (creates the secondary human outcome).
+57. [TIME-INTENSIVE] Collect evidence-relevance labels for every core
+annotation block (creates the primary human ground truth).
 
-58. [TIME-INTENSIVE] Calculate inter-annotator agreement (use Cohen’s kappa or Krippendorff’s alpha).
+58. [TIME-INTENSIVE] Collect claim-support labels for the pre-registered
+explanation sample (creates the secondary human outcome).
 
-59. [TIME-INTENSIVE] Adjudicate disagreements using the written guideline (records decisions and disagreement reasons).
+59. [TIME-INTENSIVE] Calculate inter-annotator agreement (use Cohen’s kappa
+or Krippendorff’s alpha, with a registered minimum threshold and a remediation
+rule if it is not met).
 
-60. Prepare the ethics documentation (consent, compensation, anonymization, and institutional approval/exemption).
+60. [TIME-INTENSIVE] Adjudicate disagreements using the written guideline
+(records decisions and disagreement reasons).
 
-61. Write the power-analysis script (uses Δ = 0.05, paired SD = 0.15, α = 0.05, and 80% power).
+[DONE] 61. Write a parameterized power-analysis script using a TOST formula with
+Δ = 0.05, α = 0.05, and 80% power; compute sample size over paired SD values
+from 0.15 to 0.35 and re-estimate after the pilot.
 
-62. Register the protocol on OSF or AsPredicted (register H1, TOST, sampling, prompts, exclusions, and analysis).
+[DONE] 62. Freeze the definitions required for registration: event unit,
+normal-replacement alignment and no-counterpart rule, evidence budget k,
+empty-set F1 convention, separate false-positive handling, primary
+detector/LLM/dataset strata, mixed-effects analysis with block as a random
+effect, and the primary shuffle type.
 
-63. Freeze the registered experiment files (save the exact configuration and code version before the pilot).
+[DONE] 63. The frozen protocol packet and exact-file manifest were submitted to
+OSF Registries and archived at https://osf.io/qrvuy/overview. The manifest
+records the OSF URL, registration timestamp, protocol version, and hashes for
+the registration-critical experiment files. Prior detector development and
+limited model smoke tests are disclosed as foreknowledge; confirmatory LLM
+generation and human-outcome analysis proceed under the registered protocol.
 
 Phase 7: Perturbation and faithfulness
 
-64. Implement the pluggable perturbation interface (all strategies use one common function).
+[DONE] 64. Implement the pluggable perturbation interface (all strategies use one common function).
 
-65. Implement deletion perturbation (removes cited events).
+[DONE] 65. Implement deletion perturbation (removes cited events).
 
-66. Implement normal-event replacement (replaces events using the normal comparison).
+[DONE] 66. Implement normal-event replacement (replaces events using the normal comparison).
 
-67. Implement unknown-token replacement (preserves sequence length).
+[DONE] 67. Implement unknown-token replacement (preserves sequence length).
 
-68. Implement normal-block resampling (samples compatible normal events).
+[DONE] 68. Implement normal-block resampling (samples compatible normal events).
 
-69. Implement parameter masking (tests changes without removing event templates).
+[DONE] 69. Implement parameter masking (tests changes without removing event templates).
 
-70. Implement matched random perturbations (uses the same strategy and event budget).
+[DONE] 70. Implement matched random perturbations (uses the same strategy and event budget).
 
-71. Record perturbation metadata (length, vocabulary, chronology, parser status, and OOD indicators).
+[DONE] 71. Record perturbation metadata (length, vocabulary, chronology, parser status, and OOD indicators).
 
-72. Implement multi-strategy detector-faithfulness scoring (keeps detector faithfulness separate from human evidence recovery).
+[DONE] 72. Implement multi-strategy detector-faithfulness scoring (keeps detector faithfulness separate from human evidence recovery).
 
-73. Apply multi-strategy checks to sufficiency (does not accept deletion-only sufficiency).
+[DONE] 73. Apply multi-strategy checks to sufficiency (does not accept deletion-only sufficiency).
 
-74. Define the attribution-only reference and random floor (makes consistency scores interpretable).
+[DONE] 74. Define the attribution-only reference and random floor (makes consistency scores interpretable).
 
 75. [TIME-INTENSIVE] Implement the small ROAR-style retraining check (retrain on a limited modified subset).
 
 Phase 8: Pilot and go/no-go decision
 
-76. [TIME-INTENSIVE] Build the minimal HDFS pilot dataset (uses a small annotated and synthetic sample).
+76. [TIME-INTENSIVE] Build the minimal HDFS pilot dataset and synthetic case
+generator (remove failure event, insert recovery, duplicate, swap, and
+replace); retain only cases where the detector score changes in the expected
+direction, and define the minimum viable scope before expansion.
 
 77. [TIME-INTENSIVE] Run the LSTM blinded condition (creates the baseline explanation outputs).
 
@@ -184,7 +282,9 @@ Phase 8: Pilot and go/no-go decision
 
 82. [TIME-INTENSIVE] Calculate pilot detector faithfulness (measures score changes and perturbation consistency).
 
-83. Apply the registered go/no-go rule (decides whether to continue the attribution hypothesis).
+83. Apply a registered descriptive go/no-go rule to the pilot (signal present,
+absent, or inconclusive; do not treat it as the confirmatory TOST) and apply
+the pre-registered scope-cut rule.
 
 84. Record the pilot decision transparently (continue, pivot to benchmark, or report an inconclusive result).
 
@@ -261,6 +361,17 @@ Phase 11: Artifact and paper completion
 117. [TIME-INTENSIVE] Perform a final registration-versus-results audit (checks that no unregistered analysis became primary).
 
 118. [TIME-INTENSIVE] Prepare the final manuscript and supplementary material (includes tables, prompts, annotation protocol, and artifact link).
+
+Final reviewer checks
+
+[ ] R5. Hash transferred Colab checkpoints and predictions, re-run local
+inference, and verify stored predictions within a registered tolerance.
+
+[ ] R6. Audit cache keys for checkpoint hashes and calibration parameters.
+
+[ ] R7. Independently audit critical AI-written modules and add golden-prompt,
+attribution-free annotation-export, and ledger-completeness tests. Recompute a
+small set of metrics and attribution values independently.
 
 Suggested opening prompt for each new Codex chat:
 

@@ -28,14 +28,20 @@ GEMINI_API_KEY=your-gemini-api-key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-If `GEMINI_API_KEY` is not configured, the backend can still use an
-OpenAI-compatible provider such as Groq with these settings:
+For the research experiments, the frozen open-weight model pair is Mistral
+and Qwen. Mistral is intended to run locally or in Colab rather than through
+the old hosted GPT-OSS/Groq path, but full Step 47A execution is currently
+blocked by documented runtime failures:
 
-```dotenv
-GROQ_API_KEY=your-groq-api-key
-LOGINSIGHT_LLM_BASE_URL=https://api.groq.com/openai/v1/responses
-LOGINSIGHT_LLM_MODEL=openai/gpt-oss-20b
+```text
+Mistral: mistralai/Mistral-7B-Instruct-v0.3
+Qwen:    Qwen/Qwen2.5-7B-Instruct
 ```
+
+The Mistral pilot runner is documented in
+`research/scripts/run_mistral_pilot.py`; the historical GPT-OSS runners are
+retained only for provenance. See
+`research/experiments/step47a_execution_failures.md` before starting a run.
 
 Then start the backend normally:
 

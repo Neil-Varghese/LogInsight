@@ -1,0 +1,31 @@
+{
+  "created_at_utc": "2026-10-15T18:40:05.400193+00:00",
+  "step": 46,
+  "prompt_data": "synthetic_only",
+  "decoding": {
+    "temperature": 0.2,
+    "top_p": 0.95,
+    "max_output_tokens": 512,
+    "input_context_cap_tokens": 6500,
+    "input_context_cap_policy": "deterministic_cap; record omitted event IDs; never silently truncate",
+    "local_seed": 2026
+  },
+  "models": {
+    "groq": {
+      "status": "passed",
+      "provider": "groq",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "requested_model": "openai/gpt-oss-20b",
+      "reasoning_effort": "low",
+      "response_json": {
+        "answer_status": "success",
+        "summary": "The log shows a failure of the BlockReceiver at line 10, followed by a recovery at line 11.",
+        "evidence_event_ids": [
+          "E1",
+          "E2"
+        ]
+      },
+      "response_text_sha256": "87f9636133b6bf8a15f21574e3b4b5048b9169be56091cd0970779deb36a81e0"
+    }
+  }
+}

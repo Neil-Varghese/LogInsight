@@ -1,6 +1,56 @@
 {
-  "config_version": "0.1.0",
-  "protocol_status": "draft_before_registration",
+  "config_version": "0.2.0",
+  "protocol_status": "externally_preregistered_on_osf",
+  "external_registration": {
+    "required_for_current_pilot": true,
+    "platform": "OSF",
+    "registration_url": "https://osf.io/qrvuy/overview",
+    "registered_at": "2026-10-18T16:36:00+05:30",
+    "availability_status": "registered",
+    "decision": "proceed_under_registered_protocol",
+    "confirmatory_claims_allowed": true,
+    "local_freeze_manifest": "research/experiments/registration/step63_preregistration_manifest.json",
+    "revisit_before_confirmatory_main_experiment": false
+  },
+  "llm_generation_plan": {
+    "step": "47A_then_47B",
+    "status": "exploratory_pilot",
+    "order": ["llm_primary", "llm_open_weight"],
+    "first_model_role": "pipeline_validation_and_small_smoke_pilot",
+    "second_model_role": "matched_replay_after_pipeline_freeze",
+    "must_match_across_models": [
+      "input_blocks",
+      "prompt_conditions",
+      "evidence_budget",
+      "repetition_count",
+      "prompt_templates",
+      "output_schema",
+      "ledger_fields"
+    ],
+    "no_post_hoc_protocol_changes_after_first_model": true,
+    "exploratory_outputs_only": false
+  },
+  "protocol_freeze": {
+    "step": 62,
+    "status": "frozen_for_registration",
+    "artifact": "research/experiments/protocol_freeze_step62.json",
+    "event_unit": "complete_BlockId_block_primary; non_overlapping_60_second_window_transfer",
+    "normal_replacement": "position_aligned_active_event_replacement; no counterpart means unchanged and unavailable",
+    "evidence_budget_top_k_events": 5,
+    "empty_set_f1": {
+      "both_empty": 1.0,
+      "one_empty": 0.0
+    },
+    "detector_false_positive_handling": "separate_detector_metric; excluded from human evidence F1",
+    "primary_strata": {
+      "dataset": "HDFS",
+      "detector": "loginsight_lstm",
+      "llm": "llm_primary"
+    },
+    "mixed_effects_random_effect": "prediction_unit_block_or_window_id",
+    "primary_shuffle_type": "within_block_permutation",
+    "validation_script": "research/scripts/validate_protocol_freeze.py"
+  },
   "study": {
     "name": "LogInsight-FV",
     "title": "Faithfulness-Verified and Uncertainty-Aware Explanations for Block-Level Log Anomaly Detection",
@@ -40,12 +90,23 @@
   },
   "multi_seed_training": {
     "step": 29,
-    "status": "pending_user_training",
+    "status": "complete",
     "script": "research/scripts/train_multiseed_detectors.py",
     "registered_seeds": [13, 42, 73, 101, 202],
     "existing_seed_13_reused": true,
     "required_architectures": ["loginsight_lstm", "logrobust_attention_bilstm"],
     "report": "research/results/tables/multiseed_training_manifest.json"
+  },
+  "inference_cache": {
+    "step": 30,
+    "status": "complete",
+    "implementation": "research/scripts/detector_interface.py",
+    "batched_predictor": "predict_probabilities_batched",
+    "cache": "DetectorInferenceCache",
+    "key_namespace": ["detector_id", "model_key", "input_dtype", "input_shape", "input_bytes"],
+    "cache_scope": "in_process",
+    "stores": "detector_probabilities_only",
+    "statistics": ["requested_rows", "cache_hit_rows", "deduplicated_rows", "model_rows"]
   },
   "datasets": {
     "HDFS": {
@@ -124,7 +185,7 @@
   "detectors": {
     "loginsight_lstm": {
       "id": "loginsight_lstm",
-      "status": "repository_foundation_to_retrain",
+      "status": "trained_multiseed",
       "architecture": "embedding_plus_two_lstm_layers_batch_normalization_dropout_dense",
       "checkpoint": "models/lstm_model(v2).keras",
       "event_mapping": "research/event2idx.pkl",
@@ -150,7 +211,7 @@
     },
     "logrobust_attention_bilstm": {
       "id": "logrobust_attention_bilstm",
-      "status": "trained_seed_13",
+      "status": "trained_multiseed",
       "architecture_source": "published_LogRobust_method",
       "citation": "Xu Zhang et al., Robust Log-Based Anomaly Detection on Unstable Log Data, ESEC/FSE 2019, DOI: 10.1145/3338906.3338931",
       "implementation": "trainable_event_embedding_bidirectional_lstm_additive_temporal_attention_sigmoid_classifier",
@@ -197,46 +258,226 @@
     "perturbation_seed": 2026,
     "llm_repeated_generations_per_block_condition": 3,
     "llm_api_seed": null,
-    "seed_status": "provisional_values_to_freeze_in_registration"
+    "seed_status": "frozen_in_osf_registration_qrvuy"
   },
   "attribution": {
     "prompt_visible_method": "integrated_gradients",
     "verification_only_methods": ["occlusion", "leave_one_event_out"],
-    "baseline": "TO_BE_DEFINED_AND_REGISTERED",
-    "integration_steps": null,
+    "script": "research/scripts/integrated_gradients_lstm.py",
+    "logrobust_script": "research/scripts/integrated_gradients_logrobust.py",
+    "target": "anomaly_probability",
+    "baseline": "all_padding_embedding",
+    "baseline_event_id": 0,
+    "masked_model_path_policy": "preserve_input_event_mask_during_integration",
+    "integration_steps": 64,
+    "aggregation": "sum_embedding_dimension_attributions_per_event_position",
     "ranking_rule": "absolute_attribution_descending",
     "occlusion_and_leave_one_out_must_never_reach_llm": true
+  },
+  "attribution_validation": {
+    "step": 33,
+    "status": "complete",
+    "script": "research/scripts/validate_integrated_gradients.py",
+    "default_max_completeness_error": 0.05,
+    "numeric_tolerance": 1e-06,
+    "checks": [
+      "probability_and_baseline_arithmetic",
+      "completeness_error_consistency_and_threshold",
+      "event_position_and_sequence_index_alignment",
+      "padding_and_rank_integrity",
+      "duplicate_prediction_units",
+      "manifest_record_counts"
+    ]
+  },
+  "occlusion_verification": {
+    "step": 34,
+    "status": "complete",
+    "script": "research/scripts/occlusion_scores.py",
+    "strategy": "single_event_deletion",
+    "score": "original_probability_minus_occluded_probability",
+    "scope": "verification_only",
+    "prompt_visible": false,
+    "uses_inference_cache": true,
+    "artifact_format": "compressed_jsonl_plus_manifest"
+  },
+  "leave_one_event_out_verification": {
+    "step": 35,
+    "status": "complete",
+    "script": "research/scripts/leave_one_event_out_scores.py",
+    "strategy": "single_event_deletion",
+    "score": "original_probability_minus_leave_one_event_out_probability",
+    "scope": "verification_only",
+    "prompt_visible": false,
+    "uses_inference_cache": true,
+    "artifact_format": "compressed_jsonl_plus_manifest"
+  },
+  "attribution_separation": {
+    "step": 36,
+    "status": "complete",
+    "script": "research/scripts/prompt_attribution_boundary.py",
+    "enforcement": "strict_reject_before_prompt_rendering",
+    "prompt_visible_attributions": ["integrated_gradients", "shuffled_integrated_gradients"],
+    "prompt_forbidden_attributions": ["occlusion", "leave_one_event_out"],
+    "rejects_verification_only_metadata": true,
+    "condition_allowlist_source": "prompt_conditions"
+  },
+  "attribution_only_baseline": {
+    "step": 37,
+    "status": "complete",
+    "script": "research/scripts/attribution_only_baseline.py",
+    "source_method": "integrated_gradients",
+    "selection": "top_k_non_padding_events_by_integrated_gradients_rank",
+    "top_k_requires_explicit_cli_value": true,
+    "llm_used": false,
+    "prompt_rendered": false,
+    "stores_full_vector_in_baseline": false,
+    "source_vector_remains_separate": true,
+    "artifact_format": "compressed_jsonl_plus_manifest"
+  },
+  "random_event_baseline": {
+    "step": 38,
+    "status": "complete",
+    "script": "research/scripts/random_event_baseline.py",
+    "source_method": "integrated_gradients_event_positions_only",
+    "selection": "uniform_without_replacement_over_non_padding_events",
+    "budget": "matches_attribution_only_top_k",
+    "seed_source": "randomness.perturbation_seed",
+    "per_unit_seed_derivation": "derive_seed_by_architecture_detector_seed_split_unit_and_top_k",
+    "uses_attribution_scores": false,
+    "llm_used": false,
+    "prompt_rendered": false,
+    "artifact_format": "compressed_jsonl_plus_manifest"
+  },
+  "attribution_vector_storage": {
+    "step": 39,
+    "status": "complete",
+    "script": "research/scripts/validate_attribution_storage.py",
+    "registry": "research/models/attributions/attribution_vector_store.manifest.json",
+    "storage_policy": "one_method_per_file_no_vector_merging",
+    "methods": {
+      "integrated_gradients": {
+        "prompt_visible": true,
+        "verification_only": false
+      },
+      "event_occlusion": {
+        "prompt_visible": false,
+        "verification_only": true
+      },
+      "leave_one_event_out": {
+        "prompt_visible": false,
+        "verification_only": true
+      }
+    },
+    "rejects_mixed_method_files": true,
+    "records_sha256": true,
+    "rejects_duplicate_unit_ids": true
+  },
+  "sequence_overlap_audit": {
+    "reviewer_gate": "R1",
+    "status": "complete",
+    "script": "research/scripts/sequence_overlap_audit.py",
+    "report": "research/results/tables/sequence_overlap_audit.json",
+    "sequence_definition": "exact ordered Sequence event-ID list without padding",
+    "train_test_overlap_checked": true,
+    "novel_test_metrics_reported": true,
+    "annotation_pool_unique_sequences_reported": true
+  },
+  "shortcut_baseline_audit": {
+    "reviewer_gate": "R2",
+    "status": "complete",
+    "script": "research/scripts/shortcut_baseline_audit.py",
+    "report": "research/results/tables/shortcut_baseline_audit.json",
+    "baselines": [
+      "training_vocabulary_event_template_count_logistic_regression",
+      "sequence_length_only_logistic_regression"
+    ],
+    "fit_split": "train",
+    "class_weight": "balanced",
+    "threshold": 0.5,
+    "test_labels_used_for_fit_or_tuning": false
+  },
+  "primary_explanation_seed_selection": {
+    "reviewer_gate": "R3",
+    "status": "complete",
+    "script": "research/scripts/select_primary_explanation_seeds.py",
+    "report": "research/results/tables/primary_explanation_seed_selection.json",
+    "selection_split": "validation",
+    "primary_metric": "f1",
+    "tie_breakers": [
+      "lower_validation_loss",
+      "lower_seed"
+    ],
+    "test_metrics_used_for_selection": false,
+    "explanation_or_attribution_outputs_used_for_selection": false,
+    "secondary_seed_role": "attribution_stability",
+    "primary_seeds": {
+      "loginsight_lstm": 13,
+      "logrobust_attention_bilstm": 202
+    }
   },
   "normal_block_retrieval": {
     "enabled": true,
     "source_split": "train",
     "comparison_type": "similar_normal_block",
-    "similarity_method": "TO_BE_DEFINED_AND_REGISTERED",
+    "similarity_method": "event_tfidf_cosine",
+    "similarity_method_status": "frozen_in_osf_registration_qrvuy",
+    "tie_break": "highest cosine similarity, then lowest candidate_unit_id",
+    "zero_similarity_fallback": "lowest candidate_unit_id",
     "retrieval_k": 1
   },
   "llm": {
+    "selection_status": "selected_pair; Mistral and Qwen Step 46 smoke tests passed; exploratory pilot",
+    "selection_rationale": "Two separately evaluated open-weight instruction models from different model families, both runnable in a documented Colab or local environment without a hosted API dependency.",
     "models": [
       {
         "id": "llm_primary",
-        "provider": "TO_BE_SELECTED",
-        "model_name": "TO_BE_REGISTERED",
-        "open_weight": false
+        "provider": "huggingface",
+        "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
+        "open_weight": true,
+        "access_mode": "local_or_colab",
+        "license": "Apache-2.0",
+        "checkpoint_revision": "c170c708c41dac9275d15a8fff4eca08d52bab71",
+        "checkpoint_revision_status": "captured_in_step_46_smoke_test",
+        "context_window_tokens": 32768,
+        "recommended_quantization": "4-bit NF4",
+        "runtime_target": "Colab GPU by default; local GPU is acceptable if captured",
+        "hardware_verification_status": "captured_Tesla_T4_in_step_46_smoke_test",
+        "smoke_test_report": "research/results/tables/step46_mistral_smoke_test.json"
       },
       {
         "id": "llm_open_weight",
-        "provider": "TO_BE_SELECTED",
-        "model_name": "TO_BE_REGISTERED",
-        "open_weight": true
+        "provider": "huggingface",
+        "model_name": "Qwen/Qwen2.5-7B-Instruct",
+        "open_weight": true,
+        "access_mode": "local_or_colab",
+        "license": "Qwen License Agreement",
+        "checkpoint_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+        "checkpoint_revision_status": "captured_in_step_46_smoke_test",
+        "context_window_tokens": 131072,
+        "recommended_quantization": "4-bit",
+        "runtime_target": "Colab GPU by default; local GPU is acceptable if captured",
+        "hardware_verification_status": "captured_Tesla_T4_in_step_46_smoke_test",
+        "smoke_test_report": "research/results/tables/step46_qwen_smoke_test.json"
       }
     ],
     "decoding": {
-      "temperature": null,
-      "top_p": null,
-      "max_output_tokens": null,
+      "temperature": 0.2,
+      "top_p": 0.95,
+      "max_output_tokens": 512,
       "provider_seed": null,
-      "settings_status": "freeze_before_pilot"
+      "local_seed": 2026,
+      "input_context_cap_tokens": 6500,
+      "input_context_cap_policy": "deterministic_cap; record omitted event IDs; never silently truncate",
+      "output_format": "application/json",
+      "settings_status": "captured_in_step_46_smoke_tests",
+      "smoke_test_reports": [
+        "research/results/tables/step46_llm_smoke_test.json",
+        "research/results/tables/step46_qwen_smoke_test.json"
+      ]
     },
     "structured_output_schema": "research/experiments/llm_explanation_schema.json",
+    "structured_output_schema_version": "1.0",
+    "structured_output_schema_status": "complete",
     "asynchronous_verification": true,
     "detector_alert_must_not_wait_for_llm": true
   },
@@ -260,6 +501,24 @@
       "prompt_forbidden": ["occlusion", "leave_one_event_out"]
     },
     {
+      "id": "detector_only",
+      "description": "Block evidence and basic detector output without a normal comparison or attribution.",
+      "prompt_visible": ["anomalous_block_evidence", "detector_output"],
+      "prompt_forbidden": ["normal_comparison_block", "integrated_gradients", "shuffled_integrated_gradients", "occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "unblinded_no_normal",
+      "description": "Block evidence, detector output, and Integrated Gradients without a normal comparison.",
+      "prompt_visible": ["anomalous_block_evidence", "detector_output", "integrated_gradients"],
+      "prompt_forbidden": ["normal_comparison_block", "occlusion", "leave_one_event_out"]
+    },
+    {
+      "id": "shuffled_integrated_gradients_no_normal",
+      "description": "Block evidence, detector output, and shuffled Integrated Gradients without a normal comparison.",
+      "prompt_visible": ["anomalous_block_evidence", "detector_output", "shuffled_integrated_gradients"],
+      "prompt_forbidden": ["normal_comparison_block", "occlusion", "leave_one_event_out"]
+    },
+    {
       "id": "attribution_only",
       "description": "Top-k Integrated Gradients events without an LLM-generated explanation.",
       "prompt_visible": [],
@@ -278,10 +537,36 @@
       "prompt_forbidden": ["detector_output", "normal_comparison_block", "integrated_gradients", "occlusion", "leave_one_event_out"]
     }
   ],
+  "contrastive_factor": {
+    "status": "frozen_in_osf_registration_qrvuy",
+    "normal_comparison": [true, false],
+    "attribution": ["none", "integrated_gradients", "shuffled_integrated_gradients"],
+    "condition_map": {
+      "true|none": "blinded",
+      "true|integrated_gradients": "unblinded",
+      "true|shuffled_integrated_gradients": "shuffled_integrated_gradients",
+      "false|none": "detector_only",
+      "false|integrated_gradients": "unblinded_no_normal",
+      "false|shuffled_integrated_gradients": "shuffled_integrated_gradients_no_normal"
+    }
+  },
+  "shuffled_integrated_gradients": {
+    "status": "frozen_and_registered_step_63",
+    "allowed_shuffle_types": [
+      "within_block_permutation",
+      "cross_block_donor"
+    ],
+    "primary_shuffle_type": "within_block_permutation",
+    "seed": 2026,
+    "cross_block_requires_equal_active_event_count": true,
+    "source_method": "integrated_gradients",
+    "prompt_visible": true,
+    "verification_only": false
+  },
   "evidence_budget": {
-    "top_k_events": null,
+    "top_k_events": 5,
     "random_control_matches_budget": true,
-    "budget_status": "freeze_before_pilot"
+    "budget_status": "frozen_step_62"
   },
   "perturbations": {
     "interface": "perturb(block, target_events, strategy, seed)",
@@ -312,6 +597,11 @@
     "pool_sampling_unit": "dataset_prediction_unit_architecture_item",
     "pool_candidate_schema": "research/experiments/annotation_candidate_schema.json",
     "pool_sampler": "research/scripts/sample_annotation_pool.py",
+    "pool_candidate_builder": "research/scripts/build_annotation_candidates.py",
+    "pool_candidate_metadata": "research/experiments/pilot/annotation_candidates.jsonl",
+    "pool_output": "research/experiments/pilot/annotation_pool.jsonl.gz",
+    "pool_manifest": "research/experiments/pilot/annotation_pool_manifest.json",
+    "pool_status": "complete",
     "pool_length_bins": {
       "short_0_10": "sequence_length <= 10",
       "medium_11_50": "11 <= sequence_length <= 50",
@@ -338,7 +628,8 @@
     "assumed_paired_standard_deviation": 0.15,
     "approximate_minimum_independent_annotated_blocks": 71,
     "planned_recruitment_buffer": 100,
-    "registration_status": "pending_OSF_or_AsPredicted_registration"
+    "registration_status": "externally_registered_osf_qrvuy",
+    "confirmatory_TOST_status": "enabled_under_registered_protocol"
   },
   "reporting": {
     "confidence_interval": "95_percent",

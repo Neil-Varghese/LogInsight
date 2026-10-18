@@ -9,6 +9,7 @@ model's probability output is intentionally shared.
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -83,21 +84,149 @@ class DetectorAdapter(Protocol):
         ...
 
 
-def predict_probabilities(model: Any, inputs: np.ndarray, batch_size: int) -> np.ndarray:
-    """Run the common probability-output contract for a Keras-like model."""
-
+def _validate_inference_inputs(inputs: np.ndarray, batch_size: int) -> np.ndarray:
     inputs = np.asarray(inputs)
     if inputs.ndim != 2:
         raise ValueError("detector inputs must be a two-dimensional array")
+    if not np.issubdtype(inputs.dtype, np.integer):
+        raise ValueError("detector inputs must have an integer dtype")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
-    probabilities = np.asarray(model.predict(inputs, batch_size=batch_size, verbose=1)).reshape(-1)
+    return inputs
+
+
+def predict_probabilities(
+    model: Any,
+    inputs: np.ndarray,
+    batch_size: int,
+    *,
+    verbose: int = 1,
+) -> np.ndarray:
+    """Run the common probability-output contract for a Keras-like model."""
+
+    inputs = _validate_inference_inputs(inputs, batch_size)
+    probabilities = np.asarray(model.predict(inputs, batch_size=batch_size, verbose=verbose)).reshape(-1)
     if probabilities.shape[0] != inputs.shape[0]:
         raise ValueError("model returned a different number of predictions than inputs")
     probabilities = probabilities.astype(np.float64)
     if np.any(~np.isfinite(probabilities)) or np.any((probabilities < 0) | (probabilities > 1)):
         raise ValueError("model probabilities must be finite values in [0, 1]")
     return probabilities
+
+
+def predict_probabilities_batched(
+    model: Any,
+    inputs: np.ndarray,
+    batch_size: int,
+    *,
+    verbose: int = 0,
+) -> np.ndarray:
+    """Predict in bounded chunks while preserving input order."""
+
+    inputs = _validate_inference_inputs(inputs, batch_size)
+    if inputs.shape[0] == 0:
+        return np.empty(0, dtype=np.float64)
+    chunks = [
+        predict_probabilities(
+            model,
+            inputs[start : start + batch_size],
+            min(batch_size, inputs.shape[0] - start),
+            verbose=verbose,
+        )
+        for start in range(0, inputs.shape[0], batch_size)
+    ]
+    return np.concatenate(chunks)
+
+
+def _inference_row_key(detector_id: str, model_key: str, row: np.ndarray) -> str:
+    """Create a stable cache key for one detector input row."""
+
+    row = np.ascontiguousarray(row)
+    digest = hashlib.sha256()
+    digest.update(detector_id.encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(model_key.encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(str(row.dtype).encode("ascii"))
+    digest.update(b"\0")
+    digest.update(json.dumps(tuple(row.shape)).encode("ascii"))
+    digest.update(b"\0")
+    digest.update(row.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+@dataclass
+class InferenceCacheStats:
+    """Counters describing cache reuse for a detector inference session."""
+
+    requested_rows: int = 0
+    cache_hit_rows: int = 0
+    deduplicated_rows: int = 0
+    model_rows: int = 0
+
+
+class DetectorInferenceCache:
+    """Cache and batch detector probabilities for repeated perturbation inputs.
+
+    The cache is namespaced by detector ID and model key. Callers should use a
+    checkpoint hash, run-manifest path, or another stable model identity as
+    ``model_key`` so predictions from different seeds or checkpoints cannot
+    collide. The cache stores probabilities only; labels, thresholds, and
+    explanation metadata remain outside this inference layer.
+    """
+
+    def __init__(self, detector_id: str, model_key: str) -> None:
+        if not detector_id or not model_key:
+            raise ValueError("detector_id and model_key must be non-empty")
+        self.detector_id = detector_id
+        self.model_key = model_key
+        self._probabilities: dict[str, float] = {}
+        self.stats = InferenceCacheStats()
+
+    def __len__(self) -> int:
+        return len(self._probabilities)
+
+    def clear(self) -> None:
+        self._probabilities.clear()
+        self.stats = InferenceCacheStats()
+
+    def predict(self, model: Any, inputs: np.ndarray, batch_size: int) -> np.ndarray:
+        """Return probabilities, evaluating only unique cache misses."""
+
+        inputs = _validate_inference_inputs(inputs, batch_size)
+        self.stats.requested_rows += int(inputs.shape[0])
+        if inputs.shape[0] == 0:
+            return np.empty(0, dtype=np.float64)
+
+        keys = [_inference_row_key(self.detector_id, self.model_key, row) for row in inputs]
+        output = np.full(inputs.shape[0], np.nan, dtype=np.float64)
+        pending_indices: dict[str, int] = {}
+        for index, key in enumerate(keys):
+            if key in self._probabilities:
+                output[index] = self._probabilities[key]
+                self.stats.cache_hit_rows += 1
+            elif key in pending_indices:
+                self.stats.deduplicated_rows += 1
+            else:
+                pending_indices[key] = index
+
+        if pending_indices:
+            unique_indices = list(pending_indices.values())
+            unique_inputs = inputs[unique_indices]
+            probabilities = predict_probabilities_batched(
+                model,
+                unique_inputs,
+                batch_size,
+                verbose=0,
+            )
+            self.stats.model_rows += int(probabilities.shape[0])
+            for key, probability in zip(pending_indices, probabilities):
+                self._probabilities[key] = float(probability)
+
+        for index, key in enumerate(keys):
+            if np.isnan(output[index]):
+                output[index] = self._probabilities[key]
+        return output
 
 
 class KerasDetectorAdapter:

@@ -1,0 +1,244 @@
+{
+  "architectures": {
+    "loginsight_lstm": {
+      "candidates": [
+        {
+          "best_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_13.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_13.json",
+          "run_manifest_sha256": "d44d6874f9dffc17c5fb91a143f77d7b67163af7fffd8d28d64bba9b1a324f7b",
+          "seed": 13,
+          "validation": {
+            "accuracy": 0.9994261468368518,
+            "f1": 0.990279823269514,
+            "loss": 0.007232072637078492,
+            "precision": 0.9824663939216832,
+            "recall": 0.9982185273159145,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_73.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_73.json",
+          "run_manifest_sha256": "b5b42fd86553a4078a7152e9e4c7c89ea6949c0ed9852631bf651ac829d2bf1d",
+          "seed": 73,
+          "validation": {
+            "accuracy": 0.9993739783674747,
+            "f1": 0.9893992932862191,
+            "loss": 0.006222959649475003,
+            "precision": 0.9813084112149533,
+            "recall": 0.997624703087886,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_101.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_101.json",
+          "run_manifest_sha256": "8aa02853f9f53431429fedf7e86f7f88fc7b7de192ea807943516aa8772633c4",
+          "seed": 101,
+          "validation": {
+            "accuracy": 0.9993565888776823,
+            "f1": 0.9891208468097619,
+            "loss": 0.0052907108367880006,
+            "precision": 0.9796156086196856,
+            "recall": 0.998812351543943,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_42.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_42.json",
+          "run_manifest_sha256": "5cc4da3214693760abdbf52bba2db89b8b06155ebee5e0d535d48e7360adbd20",
+          "seed": 42,
+          "validation": {
+            "accuracy": 0.9993565888776823,
+            "f1": 0.9891080365027964,
+            "loss": 0.004888160533310286,
+            "precision": 0.9807355516637478,
+            "recall": 0.997624703087886,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_202.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_202.json",
+          "run_manifest_sha256": "813e6b3bbebd99165d339b30880c1d92a90412eff151a28d5107cf26bc500a2a",
+          "seed": 202,
+          "validation": {
+            "accuracy": 0.9993565888776823,
+            "f1": 0.989101620029455,
+            "loss": 0.00532934063712103,
+            "precision": 0.9812974868497955,
+            "recall": 0.9970308788598575,
+            "threshold": 0.5
+          }
+        }
+      ],
+      "primary_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/best_seed_13.keras",
+      "primary_run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_13.json",
+      "primary_seed": 13,
+      "primary_validation": {
+        "accuracy": 0.9994261468368518,
+        "f1": 0.990279823269514,
+        "loss": 0.007232072637078492,
+        "precision": 0.9824663939216832,
+        "recall": 0.9982185273159145,
+        "threshold": 0.5
+      },
+      "secondary_attribution_stability_seeds": [
+        73,
+        101,
+        42,
+        202
+      ]
+    },
+    "logrobust_attention_bilstm": {
+      "candidates": [
+        {
+          "best_checkpoint": "/content/drive/MyDrive/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_202.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_202.json",
+          "run_manifest_sha256": "4a7c49c1100d029867f79edbdb8ab7d233f38d9e308ed9bc8a2f7025eb63948d",
+          "seed": 202,
+          "validation": {
+            "accuracy": 0.9998434945918687,
+            "f1": 0.9973301690892911,
+            "loss": 0.0010906231351071013,
+            "precision": 0.996443390634262,
+            "recall": 0.9982185273159145,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/content/drive/MyDrive/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_101.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_101.json",
+          "run_manifest_sha256": "008ac1d2b0720585fa35233c48d5322a9271c6ccc64460736a67c735ad8b435e",
+          "seed": 101,
+          "validation": {
+            "accuracy": 0.9996869891837373,
+            "f1": 0.9946808510638299,
+            "loss": 0.0014119540807038253,
+            "precision": 0.99,
+            "recall": 0.9994061757719715,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/content/drive/MyDrive/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_42.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_42.json",
+          "run_manifest_sha256": "013d596e92537cd7d03c1bbfbc2ac22b06ec3a53db62e4d4add863a223fb0508",
+          "seed": 42,
+          "validation": {
+            "accuracy": 0.9996522102041526,
+            "f1": 0.9940898345153664,
+            "loss": 0.002368302392764998,
+            "precision": 0.9894117647058823,
+            "recall": 0.998812351543943,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_13.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_13.json",
+          "run_manifest_sha256": "07fa700a5047ea38312695cf82909d8efd420c45c2221703fc13618734a329ed",
+          "seed": 13,
+          "validation": {
+            "accuracy": 0.999530483775606,
+            "f1": 0.9920424403183026,
+            "loss": 0.0012233821552328015,
+            "precision": 0.9847864248098304,
+            "recall": 0.9994061757719715,
+            "threshold": 0.5
+          }
+        },
+        {
+          "best_checkpoint": "/content/drive/MyDrive/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_73.keras",
+          "run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_73.json",
+          "run_manifest_sha256": "6c895f6d4918847e6c2dc016c1689dbaec63ef0508f71352db288cb31331b5f1",
+          "seed": 73,
+          "validation": {
+            "accuracy": 0.9994261468368518,
+            "f1": 0.9902855460700618,
+            "loss": 0.002947776979266716,
+            "precision": 0.981903093987157,
+            "recall": 0.998812351543943,
+            "threshold": 0.5
+          }
+        }
+      ],
+      "primary_checkpoint": "/content/drive/MyDrive/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/best_seed_202.keras",
+      "primary_run_manifest": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_202.json",
+      "primary_seed": 202,
+      "primary_validation": {
+        "accuracy": 0.9998434945918687,
+        "f1": 0.9973301690892911,
+        "loss": 0.0010906231351071013,
+        "precision": 0.996443390634262,
+        "recall": 0.9982185273159145,
+        "threshold": 0.5
+      },
+      "secondary_attribution_stability_seeds": [
+        101,
+        42,
+        13,
+        73
+      ]
+    }
+  },
+  "audit": "primary_explanation_seed_selection",
+  "input_manifests": [
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_101.json",
+      "sha256": "8aa02853f9f53431429fedf7e86f7f88fc7b7de192ea807943516aa8772633c4"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_13.json",
+      "sha256": "d44d6874f9dffc17c5fb91a143f77d7b67163af7fffd8d28d64bba9b1a324f7b"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_202.json",
+      "sha256": "813e6b3bbebd99165d339b30880c1d92a90412eff151a28d5107cf26bc500a2a"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_42.json",
+      "sha256": "5cc4da3214693760abdbf52bba2db89b8b06155ebee5e0d535d48e7360adbd20"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/loginsight_lstm/run_manifest_seed_73.json",
+      "sha256": "b5b42fd86553a4078a7152e9e4c7c89ea6949c0ed9852631bf651ac829d2bf1d"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_101.json",
+      "sha256": "008ac1d2b0720585fa35233c48d5322a9271c6ccc64460736a67c735ad8b435e"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_13.json",
+      "sha256": "07fa700a5047ea38312695cf82909d8efd420c45c2221703fc13618734a329ed"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_202.json",
+      "sha256": "4a7c49c1100d029867f79edbdb8ab7d233f38d9e308ed9bc8a2f7025eb63948d"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_42.json",
+      "sha256": "013d596e92537cd7d03c1bbfbc2ac22b06ec3a53db62e4d4add863a223fb0508"
+    },
+    {
+      "path": "/Users/neilvargheseabraham/Downloads/LogInsight/research/models/checkpoints/logrobust_attention_bilstm/run_manifest_seed_73.json",
+      "sha256": "6c895f6d4918847e6c2dc016c1689dbaec63ef0508f71352db288cb31331b5f1"
+    }
+  ],
+  "registration_source": "/Users/neilvargheseabraham/Downloads/LogInsight/research/results/tables/multiseed_training_manifest.json",
+  "schema_version": "1.0",
+  "selection_policy": {
+    "explanation_or_attribution_outputs_used_for_selection": false,
+    "maximize_primary_metric": true,
+    "primary_metric": "f1",
+    "secondary_seed_role": "attribution_stability",
+    "selected_before_explanation_generation": true,
+    "selection_split": "validation",
+    "test_metrics_used_for_selection": false,
+    "tie_breakers": [
+      "lower_validation_loss",
+      "lower_seed"
+    ]
+  }
+}
