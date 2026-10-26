@@ -10,6 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "sim" / "cluster.log"
 
+for old in (ROOT / "sim" / "labels").glob("*.csv"):  # fresh answer key for a fresh run
+    old.unlink()
 subprocess.run(["docker", "compose", "up", "-d"], cwd=ROOT, check=True)
 try:
     # Raw bytes straight to the file: a shell ">" on Windows PowerShell would re-encode it as UTF-16.

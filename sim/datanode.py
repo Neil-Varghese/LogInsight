@@ -5,6 +5,7 @@ Several sessions run at once and their lines interleave, like a busy node. Docke
 """
 
 import os
+import socket
 import random
 import re
 import time
@@ -13,6 +14,7 @@ from pathlib import Path
 
 SAMPLES = Path(os.environ.get("SAMPLES", "/samples"))
 RATE = float(os.environ.get("LINES_PER_SECOND", 5))   # per container
+LABELS = Path(os.environ.get("LABELS_DIR", "/labels")) / f"{socket.gethostname()}.csv"  # answer key: block_id,label
 ANOMALY = float(os.environ.get("ANOMALY_RATE", 0.05))  # share of sessions taken from the anomalous sample
 CONCURRENT = int(os.environ.get("CONCURRENT_BLOCKS", 8))
 LINE = re.compile(r"^\d{6} \d{6} (.*)$")  # drop the old date/time, keep "pid LEVEL component: message"
@@ -34,8 +36,11 @@ active = []  # each item is one block's remaining lines, last line first
 
 while True:
     while len(active) < CONCURRENT:
-        old, lines = random.choice(odd if random.random() < ANOMALY else normal)
+        is_odd = random.random() < ANOMALY
+        old, lines = random.choice(odd if is_odd else normal)
         new = f"blk_{random.randint(-2**62, 2**62)}"
+        with LABELS.open("a") as f:
+            f.write(f"{new},{'Anomaly' if is_odd else 'Normal'}\n")
         active.append([l.replace(old, new) for l in lines][::-1])
     block = random.choice(active)
     print(f"{datetime.now(timezone.utc):%y%m%d %H%M%S} {block.pop()}", flush=True)

@@ -23,10 +23,10 @@ const BADGE: Record<Exclude<Health, null>, { text: string; box: string; dot: str
 
 export type Telemetry = { linesPerSec: number | null; backlog: string; lastLine: string; latencyMs: number | null };
 
-function Chip({ label, value, tone = "text-slate-200" }: { label: string; value: string; tone?: string }) {
+function Chip({ label, value, tone = "text-white" }: { label: string; value: string; tone?: string }) {
   return (
-    <span className="flex items-baseline gap-1 text-slate-500">
-      {label} <span className={`font-mono tabular-nums ${tone}`}>{value}</span>
+    <span className="flex items-baseline gap-1.5 rounded-md border border-white/25 bg-white/10 px-2.5 py-1 text-white">
+      {label} <span className={`font-mono font-semibold tabular-nums ${tone}`}>{value}</span>
     </span>
   );
 }
@@ -44,7 +44,7 @@ export function TopNav({ threshold, health, telemetry, paused, onPause, light, o
       <span className="text-lg font-semibold tracking-tight text-white">LogInsight</span>
       <div className="flex min-w-0 items-center gap-3 text-xs sm:gap-4">
         {/* Telemetry chips drop away on narrow screens so the status badge always fits. */}
-        <div className="hidden items-center gap-4 xl:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           <Chip label="Ingest" value={telemetry.linesPerSec === null ? "–" : `${telemetry.linesPerSec.toLocaleString()} lines/s`} />
           <Chip label="Backlog" value={telemetry.backlog} />
           <Chip label="Last line" value={telemetry.lastLine} />
