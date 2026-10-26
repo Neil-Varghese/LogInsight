@@ -32,6 +32,7 @@ IPADDR = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d)")  # any IPv4 in
 SOURCE = re.compile(r"(?:from|src:) /([\d.]+)")
 WINDOW = predictor.MAX_SEQUENCE_LENGTH  # the model sees the last 50 events of a block
 POLL_SECONDS = 1
+SETTLE_SECONDS = 5  # a block is scored once no new line for it arrived for this long; half-finished blocks look anomalous to the model
 MAX_CHUNK = 8 * 1024 * 1024  # bytes read per tick, so a huge backlog is worked through in slices
 BUCKETS = (10, 60, 300, 900, 3600, 21600, 86400)  # chart bucket sizes in seconds; the smallest giving <= 60 bars wins
 TOP_EVENT_BLOCKS = 20000  # ponytail: "top events" looks at the 20k most recent blocks; aggregate incrementally if that is too slow
@@ -75,9 +76,11 @@ def model_scorer():
 
 
 class Monitor:
-    def __init__(self, log_path, db_path, scorer=None):
+    def __init__(self, log_path, db_path, scorer=None, settle=SETTLE_SECONDS):
         self.log_path, self.db_path = Path(log_path), Path(db_path)
         self.scorer = scorer  # None = load the Keras model in the background thread (a fake can be injected in tests)
+        self.settle = settle
+        self.pending = {}  # block_id -> wall time of its newest line; scored and saved once settled (lost on a crash, ponytail: persist if that matters)
         self.lock = threading.Lock()  # one tick or reset at a time
         self.stop = threading.Event()
         # ponytail: every block ever seen stays in memory; evict idle blocks if a feed has millions of them.
@@ -146,7 +149,7 @@ class Monitor:
 
     def _hydrate(self, db):
         """Rebuild memory from disk, so a restart (or a failed tick) continues exactly where the saved offset says."""
-        self.state = {}
+        self.state, self.pending = {}, {}
         for block_id, n, events, first, last in db.execute(
             "SELECT block_id, sequence_len, event_ids, first_seen, last_seen FROM blocks"
         ):
@@ -167,16 +170,16 @@ class Monitor:
         size = self.log_path.stat().st_size
         if size < self.offset:
             self.offset = 0  # file was truncated or rotated: read the new one from the top
-        if size == self.offset:
+        lines, end = [], 0
+        if size > self.offset:
+            with self.log_path.open("rb") as log_file:
+                log_file.seek(self.offset)
+                chunk = log_file.read(MAX_CHUNK)
+            end = chunk.rfind(b"\n") + 1  # only whole lines; a half-written last line waits for the next tick
+            lines = chunk[:end].decode("utf-8", "replace").splitlines()
+        if not lines and not self.pending:
             return 0
-        with self.log_path.open("rb") as log_file:
-            log_file.seek(self.offset)
-            chunk = log_file.read(MAX_CHUNK)
-        end = chunk.rfind(b"\n") + 1  # only whole lines; a half-written last line waits for the next tick
-        if not end:
-            return 0
-        lines = chunk[:end].decode("utf-8", "replace").splitlines()
-        event2idx, dirty, unmatched, transfers, activity = _event2idx(), set(), 0, [], Counter()
+        event2idx, unmatched, transfers, activity = _event2idx(), 0, [], Counter()
         for line in lines:
             header = HEADER.match(line)
             if not header:
@@ -200,8 +203,8 @@ class Monitor:
             entry["events"].append(event)
             entry["n"] += 1
             entry["first"], entry["last"] = min(entry["first"], when), max(entry["last"], when)
-            dirty.add(block.group(1))
-        ids = sorted(dirty)
+            self.pending[block.group(1)] = time.time()
+        ids = sorted(b for b, seen in self.pending.items() if time.time() - seen >= self.settle)
         scoring = time.perf_counter()
         scores = self.scorer([[event2idx[e] for e in self.state[b]["events"]] for b in ids]) if ids else []
         score_s = time.perf_counter() - scoring
@@ -219,6 +222,8 @@ class Monitor:
         db.executemany("INSERT OR REPLACE INTO meta VALUES (?, ?)", [(k, str(v)) for k, v in new.items()])
         db.commit()  # blocks and offset land together, so a crash can never double-count lines
         self.offset, self.lines, self.unmatched = new["offset"], new["lines"], new["unmatched"]
+        for b in ids:
+            del self.pending[b]
         for line in lines:
             self._feed(line)  # only after the save above: a line shows up once it has been processed
         self.timings.append((time.time(), len(lines), len(ids), time.perf_counter() - began, score_s))
@@ -264,7 +269,7 @@ class Monitor:
                 db.commit()
             finally:
                 db.close()
-            self.state, self.offset, self.lines, self.unmatched = {}, 0, 0, 0
+            self.state, self.pending, self.offset, self.lines, self.unmatched = {}, {}, 0, 0, 0
             self.rates.clear()
             self.feed.clear()
             self.severity_counts.clear()

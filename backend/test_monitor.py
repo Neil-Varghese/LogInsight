@@ -21,7 +21,7 @@ class TestMonitor(unittest.TestCase):
         folder = Path(tempfile.mkdtemp())
         self.log = folder / "live.log"
         self.log.write_text("")
-        self.monitor = monitor.Monitor(self.log, folder / "m.sqlite3", scorer=fake_scorer)
+        self.monitor = monitor.Monitor(self.log, folder / "m.sqlite3", scorer=fake_scorer, settle=0)
         self.db = self.monitor._setup()
         self.lines = SAMPLE.read_text(encoding="utf-8").splitlines(keepends=True)
 
@@ -32,6 +32,16 @@ class TestMonitor(unittest.TestCase):
         self.assertEqual(self.monitor.offset, len(first.encode()))
         self.log.write_bytes((first + second).encode())
         self.assertEqual(self.monitor._tick(self.db), 1)
+
+    def test_block_is_saved_only_after_it_settles(self):
+        self.monitor.settle = 60
+        self.log.write_bytes(("".join(self.lines[:50])).encode())
+        self.monitor._tick(self.db)
+        self.assertEqual(monitor.summary(self.db, 0.5)["total"], 0)  # still in progress
+        self.monitor.settle = 0
+        self.monitor._tick(self.db)  # no new lines, but the waiting blocks are now saved
+        self.assertGreater(monitor.summary(self.db, 0.5)["total"], 0)
+        self.assertFalse(self.monitor.pending)
 
     def test_window_keeps_last_events_but_counts_all(self):
         self.log.write_bytes(("".join(self.lines[:600])).encode())
@@ -46,7 +56,7 @@ class TestMonitor(unittest.TestCase):
         low, high = monitor.summary(self.db, 0.0), monitor.summary(self.db, 1.01)
         self.assertEqual(low["anomalous"], low["total"])
         self.assertEqual(high["anomalous"], 0)
-        again = monitor.Monitor(self.log, self.monitor.db_path, scorer=fake_scorer)
+        again = monitor.Monitor(self.log, self.monitor.db_path, scorer=fake_scorer, settle=0)
         again._setup()
         self.assertEqual(again.offset, self.monitor.offset)
         self.assertEqual(len(again.state), len(self.monitor.state))
