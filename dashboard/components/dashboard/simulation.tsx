@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { Charts } from "@/components/dashboard/charts";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
-import { getSimInfo, getSummary, startSim, stopSim, type SimInfo, type SimMode, type Status, type Summary } from "@/lib/api";
+import { getSimInfo, getSummary, startSim, stopSim, resetMonitor, type SimInfo, type SimMode, type Status, type Summary } from "@/lib/api";
 
 const POLL_MS = 2000;
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 const SOURCES: { id: SimMode; title: string; text: string }[] = [
-  { id: "replay", title: "Replay (no Docker needed)", text: "Plays a real HDFS sample log into the monitor at 20 lines per second, about 90 seconds in total." },
+  { id: "replay", title: "Replay (no Docker needed)", text: "Streams endless HDFS-style logs at 20 lines per second, about 5% of blocks taken from the anomalous sample. Same generator as Docker, run locally." },
   { id: "docker", title: "Docker cluster", text: "Starts 3 fake datanode containers that print an endless HDFS-style stream. Needs Docker Desktop running." },
 ];
 
@@ -26,6 +26,7 @@ export function Simulation({ status, threshold }: { status: Status | null; thres
   const [mode, setMode] = useState<SimMode>("replay");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +53,14 @@ export function Simulation({ status, threshold }: { status: Status | null; thres
     }
   }
 
+  async function reset() {
+    if (!confirmReset) { setConfirmReset(true); return; } // two clicks: this wipes the monitor's results
+    setConfirmReset(false); setBusy(true); setError("");
+    try { await resetMonitor(); setSummary(null); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not reach the server."); }
+    finally { setBusy(false); }
+  }
+
   const running = sim?.running ?? false;
   const finished = !running && sim?.mode && sim.exit_code !== null;
   return (
@@ -75,6 +84,12 @@ export function Simulation({ status, threshold }: { status: Status | null; thres
             className={`h-12 min-w-56 rounded-sm border px-8 text-sm font-semibold disabled:opacity-60 ${running ? "border-red-700 bg-red-950 text-red-200 hover:bg-red-900" : "border-emerald-600 bg-emerald-700 text-white hover:bg-emerald-600"}`}
           >
             {busy ? "Working…" : running ? "■  Stop simulation" : "▶  Run simulation"}
+          </button>
+          <button
+            type="button" onClick={reset} disabled={busy || running} onBlur={() => setConfirmReset(false)}
+            className="h-12 rounded-sm border border-slate-700 px-6 text-sm font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-40"
+          >
+            {confirmReset ? "Click again to wipe all results" : "Reset to 0"}
           </button>
           <span className="text-xs text-slate-400">
             {running && <span className="flex items-center gap-2 text-emerald-400"><span className="size-2 animate-pulse rounded-full bg-emerald-400" />Running {sim?.mode} · {clock(sim?.elapsed_s ?? 0)} elapsed</span>}

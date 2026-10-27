@@ -155,7 +155,7 @@ export function Monitor({ status, threshold, onThreshold, paused, onPause }: {
       <div className={`space-y-2 ${scores === null ? "animate-pulse" : ""}`}>
         <KpiCards
           k={kpis}
-          last={{ label: "Blocks Tracked", value: status ? status.blocks.toLocaleString() : "–", sub: "distinct HDFS blocks seen so far" }}
+          last={{ label: "Blocks Tracked", value: status ? status.blocks.toLocaleString() : "–", sub: `distinct HDFS blocks seen so far, ${status?.in_progress ?? 0} still being scored` }}
         />
         <Charts summary={summary} threshold={cut} />
         <SessionsTable

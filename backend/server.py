@@ -73,11 +73,23 @@ def sim_start(mode):
                 return HTTPStatus.BAD_REQUEST, {"error": "Docker Desktop is not running. Start it and try again, or use the Replay source."}
             target, command = PROJECT_ROOT / "sim" / "cluster.log", [sys.executable, str(PROJECT_ROOT / "sim" / "collect.py")]
         elif mode == "replay":
-            target, command = TEST_SETS_DIR / "live_demo.log", [sys.executable, str(PROJECT_ROOT / "backend" / "simulate_live.py")]
+            # The Docker cluster's generator as one local process: endless sessions with fresh block ids and a live timestamp.
+            target, command = TEST_SETS_DIR / "live_demo.log", [sys.executable, str(PROJECT_ROOT / "sim" / "datanode.py")]
         else:
             return HTTPStatus.BAD_REQUEST, {"error": "Source must be replay or docker."}
+        env, out = None, subprocess.DEVNULL
+        if mode == "replay":
+            labels = PROJECT_ROOT / "sim" / "labels"  # the answer key sim/evaluate.py reads
+            labels.mkdir(exist_ok=True)
+            for old in labels.glob("*.csv"):
+                old.unlink()
+            env = {**os.environ, "SAMPLES": str(TEST_SETS_DIR), "LABELS_DIR": str(labels), "LINES_PER_SECOND": "20"}
+            out = target.open("wb")  # truncates the old stream
         MONITOR.watch(target)
-        SIM.update(proc=subprocess.Popen(command, cwd=PROJECT_ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL), mode=mode, started=time.time())
+        MONITOR.reset()  # watch() only resets on a new file, and a re-run must start from zero
+        SIM.update(proc=subprocess.Popen(command, cwd=PROJECT_ROOT, stdout=out, stderr=subprocess.DEVNULL, env=env), mode=mode, started=time.time())
+        if out is not subprocess.DEVNULL:
+            out.close()  # the child keeps its own handle
     return HTTPStatus.OK, sim_info()
 
 
@@ -568,7 +580,21 @@ class LogInsightHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
 
+def last_watched_file():
+    """The log file the saved results came from (live_demo.log for a replay, cluster.log for Docker), if it still exists."""
+    db = sqlite3.connect(MONITOR.db_path)
+    try:
+        row = db.execute("SELECT value FROM meta WHERE key = 'file'").fetchone()
+    except sqlite3.Error:
+        return None
+    finally:
+        db.close()
+    return Path(row[0]) if row and Path(row[0]).is_file() else None
+
+
 if __name__ == "__main__":
+    if "LOGINSIGHT_WATCH" not in os.environ:  # a restart carries on with the run it was last showing, not always the replay file
+        MONITOR.log_path = last_watched_file() or MONITOR.log_path
     JOBS["monitor"] = {"stage": "monitoring", "progress": 100, "file": str(MONITOR.log_path), "database": str(MONITOR.db_path)}
     MONITOR.start()  # reuses the /api/jobs/monitor/blocks routes for block detail and explanations
     server = ThreadingHTTPServer(("127.0.0.1", 8000), LogInsightHandler)  # this machine only; "" would expose it to the whole network

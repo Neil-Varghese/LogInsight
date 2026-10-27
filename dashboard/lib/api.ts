@@ -61,7 +61,7 @@ export type Perf = {
 };
 export type Status = {
   model_loaded: boolean; error: string | null; last_ingest: number | null; started: number; file: string;
-  lines: number; unmatched: number; blocks: number; backlog_bytes: number; now: number;
+  lines: number; unmatched: number; blocks: number; in_progress: number; backlog_bytes: number; now: number;
   rates: { t: number; rate: number }[]; perf: Perf;
 };
 export type Summary = {

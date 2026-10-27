@@ -22,6 +22,7 @@ export function LiveFeed() {
   const queue = useRef<FeedLine[]>([]);
   const cursor = useRef(-1); // sequence number of the last line fetched
   const generation = useRef<number | null>(null);
+  const [baseline, setBaseline] = useState(0); // lines up to this sequence number were already logged when the view opened: shown still, never animated
   const pausedRef = useRef(false);
 
   useEffect(() => { pausedRef.current = paused; }, [paused]);
@@ -37,6 +38,14 @@ export function LiveFeed() {
         const reset = (generation.current !== null && generation.current !== feed.generation) || feed.latest < cursor.current;
         if (reset) { queue.current = []; setLines([]); } // the monitor was reset or the server restarted: start the view over
         generation.current = feed.generation;
+        if (cursor.current === -1) { // first load: the existing lines go straight on screen, newest on top, and nothing moves
+          setBaseline(feed.latest);
+          setLines(feed.lines.slice().reverse().slice(0, KEEP));
+          setCounts(feed.counts); setError("");
+          cursor.current = feed.lines.length ? feed.lines[feed.lines.length - 1].seq : feed.latest;
+          if (!cancelled) timer = setTimeout(poll, POLL_MS);
+          return;
+        }
         const last = feed.lines[feed.lines.length - 1];
         cursor.current = feed.latest < cursor.current ? -1 : last ? last.seq : cursor.current;
         queue.current = queue.current.concat(feed.lines).slice(-QUEUE_MAX);
@@ -105,7 +114,7 @@ export function LiveFeed() {
           </div>
         ) : (
           shown.map((l) => (
-            <div key={l.seq} className="flex animate-in items-baseline gap-3 border-b border-slate-800/60 px-3 py-1 font-mono text-[11px] duration-300 fade-in slide-in-from-top-1 motion-reduce:animate-none">
+            <div key={l.seq} className={`flex items-baseline gap-3 border-b border-slate-800/60 px-3 py-1 font-mono text-[11px] duration-300 fade-in slide-in-from-top-1 motion-reduce:animate-none ${l.seq > baseline ? "animate-in" : ""}`}>
               <span className="shrink-0 text-slate-500">{clock(l.t)}</span>
               <span className={`w-20 shrink-0 rounded-sm border px-1 text-center ${tierOf(l.sev).badge}`}>{tierOf(l.sev).priority} {l.level}</span>
               <span className="hidden w-32 shrink-0 truncate text-slate-500 md:inline">{l.src}</span>

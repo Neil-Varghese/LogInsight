@@ -290,7 +290,7 @@ class Monitor:
     def snapshot(self):
         size = self.log_path.stat().st_size if self.log_path.exists() else 0
         return {**self.info, "file": self.log_path.name, "lines": self.lines, "unmatched": self.unmatched,
-                "blocks": len(self.state), "backlog_bytes": max(0, size - self.offset), "now": time.time(),
+                "blocks": len(self.state), "in_progress": len(self.pending), "backlog_bytes": max(0, size - self.offset), "now": time.time(),
                 "rates": [{"t": t, "rate": round(r, 1)} for t, r in self.rates], "perf": self.perf()}
 
 
