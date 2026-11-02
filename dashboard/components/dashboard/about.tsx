@@ -19,7 +19,7 @@ export function About() {
               <img src={d.photo} alt={d.name} className="size-20 rounded-full border border-slate-800 object-cover" />
               <div className="mt-2 text-sm font-semibold text-slate-100">{d.name}</div>
               <div className="text-xs text-indigo-400">{d.role}</div>
-              <p className="mt-1 text-xs text-slate-300">{d.bio}</p>
+              {d.bio && <p className="mt-1 text-xs text-slate-300">{d.bio}</p>}
             </div>
           ))}
         </div>

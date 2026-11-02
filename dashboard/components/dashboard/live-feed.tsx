@@ -110,7 +110,7 @@ export function LiveFeed() {
       <div role="log" aria-live="off" className="h-80 overflow-y-auto">
         {shown.length === 0 ? (
           <div className="flex h-full items-center justify-center px-3 text-center text-xs text-slate-500">
-            {lines.length === 0 ? "Waiting for log lines… press Run on the Simulation tab." : "Every priority is switched off, or none of the lines on screen match."}
+            {lines.length === 0 ? "Waiting for log lines… press Run on the Monitor tab." : "Every priority is switched off, or none of the lines on screen match."}
           </div>
         ) : (
           shown.map((l) => (

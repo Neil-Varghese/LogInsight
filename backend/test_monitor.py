@@ -43,6 +43,25 @@ class TestMonitor(unittest.TestCase):
         self.assertGreater(monitor.summary(self.db, 0.5)["total"], 0)
         self.assertFalse(self.monitor.pending)
 
+    def test_reset_can_keep_traffic_and_ip_history(self):
+        self.monitor.feed.append({"seq": 1})
+        self.monitor.severity_counts["INFO"] = 3
+        gen = self.monitor.generation
+        self.monitor.reset(keep_history=True)
+        self.assertEqual((len(self.monitor.feed), self.monitor.severity_counts["INFO"], self.monitor.generation), (1, 3, gen))
+        self.monitor.reset()
+        self.assertEqual((len(self.monitor.feed), self.monitor.generation), (0, gen + 1))
+
+    def test_freeze_keeps_the_numbers_where_they_were(self):
+        self.monitor.settle = 60
+        self.log.write_bytes(("".join(self.lines[:50])).encode())
+        self.monitor._tick(self.db)
+        self.monitor.freeze()
+        self.monitor.settle = 0
+        self.log.write_bytes(("".join(self.lines[:100])).encode())
+        self.assertEqual(self.monitor._tick(self.db), 0)
+        self.assertEqual(monitor.summary(self.db, 0.5)["total"], 0)  # the waiting blocks were dropped, not scored
+
     def test_window_keeps_last_events_but_counts_all(self):
         self.log.write_bytes(("".join(self.lines[:600])).encode())
         self.monitor._tick(self.db)

@@ -9,14 +9,15 @@ export type Developer = { name: string; role: string; bio: string; photo: string
 
 // What led to building LogInsight. Each string is one paragraph.
 export const STORY: string[] = [
-  "Placeholder: describe the problem that started this project, for example how much log data a Hadoop (HDFS) cluster produces and how hard it is to spot trouble by reading it by hand.",
-  "Placeholder: describe the idea, for example teaching an LSTM model what normal block activity looks like so that unusual behaviour is flagged automatically, in real time.",
-  "Placeholder: describe the goal, for example a dashboard that a person on call can open and understand in seconds.",
+  "Modern systems produce billions of log events a day, far too many to read by hand when diagnosing faults or auditing activity.",
+  "Existing anomaly detectors act as black boxes: they raise alerts without a cause, which leads to alert fatigue and slow response.",
+  "LogInsight uses an LSTM to flag anomalous HDFS blocks and an LLM to explain them, with a Docker log simulator and a live dashboard.",
+  "The goal is to help SOC analysts and DevOps engineers investigate anomalies with more confidence and less domain expertise.",
 ];
 
 export const DEVELOPERS: Developer[] = [
-  { name: "Developer One", role: "Role / focus area", bio: "Placeholder: two or three sentences about yourself and what you built.", photo: "/team/dev1.svg" },
-  { name: "Developer Two", role: "Role / focus area", bio: "Placeholder: two or three sentences about yourself and what you built.", photo: "/team/dev2.svg" },
-  { name: "Developer Three", role: "Role / focus area", bio: "Placeholder: two or three sentences about yourself and what you built.", photo: "/team/dev3.svg" },
-  { name: "Developer Four", role: "Role / focus area", bio: "Placeholder: two or three sentences about yourself and what you built.", photo: "/team/dev4.svg" },
+  { name: "Neil Varghese Abraham", role: "1BY23CS144", bio: "", photo: "/team/dev1.svg" },
+  { name: "Nikitha R Shenoy", role: "1BY23CS148", bio: "", photo: "/team/dev2.svg" },
+  { name: "Sai Mansi Maddali", role: "1BY23CS196", bio: "", photo: "/team/dev3.svg" },
+  { name: "Trinabh Chadha", role: "1BY23CS275", bio: "", photo: "/team/dev4.svg" },
 ];

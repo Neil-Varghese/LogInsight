@@ -21,18 +21,14 @@ export function Performance({ status }: { status: Status | null }) {
     <div className="space-y-2">
       {!perf || perf.ticks === 0 ? (
         <p className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm px-3 py-6 text-center text-xs text-slate-500">
-          No lines processed yet. Run the simulation (Simulation tab) and the numbers appear here.
+          No lines processed yet. Run the simulation (Monitor tab) and the numbers appear here.
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          {metric("Capacity", `${Math.round(perf.capacity_lines_per_s).toLocaleString()} lines/s`, "most it can keep up with")}
-          {metric("Tick time (avg)", `${perf.tick_avg_ms.toFixed(0)} ms`, "read + match + score + save")}
-          {metric("Tick time (p95)", `${perf.tick_p95_ms.toFixed(0)} ms`, "the slowest 1 in 20")}
           {metric("Scoring", `${perf.score_ms_per_block.toFixed(1)} ms/block`, "LSTM time per block")}
           {metric("Model load", perf.model_load_s === null ? "–" : `${perf.model_load_s.toFixed(1)} s`, "one-off at start-up")}
           {metric("Database", size(perf.db_bytes), "monitor.sqlite3")}
           {metric("Uptime", duration(perf.uptime_s), "since the server started")}
-          {metric("Ticks sampled", String(perf.ticks), "busy ticks, last 200")}
         </div>
       )}
       <ChartCard title="Ingest throughput" note="lines per second" empty={!status || status.rates.length === 0}>
@@ -46,9 +42,6 @@ export function Performance({ status }: { status: Status | null }) {
           </AreaChart>
         </ResponsiveContainer>
       </ChartCard>
-      <p className="text-[11px] text-slate-500">
-        If the ingest throughput stays below Capacity, the monitor keeps up with the log. If it gets close, the Backlog on the Monitor tab starts to grow.
-      </p>
     </div>
   );
 }

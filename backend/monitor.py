@@ -32,7 +32,7 @@ IPADDR = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d)")  # any IPv4 in
 SOURCE = re.compile(r"(?:from|src:) /([\d.]+)")
 WINDOW = predictor.MAX_SEQUENCE_LENGTH  # the model sees the last 50 events of a block
 POLL_SECONDS = 1
-SETTLE_SECONDS = 5  # a block is scored once no new line for it arrived for this long; half-finished blocks look anomalous to the model
+SETTLE_SECONDS = 20  # a block is scored once no new line for it arrived for this long; half-finished blocks look anomalous to the model
 MAX_CHUNK = 8 * 1024 * 1024  # bytes read per tick, so a huge backlog is worked through in slices
 BUCKETS = (10, 60, 300, 900, 3600, 21600, 86400)  # chart bucket sizes in seconds; the smallest giving <= 60 bars wins
 TOP_EVENT_BLOCKS = 20000  # ponytail: "top events" looks at the 20k most recent blocks; aggregate incrementally if that is too slow
@@ -83,6 +83,7 @@ class Monitor:
         self.pending = {}  # block_id -> wall time of its newest line; scored and saved once settled (lost on a crash, ponytail: persist if that matters)
         self.lock = threading.Lock()  # one tick or reset at a time
         self.stop = threading.Event()
+        self.frozen = False  # True after a simulation is stopped: ticks do nothing, so the numbers stay where they were
         # ponytail: every block ever seen stays in memory; evict idle blocks if a feed has millions of them.
         self.state = {}  # block_id -> {"events": last 50 event ids, "n": total events, "first": t, "last": t}
         self.offset = self.lines = self.unmatched = 0
@@ -166,6 +167,8 @@ class Monitor:
         return None
 
     def _tick(self, db):
+        if self.frozen:
+            return 0
         began = time.perf_counter()
         size = self.log_path.stat().st_size
         if size < self.offset:
@@ -248,7 +251,7 @@ class Monitor:
         # ponytail: a reader more than `limit` lines behind skips the middle; page by seq if gap-free history matters
         return {"generation": self.generation, "latest": self.feed_seq, "counts": dict(self.severity_counts), "lines": fresh[-limit:]}
 
-    def watch(self, path):
+    def watch(self, path, keep_history=False):
         """Switch to another log file and start from zero (a no-op if it is already the watched file)."""
         path = Path(path)
         if path == self.log_path:
@@ -257,23 +260,37 @@ class Monitor:
         path.touch()
         with self.lock:
             self.log_path = path
-        self.reset()
+        self.reset(keep_history)
 
-    def reset(self):
-        """Forget everything and re-read the file from the top."""
+    def freeze(self):
+        """Stop changing the numbers: drop blocks still waiting to be scored (they are cut off, so the model would flag them) and skip what is left in the file."""
+        self.frozen = True
+        with self.lock:
+            self.pending.clear()
+            self.offset = self.log_path.stat().st_size if self.log_path.exists() else 0
+            db = self._connect()
+            try:
+                db.executemany("INSERT OR REPLACE INTO meta VALUES (?, ?)", [("offset", str(self.offset)), ("file", str(self.log_path))])
+                db.commit()
+            finally:
+                db.close()
+
+    def reset(self, keep_history=False):
+        """Forget everything and re-read the file from the top. keep_history=True keeps traffic, IPs and the live line stream (what the Traffic and Active IPs tabs show)."""
         with self.lock:
             db = self._connect()
             try:
-                for table in ("blocks", "explanations", "traffic", "ip_activity", "meta"):
+                for table in ("blocks", "explanations", "meta") if keep_history else ("blocks", "explanations", "traffic", "ip_activity", "meta"):
                     db.execute(f"DELETE FROM {table}")
                 db.commit()
             finally:
                 db.close()
             self.state, self.pending, self.offset, self.lines, self.unmatched = {}, {}, 0, 0, 0
             self.rates.clear()
-            self.feed.clear()
-            self.severity_counts.clear()
-            self.generation += 1
+            if not keep_history:
+                self.feed.clear()
+                self.severity_counts.clear()
+                self.generation += 1
 
     def perf(self):
         """Speed numbers over the last ~200 busy ticks (ticks that found new lines)."""

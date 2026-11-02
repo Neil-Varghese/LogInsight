@@ -18,15 +18,11 @@ export function Settings({ status }: { status: Status | null }) {
     <div className="space-y-2">
       <section className="rounded-lg border border-slate-800 bg-slate-900 shadow-sm p-3">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Log source</h2>
-        <dl className="grid grid-cols-[10rem_1fr] gap-y-1 text-xs">
+        <dl className="grid grid-cols-[7rem_1fr] gap-y-1 text-xs">
           <dt className="text-slate-500">Watched file</dt>
           <dd className="font-mono text-slate-200">{status?.file ?? "–"}</dd>
-          <dt className="text-slate-500">Change it</dt>
-          <dd className="text-slate-400">
-            start the server with <span className="font-mono text-slate-300">LOGINSIGHT_WATCH=path/to/hdfs.log</span> (relative to the project folder)
-          </dd>
           <dt className="text-slate-500">Format</dt>
-          <dd className="text-slate-400">HDFS only for now</dd>
+          <dd className="text-slate-400">HDFS</dd>
         </dl>
       </section>
 

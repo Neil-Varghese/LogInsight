@@ -85,8 +85,11 @@ def sim_start(mode):
                 old.unlink()
             env = {**os.environ, "SAMPLES": str(TEST_SETS_DIR), "LABELS_DIR": str(labels), "LINES_PER_SECOND": "20"}
             out = target.open("wb")  # truncates the old stream
-        MONITOR.watch(target)
-        MONITOR.reset()  # watch() only resets on a new file, and a re-run must start from zero
+        if mode == "docker":
+            target.write_bytes(b"")  # drop the previous run's lines now, or the monitor re-reads them until collect.py truncates the file
+        MONITOR.frozen = False
+        MONITOR.watch(target, keep_history=True)
+        MONITOR.reset(keep_history=True)  # watch() only resets on a new file, and block results restart from zero while traffic and IPs carry on until the backend restarts
         SIM.update(proc=subprocess.Popen(command, cwd=PROJECT_ROOT, stdout=out, stderr=subprocess.DEVNULL, env=env), mode=mode, started=time.time())
         if out is not subprocess.DEVNULL:
             out.close()  # the child keeps its own handle
@@ -96,12 +99,14 @@ def sim_start(mode):
 def sim_stop():
     with SIM_LOCK:
         if sim_running():
+            MONITOR.freeze()  # the results stay as they were when Stop was pressed
             SIM["proc"].terminate()
             if SIM["mode"] == "docker":  # collect.py cannot clean up when killed, so take the containers down here
                 try:
                     subprocess.run(["docker", "compose", "down"], cwd=PROJECT_ROOT, capture_output=True, timeout=90)
                 except (OSError, subprocess.SubprocessError):
                     pass
+            MONITOR.freeze()  # again: the containers may have written a last few lines while shutting down
     return sim_info()
 
 
@@ -593,8 +598,10 @@ def last_watched_file():
 
 
 if __name__ == "__main__":
-    if "LOGINSIGHT_WATCH" not in os.environ:  # a restart carries on with the run it was last showing, not always the replay file
+    if "LOGINSIGHT_WATCH" not in os.environ:  # remember which file the last run used, so the status bar names it
         MONITOR.log_path = last_watched_file() or MONITOR.log_path
+        MONITOR.reset()  # every start begins at zero, with the old file's lines skipped until the next Run
+        MONITOR.freeze()
     JOBS["monitor"] = {"stage": "monitoring", "progress": 100, "file": str(MONITOR.log_path), "database": str(MONITOR.db_path)}
     MONITOR.start()  # reuses the /api/jobs/monitor/blocks routes for block detail and explanations
     server = ThreadingHTTPServer(("127.0.0.1", 8000), LogInsightHandler)  # this machine only; "" would expose it to the whole network

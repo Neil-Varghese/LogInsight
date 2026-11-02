@@ -1,14 +1,13 @@
-import { Activity, Globe, LogOut, Moon, Network, Pause, Play, Settings, ShieldCheck, Sun } from "lucide-react";
+import { Activity, Globe, LogOut, Moon, Network, Settings, ShieldCheck, Sun } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type View = "executive" | "monitor" | "simulation" | "traffic" | "ips" | "settings";
+export type View = "executive" | "monitor" | "traffic" | "ips" | "settings";
 export type Health = "online" | "loading" | "error" | "offline" | null;
 
 // Each section: its icon on the left rail and the name shown on the tab above the page.
 const SECTIONS: { id: View; label: string; Icon: ComponentType<{ className?: string }> }[] = [
   { id: "monitor", label: "Monitor", Icon: Activity },
   { id: "executive", label: "Executive", Icon: ShieldCheck },
-  { id: "simulation", label: "Simulation", Icon: Play },
   { id: "traffic", label: "Traffic", Icon: Network },
   { id: "ips", label: "Active IPs", Icon: Globe },
   { id: "settings", label: "Settings", Icon: Settings },
@@ -21,45 +20,22 @@ const BADGE: Record<Exclude<Health, null>, { text: string; box: string; dot: str
   offline: { text: "Backend Offline", box: "border-red-900 bg-red-950 text-red-400", dot: "bg-red-400" },
 };
 
-export type Telemetry = { linesPerSec: number | null; backlog: string; lastLine: string; latencyMs: number | null };
-
-function Chip({ label, value, tone = "text-white" }: { label: string; value: string; tone?: string }) {
-  return (
-    <span className="flex items-baseline gap-1.5 rounded-md border border-white/25 bg-white/10 px-2.5 py-1 text-white">
-      {label} <span className={`font-mono font-semibold tabular-nums ${tone}`}>{value}</span>
-    </span>
-  );
-}
-
-// Top bar: name, live telemetry chips (ingest rate, backlog, last line, API latency), model status, pause/resume and theme toggle.
-export function TopNav({ threshold, health, telemetry, paused, onPause, light, onTheme, onLogout }: {
-  threshold: number; health: Health; telemetry: Telemetry; paused: boolean; onPause: () => void; light: boolean; onTheme: () => void; onLogout: () => void;
+// Top bar: name, model status (online / loading / error / offline), theme toggle and log out.
+export function TopNav({ health, light, onTheme, onLogout }: {
+  health: Health; light: boolean; onTheme: () => void; onLogout: () => void;
 }) {
   const badge = BADGE[health ?? "loading"];
-  const ms = telemetry.latencyMs;
-  const latencyTone = ms === null ? undefined : ms < 150 ? "text-emerald-400" : ms < 500 ? "text-amber-400" : "text-red-400";
   const iconButton = "grid size-8 place-items-center rounded-md border border-white/30 bg-white/15 text-white transition-colors hover:bg-white/30";
   return (
     <header className="flex h-11 shrink-0 items-center justify-between gap-3 bg-[#161d27] px-3 text-slate-300 sm:px-4">
       <span className="text-lg font-semibold tracking-tight text-white">LogInsight</span>
       <div className="flex min-w-0 items-center gap-3 text-xs sm:gap-4">
-        {/* Telemetry chips drop away on narrow screens so the status badge always fits. */}
-        <div className="hidden items-center gap-2 xl:flex">
-          <Chip label="Ingest" value={telemetry.linesPerSec === null ? "–" : `${telemetry.linesPerSec.toLocaleString()} lines/s`} />
-          <Chip label="Backlog" value={telemetry.backlog} />
-          <Chip label="Last line" value={telemetry.lastLine} />
-          <Chip label="API" value={ms === null ? "–" : `${ms} ms`} tone={latencyTone} />
-          <Chip label="Threshold" value={`${threshold}%`} />
-        </div>
         {/* "online" = the monitor thread loaded the model and is running; the badge follows the real status */}
         <span className={`flex items-center gap-1.5 whitespace-nowrap rounded-sm border px-2 py-0.5 font-medium ${badge.box}`}>
-          <span className={`size-1.5 rounded-full ${badge.dot} ${health === "online" && !paused ? "animate-pulse" : ""}`} />
+          <span className={`size-1.5 rounded-full ${badge.dot} ${health === "online" ? "animate-pulse" : ""}`} />
           <span className="hidden sm:inline">{badge.text}</span>
           <span className="sm:hidden">{badge.text.split(" ").pop()}</span>
         </span>
-        <button type="button" onClick={onPause} aria-label={paused ? "Resume live polling" : "Pause live polling"} title={paused ? "Resume live polling" : "Pause live polling"} className={iconButton}>
-          {paused ? <Play className="size-3.5" /> : <Pause className="size-3.5" />}
-        </button>
         <button type="button" onClick={onTheme} aria-label="Toggle light/dark theme" title="Toggle light/dark theme" className={iconButton}>
           {light ? <Moon className="size-3.5" /> : <Sun className="size-3.5" />}
         </button>

@@ -1,13 +1,14 @@
 "use client";
 
-import { Pause, Play, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Charts } from "@/components/dashboard/charts";
 import { useInspector } from "@/components/dashboard/inspect-drawer";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
+import { SimControls } from "@/components/dashboard/sim-controls";
 import { SessionsTable, type Session } from "@/components/dashboard/sessions-table";
 import { getScores, getSummary, type Score, type Status, type Summary } from "@/lib/api";
-import { kb, ago } from "@/lib/utils";
+import { ago } from "@/lib/utils";
 
 const POLL_MS = 3000;
 const SUMMARY_DEBOUNCE_MS = 400;
@@ -33,8 +34,8 @@ function poll(load: () => Promise<void>, delay = 0) {
   return () => { stopped = true; clearTimeout(timer); };
 }
 
-export function Monitor({ status, threshold, onThreshold, paused, onPause }: {
-  status: Status | null; threshold: number; onThreshold: (percent: number) => void; paused: boolean; onPause: () => void;
+export function Monitor({ status, threshold }: {
+  status: Status | null; threshold: number;
 }) {
   const [scores, setScores] = useState<Score[] | null>(null); // every block; the threshold is applied to these in the browser
   const [serverSummary, setServerSummary] = useState<Summary | null>(null); // only used for "events that stand out", which needs the event lists
@@ -46,20 +47,18 @@ export function Monitor({ status, threshold, onThreshold, paused, onPause }: {
 
   // Scores: re-fetched every few seconds. Moving the slider does NOT touch the network for these.
   useEffect(() => {
-    if (paused) return;
     return poll(async () => {
       try { setScores((await getScores()).scores); setError(""); }
       catch (e) { setError(e instanceof Error ? e.message : "Could not reach the server."); }
     });
-  }, [paused]);
+  }, []);
 
-  // The events chart is the one thing the server still computes per threshold, so it waits for the slider to settle.
+  // The events chart is the one thing the server still computes per threshold, so it waits a moment before the first call.
   useEffect(() => {
-    if (paused) return;
     return poll(async () => {
       try { setServerSummary(await getSummary(cut)); } catch { /* the scores poll above already reports connection errors */ }
     }, SUMMARY_DEBOUNCE_MS);
-  }, [cut, paused]);
+  }, [cut]);
 
   // Everything below recomputes instantly from `scores` + the slider.
   const { rows, summary, kpis } = useMemo(() => {
@@ -98,28 +97,22 @@ export function Monitor({ status, threshold, onThreshold, paused, onPause }: {
   }, [rows, search, filter]);
 
   const idleFor = status?.last_ingest ? status.now - status.last_ingest : null;
-  const live = !paused && status?.model_loaded && !status.error && !error;
+  const live = status?.model_loaded && !status.error && !error;
 
   return (
     <div className="space-y-2">
-      {/* Command bar: live state + pause, then search, severity filters and the threshold slider. */}
+      <SimControls />
+      {/* Command bar: live state, then search and severity filters. */}
       <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs shadow-sm">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <span className="flex items-center gap-2 font-medium text-slate-200">
             <span className={`size-2 rounded-full ${live ? "animate-pulse bg-emerald-400" : "bg-amber-400"}`} />
-            {paused ? "PAUSED" : live ? "LIVE" : "STARTING"}
+            {live ? "LIVE" : "STARTING"}
             <span className="font-mono font-normal text-slate-400">{status?.file ?? "…"}</span>
           </span>
           <Stat label="Lines ingested" value={status ? status.lines.toLocaleString() : "–"} />
-          <Stat label="Backlog" value={status ? kb(status.backlog_bytes) : "–"} />
           <Stat label="Last line" value={idleFor === null ? "none yet" : ago(idleFor)} />
           <Stat label="Unmatched lines" value={status ? status.unmatched.toLocaleString() : "–"} />
-          <button
-            type="button" onClick={onPause}
-            className="ml-auto inline-flex items-center gap-1 rounded-sm border border-slate-700 px-2 py-0.5 text-slate-300 hover:border-indigo-500 hover:text-slate-100"
-          >
-            {paused ? <><Play className="size-3" /> Resume</> : <><Pause className="size-3" /> Pause</>}
-          </button>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <label className="relative min-w-40 flex-1 sm:max-w-xs">
@@ -139,11 +132,6 @@ export function Monitor({ status, threshold, onThreshold, paused, onPause }: {
               </button>
             ))}
           </div>
-          <label className="ml-auto flex items-center gap-2 text-slate-400">
-            Anomaly threshold
-            <input type="range" min={0} max={100} value={threshold} onChange={(e) => onThreshold(Number(e.target.value))} className="w-36 accent-indigo-500" />
-            <span className="w-9 font-mono text-slate-200">{threshold}%</span>
-          </label>
         </div>
       </section>
 
@@ -155,7 +143,7 @@ export function Monitor({ status, threshold, onThreshold, paused, onPause }: {
       <div className={`space-y-2 ${scores === null ? "animate-pulse" : ""}`}>
         <KpiCards
           k={kpis}
-          last={{ label: "Blocks Tracked", value: status ? status.blocks.toLocaleString() : "–", sub: `distinct HDFS blocks seen so far, ${status?.in_progress ?? 0} still being scored` }}
+          last={{ label: "Lines Read", value: status ? status.lines.toLocaleString() : "–", sub: `since the monitor last reset, ${status?.in_progress ?? 0} blocks still being scored` }}
         />
         <Charts summary={summary} threshold={cut} />
         <SessionsTable
