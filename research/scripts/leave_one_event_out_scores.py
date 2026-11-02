@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 
 try:
-    from detector_interface import DetectorInferenceCache
+    from detector_interface import DetectorInferenceCache, sha256_file
     from occlusion_scores import (
         _load_runtime,
         _manifest_path,
@@ -33,7 +33,7 @@ try:
     )
     from train_loginsight_lstm import _resolve_path
 except ImportError:  # pragma: no cover - supports package-style imports
-    from research.scripts.detector_interface import DetectorInferenceCache
+    from research.scripts.detector_interface import DetectorInferenceCache, sha256_file
     from research.scripts.occlusion_scores import (
         _load_runtime,
         _manifest_path,
@@ -115,9 +115,8 @@ def run_leave_one_event_out(
     output_path = _resolve_path(output, repo_root) if output is not None else _default_output(
         repo_root, dataset.architecture, dataset.seed, split
     )
-    model_stat = checkpoint_path.stat()
-    model_key = f"{checkpoint_path.resolve()}:{model_stat.st_size}:{model_stat.st_mtime_ns}"
-    cache = DetectorInferenceCache(dataset.architecture, model_key)
+    model_key = f"checkpoint_sha256:{sha256_file(checkpoint_path)}"
+    cache = DetectorInferenceCache(dataset.architecture, model_key, "raw_probability_v1")
     count = 0
     event_count = 0
     with _open_output(output_path) as handle:

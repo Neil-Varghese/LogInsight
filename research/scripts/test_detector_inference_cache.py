@@ -56,6 +56,20 @@ class DetectorInferenceCacheTests(unittest.TestCase):
         self.assertEqual(first.stats.model_rows, 1)
         self.assertEqual(second.stats.model_rows, 1)
 
+    def test_cache_namespace_prevents_calibration_collisions(self):
+        model = FakeModel()
+        raw = DetectorInferenceCache("loginsight_lstm", "checkpoint-sha256", "raw_probability_v1")
+        calibrated = DetectorInferenceCache("loginsight_lstm", "checkpoint-sha256", "calibration-sha256-a")
+        inputs = np.asarray([[1, 1]], dtype=np.int32)
+        raw.predict(model, inputs, batch_size=1)
+        calibrated.predict(model, inputs, batch_size=1)
+        self.assertEqual(raw.stats.model_rows, 1)
+        self.assertEqual(calibrated.stats.model_rows, 1)
+
+    def test_cache_requires_nonempty_calibration_key(self):
+        with self.assertRaises(ValueError):
+            DetectorInferenceCache("detector", "checkpoint", "")
+
     def test_empty_request_does_not_call_model(self):
         model = FakeModel()
         cache = DetectorInferenceCache("detector", "model")

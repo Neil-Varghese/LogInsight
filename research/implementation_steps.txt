@@ -4,6 +4,116 @@ LogInsight Implementation Steps
 
 Use one numbered item as one Codex chat. Do not combine targets until the previous one is verified.
 
+## Authoritative execution order from the current state
+
+The numbered phases below preserve the protocol's original step IDs. This
+roadmap controls the order in which the remaining work should actually be
+performed. A step marked complete above is an implementation artifact, not
+proof that its runtime, participant, or external-registration gate has been
+completed.
+
+Step 75 is already complete as a bounded exploratory diagnostic. Do not rerun
+it unless the protocol reconciliation invalidates its inputs. The remaining
+work must follow the gates below; a numbered implementation artifact being
+marked complete does not waive an outstanding runtime, ethics, annotation, or
+external-registration requirement.
+
+### Gate 0 — Reconcile the protocol before new confirmatory work
+
+1. **COMPLETED:** Resolve the Step 63 registration record. The OSF page
+   confirms registration `qrvuy` at
+   `https://osf.io/qrvuy/overview` on October 18, 2026 at 4:36 PM, version
+   `step63-v1`. The frozen packet and manifest were preserved unchanged, and
+   the stale draft wording is reconciled in
+   `research/experiments/registration/step63_registration_reconciliation.json`.
+2. **COMPLETED:** Complete **R7** as an independent audit of the critical
+   modules, prompt boundary, annotation export, ledger, and a small set of
+   metrics. The report is
+   `research/results/tables/r7_independent_audit.json`; focused tests are in
+   `research/scripts/test_r7_audit.py`.
+3. **COMPLETED:** Complete **R6** by auditing inference-cache keys for
+   checkpoint hashes and calibration parameters. The report is
+   `research/results/tables/r6_cache_audit.json`; focused tests are in
+   `research/scripts/test_r6_cache_audit.py` and
+   `research/scripts/test_detector_inference_cache.py`.
+4. Complete **R5** only when the transferred Colab checkpoints and predictions
+   are available; verify the registered tolerance before relying on local
+   inference.
+
+These are integrity gates. They do not generate study outcomes and should not
+be confused with the long experiment runs.
+
+### Gate 1 — Ethics, sampling, and annotation readiness
+
+5. Finish the Step 56 internal team gate: teammate consent, compensation,
+   anonymization QA, retention, roster, and coordinator signoff.
+6. Collect teammate responses to the generated Step 55 ID-memorization probe
+   and retain its scored result with the coordinator-only answer key.
+[DONE] 7. Reconcile the annotation pool before labeling. The duplicate block
+   is intentional because sampling is at the dataset/unit/architecture level;
+   the 240 annotation items represent 239 unique HDFS blocks across the two
+   architectures. The HDFS-only 228-normal/12-anomaly composition is accepted
+   for this pilot with no sampling change. The auditable decision is recorded
+   in `research/experiments/pilot/annotation_pool_reconciliation.json`.
+8. Collect the primary evidence-relevance labels (**Step 57**), calculate
+   agreement (**Step 59**), and adjudicate disagreements (**Step 60**).
+
+Core LLM conditions must not be assigned to the labeled units until this gate
+is complete. Claim-support labels are collected later, after explanations
+exist.
+
+### Gate 2 — Faithfulness check and bounded pilot construction
+
+9. **Step 75 — COMPLETED:** implement and run the limited ROAR-style
+   retraining check on the registered modified subset. The completed report is
+   `research/results/tables/step75_roar_check.json`.
+10. Build the minimal HDFS and synthetic case pilot (**Step 76**), including
+    failure removal, recovery insertion, duplicate, swap, and replacement
+    cases with the expected detector-direction checks.
+
+### Gate 3 — Model runtime and pilot generation
+
+11. Establish a bounded real-record Mistral runtime test, preserving latency,
+    memory, output, and status artifacts before attempting the full run.
+12. Complete the repeated Mistral pilot (**Step 47A**) in the registered
+    order and conditions.
+13. Complete the repeated Qwen pilot (**Step 47B**) after the matched Mistral
+    gate, with the same unit/condition/repetition bookkeeping.
+14. Run the LSTM pilot conditions and verification (**Steps 77–80**), then
+    calculate pilot human-evidence recovery and detector faithfulness
+    (**Steps 81–82**).
+15. Apply and record the descriptive pilot go/no-go decision (**Steps 83–84**).
+
+Claim-support labeling (**Step 58**) is deliberately deferred until generated
+explanations exist. Operationally, collect the registered secondary
+claim-support sample with **Step 92**, after the main explanation generation
+in Step 89; do not treat Step 58 as an early prerequisite for Step 57.
+
+### Gate 4 — Main confirmatory experiment
+
+16. Freeze the main configuration (**Step 85**) after the pilot decision and
+    any registered scope cut.
+17. Run the HDFS and BGL detector conditions (**Steps 86–88**), all repeated
+    LLM conditions (**Step 89**), perturbation and ROAR subsets (**Steps 90–91**),
+    and the secondary claim-support sample (**Step 92**).
+18. Record execution cost and run the automated quality checks (**Steps 93–94**).
+
+### Gate 5 — Analysis, release, and final writing
+
+19. Compute the detector, human-recovery, claim-support, faithfulness, and
+    perturbation outcomes (**Steps 95–99**).
+20. Run TOST, uncertainty, seed/run variance, and correction analyses
+    (**Steps 100–104**), then create tables, figures, and validity analysis
+    (**Steps 105–107**).
+21. Clean, package, rerun, and release the artifact (**Steps 108–112**), then
+    perform the final registration-versus-results audit (**Step 117**).
+22. Write the manuscript and supplement last (**Steps 113–116 and 118**).
+
+The next work is therefore **Gate 0, item 4: R5**. After Gates 0 and 1 are closed,
+the next numbered experimental implementation is **Step 76**. Recruitment and
+core labeling occur inside Gate 1; the full 47A/47B generation runs must wait
+until Gates 0 and 1 are closed.
+
 Phase 1: Project setup
 
 [DONE] 1. Create a research implementation branch (isolates research changes from the existing repository).
@@ -198,17 +308,22 @@ Phase 6: Annotation and registration
 removes hostnames/identifiers, enforces the context-length policy, and exports
 the required evidence fields).
 
-[DONE] 55. Blind annotators to conditions and attribution values (prevents annotation
-bias) and run a simple ID-memorization probe.
+[DONE] 55. Blind annotators to conditions and attribution values (prevents
+annotation bias) and generate the ID-memorization probe. The 20-pair probe is
+stored at `research/results/tables/step55_id_memorization_probe.json`; teammate
+responses and the scored result remain to be collected.
 
-[DONE] 56. Prepare the ethics documentation before recruitment or labeling
-(consent, compensation, anonymization, and institutional approval/exemption).
-The documentation artifact is complete, but recruitment and labeling remain
-blocked until the institution records approval or exemption and the consent,
-compensation, and anonymization checks are signed off.
+[DONE] 56. Prepare the ethics documentation for project-team annotators before
+labeling (consent, compensation, anonymization, independent labeling,
+adjudicator separation, and internal team approval). The project team has
+approved the safeguards; the record is scoped to internal team annotation with
+no external recruitment.
 
-57. [TIME-INTENSIVE] Collect evidence-relevance labels for every core
-annotation block (creates the primary human ground truth).
+57. [TIME-INTENSIVE] Collect evidence-relevance labels for every eligible
+core annotation block (creates the primary human ground truth). The public
+237-packet bundle is `research/results/tables/step57_annotation_packets.json`
+and the standalone annotator UI is
+`research/experiments/pilot/step57_annotation_ui.html`.
 
 58. [TIME-INTENSIVE] Collect claim-support labels for the pre-registered
 explanation sample (creates the secondary human outcome).
@@ -261,7 +376,10 @@ Phase 7: Perturbation and faithfulness
 
 [DONE] 74. Define the attribution-only reference and random floor (makes consistency scores interpretable).
 
-75. [TIME-INTENSIVE] Implement the small ROAR-style retraining check (retrain on a limited modified subset).
+75. [DONE] Implement and run the small ROAR-style retraining check (retrain on
+a limited modified subset). The bounded runner is
+`research/scripts/roar_retraining.py`; the completed seven-run report is
+`research/results/tables/step75_roar_check.json`.
 
 Phase 8: Pilot and go/no-go decision
 
@@ -367,11 +485,13 @@ Final reviewer checks
 [ ] R5. Hash transferred Colab checkpoints and predictions, re-run local
 inference, and verify stored predictions within a registered tolerance.
 
-[ ] R6. Audit cache keys for checkpoint hashes and calibration parameters.
+[DONE] R6. Audit cache keys for checkpoint hashes and calibration parameters.
+The completed report is `research/results/tables/r6_cache_audit.json`.
 
-[ ] R7. Independently audit critical AI-written modules and add golden-prompt,
+[DONE] R7. Independently audit critical AI-written modules and add golden-prompt,
 attribution-free annotation-export, and ledger-completeness tests. Recompute a
-small set of metrics and attribution values independently.
+small set of metrics and attribution values independently. The completed
+report is `research/results/tables/r7_independent_audit.json`.
 
 Suggested opening prompt for each new Codex chat:
 

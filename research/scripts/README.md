@@ -15,12 +15,50 @@ standard deviations:
 The default sensitivity range is SD 0.15 through 0.35. The generated report
 is written to `research/results/tables/step61_tost_power_analysis.json`.
 
+`roar_retraining.py` implements the bounded Step 75 remove-and-retrain check
+for the primary LogInsight LSTM. It replaces top-attribution or equal-budget
+random events with the training vocabulary's unknown-event token in bounded
+train/validation/test subsets, retrains a fresh model for each fraction, and
+writes per-split metrics and test-F1 deltas. It requires Integrated Gradients
+artifacts for all three splits and does not claim to reproduce the full ROAR
+benchmark. The protocol and example command are documented in
+`research/experiments/roar_step75_plan.md`.
+
 `seed_utils.py` is the shared seed implementation. Call
 `set_global_seed(seed, deterministic=True)` at process startup, pass explicit
 `random_state` values to scikit-learn, and use `derive_seed` or
 `make_numpy_rng` for named sub-runs. Record the returned seed report in the
 experiment ledger. LLM providers may not honor a seed, so repeated-generation
 indices and the provider/model configuration must also be recorded.
+
+`r7_audit.py` performs the short independent R7 review. It verifies golden
+prompt hashes and the registered prompt boundary, checks an attribution-free
+annotation export, validates experiment-ledger required fields (including
+rejection of a missing required field), recomputes detector metrics from the
+stored test predictions, checks serialized Integrated-Gradients rank and
+completeness values, and independently recomputes one checkpoint attribution
+record. The default command includes the model recomputation:
+
+    MPLCONFIGDIR=/tmp/loginsight-mpl python3 research/scripts/r7_audit.py \
+      --repo-root . \
+      --output research/results/tables/r7_independent_audit.json
+
+Use `--no-model-attribution` only for a fast deterministic audit when the
+TensorFlow checkpoint runtime is unavailable. Focused regression tests are in
+`test_r7_audit.py`.
+
+R6 cache identity is enforced in `detector_interface.py`. The cache key
+includes the detector ID, checkpoint SHA-256, calibration key, input dtype,
+input shape, and input bytes. Verification callers use the checkpoint content
+hash and the explicit raw-probability calibration key. Run the audit with:
+
+    python3 research/scripts/r6_cache_audit.py \
+      --repo-root . \
+      --output research/results/tables/r6_cache_audit.json
+
+The audit also hashes the registered calibration and threshold manifests and
+probes changed-checkpoint and changed-calibration identities for accidental
+cache reuse.
 
 `build_hdfs_blocks.py` reads the Drain structured HDFS CSV, extracts BlockIds
 from `Content`, sorts events chronologically by `LineId`, joins the official labels, and
@@ -368,6 +406,54 @@ and no log content; the hidden answer key stays with the coordinator.
 `score_id_memorization_probe` reports answered items, accuracy, invalid
 responses, and an above-chance indicator against the 0.5 chance level. Focused
 tests are in `test_annotation_blinding.py`.
+
+`build_step55_probe.py` builds the actual probe from the selected annotation
+pool and HDFS evidence. It writes a public probe without the answer key and a
+separate coordinator-only key:
+
+    python3 research/scripts/build_step55_probe.py \
+      --annotation-pool research/experiments/pilot/annotation_pool.jsonl.gz \
+      --evidence research/data/processed/hdfs_block_evidence_test.jsonl.gz \
+      --output research/results/tables/step55_id_memorization_probe.json \
+      --answer-key-output research/results/tables/step55_id_memorization_answer_key.json \
+      --pair-count 20 --seed 2026
+
+After teammates complete the response form, save a JSON array of
+`{"probe_id": "IDPROBE-0000", "annotator_response": "same"}` records and
+score it with `score_step55_probe.py`.
+
+`reconcile_annotation_pool.py` performs the pre-labeling pool reconciliation.
+It verifies the frozen manifest, confirms that repeated prediction units are
+distinct architecture-specific annotation items, and records the accepted
+HDFS-only composition:
+
+    python3 research/scripts/reconcile_annotation_pool.py
+
+The report is written to
+`research/experiments/pilot/annotation_pool_reconciliation.json`.
+
+`build_step57_packets.py` creates the public, blinded evidence-labeling bundle
+from the reconciled pool. It deduplicates the architecture-specific pool rows
+to one packet per unique prediction unit and excludes only context-capped
+packets:
+
+    python3 research/scripts/build_step57_packets.py
+
+The resulting `research/results/tables/step57_annotation_packets.json` contains
+237 eligible packets for the current pool. Annotators can use
+`research/experiments/pilot/step57_annotation_ui.html`; it saves progress in
+the browser and downloads a JSON array of event-level labels. Validate a
+completed export with:
+
+    python3 research/scripts/validate_step57_annotations.py \
+      --responses step57_teammate_01_annotations.json \
+      --output research/results/tables/step57_teammate_01_validation.json
+
+For a simple response interface, open
+`research/experiments/pilot/step55_probe_ui.html` in a browser, enter the
+annotator ID, choose the public probe JSON, and select Same or Different for
+each pair. The interface stores progress locally and downloads the response
+JSON; it never loads the hidden answer key.
 
 `occlusion_scores.py` computes the Step 34 verification-only diagnostic for
 both detectors. It deletes each retained event one at a time, re-pads the

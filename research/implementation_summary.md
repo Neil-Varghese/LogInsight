@@ -29,8 +29,8 @@ LogInsight dashboard/product code.
 
 ## Completed implementation
 
-All implementation checklist items through Step 46, plus Steps 51–56 and 61–74, are marked
-complete in `research/implementation_steps.txt`.
+All implementation checklist items through Step 46, plus Steps 51–56, 61–75,
+and R7, are marked complete in `research/implementation_steps.txt`.
 
 The Step 47A and 47B execution statuses are intentionally separate from
 implementation completion. Their runners and recording machinery exist, but
@@ -41,13 +41,26 @@ dated Mistral failure record is
 ### Step 56 — Annotation ethics documentation
 
 `research/experiments/annotation_ethics_documentation.md` records the
-participant scope, consent requirements, compensation fields, data
+project-team annotator scope, consent requirements, compensation fields, data
 minimization and anonymization controls, foreseeable risks, withdrawal and
-incident procedures, artifact-retention rules, and the institutional
-approval-or-exemption decision record. The documentation artifact is prepared,
-but its labeling gate remains blocked until an actual institutional decision
-and coordinator sign-off are recorded. No recruitment or core labeling should
-start from the presence of this file alone.
+incident procedures, artifact-retention rules, and the internal team approval
+record. The record also covers team-roster consent,
+independent-labeling assignments, adjudicator separation, and conflict
+disclosures. The documentation artifact is scoped to internal team annotation
+with no external recruitment and is marked approved by the project team.
+
+### Step 75 — Bounded ROAR-style retraining check
+
+`research/scripts/roar_retraining.py` implements the limited remove-and-retrain
+diagnostic for the primary LogInsight LSTM. It applies the same unknown-event
+replacement to bounded train, validation, and test subsets, comparing
+top-Integrated-Gradients removal with an equal-budget deterministic random
+event control and an unmodified reference. The report records subset limits,
+attribution/input alignment, seeds, removed-event counts, per-split metrics,
+and test-F1 deltas. The bounded TensorFlow runtime completed successfully
+across the unmodified baseline and both removal strategies. The seven-run
+report is stored at `research/results/tables/step75_roar_check.json`. This
+diagnostic is not a full ROAR benchmark.
 
 ### Step 61 — Parameterized TOST power analysis
 
@@ -76,14 +89,40 @@ https://osf.io/qrvuy/overview.
 
 ### Step 63 — OSF preregistration
 
-The local preregistration packet is prepared in
-`research/experiments/registration/step63_preregistration_packet.md` and the
-exact-file manifest were submitted to OSF Registries and archived at
-https://osf.io/qrvuy/overview. `research/scripts/prepare_registration.py`
-records the OSF URL, timestamp, and frozen artifact hashes. Prior detector
-development and limited model smoke tests remain disclosed as foreknowledge;
-confirmatory LLM generation and human-outcome analysis proceed under the
-registered protocol.
+The local preregistration packet and exact-file manifest were submitted to OSF
+Registries and archived at https://osf.io/qrvuy/overview. The OSF page confirms
+registration `qrvuy` on October 18, 2026 at 4:36 PM, version `step63-v1`.
+The frozen packet and manifest remain unchanged; the stale draft wording in the
+local packet is reconciled by
+`research/experiments/registration/step63_registration_reconciliation.json`.
+Prior detector development and limited model smoke tests remain disclosed as
+foreknowledge; confirmatory LLM generation and human-outcome analysis proceed
+under the registered protocol.
+
+### R7 — Independent critical-module audit
+
+R7 is complete. `research/scripts/r7_audit.py` checks the registered prompt
+allowlist against golden rendered-prompt hashes for all nine conditions,
+verifies that the annotation export contains no attribution or source
+identifiers, validates required fields and missing-field rejection for the
+experiment ledger, independently recomputes the stored test metrics from
+57,506 predictions, checks rank alignment and completeness for eight stored
+Integrated-Gradients records, and independently recomputes one checkpoint
+attribution record with 64 integration steps. The full report is
+`research/results/tables/r7_independent_audit.json`; focused regression tests
+are in `research/scripts/test_r7_audit.py`.
+
+### R6 — Inference-cache identity audit
+
+R6 is complete. The inference cache now namespaces each row by detector ID,
+checkpoint SHA-256, calibration identity, input dtype, input shape, and input
+bytes. Occlusion and leave-one-event-out callers use the checkpoint content
+hash rather than a path/mtime identity. The audit hashes the registered
+calibration and threshold manifests and proves that changing either the
+calibration definition or checkpoint identity causes a fresh model evaluation.
+The report is `research/results/tables/r6_cache_audit.json`; focused tests are
+in `research/scripts/test_r6_cache_audit.py` and
+`research/scripts/test_detector_inference_cache.py`.
 
 ### Step 64 — Pluggable perturbation interface
 
@@ -233,8 +272,16 @@ Focused tests are in `research/scripts/test_annotation_packet.py`.
 contain no condition, detector, attribution, model, seed, or source-provenance
 leakage. It also builds a deterministic balanced same/different probe using
 fresh opaque aliases and equal-length event-only views, with a hidden answer
-key and a scorer that reports accuracy against the 0.5 chance level. Focused
-tests are in `research/scripts/test_annotation_blinding.py`.
+key and a scorer that reports accuracy against the 0.5 chance level.
+`research/scripts/build_step55_probe.py` generated a 20-pair probe from the
+real annotation pool, excluding two context-capped units; the public probe and
+coordinator-only answer key are stored at
+`research/results/tables/step55_id_memorization_probe.json` and
+`research/results/tables/step55_id_memorization_answer_key.json`. The remaining
+operational action is for teammates to answer the pairs and score the response
+file with `score_step55_probe.py`. Focused tests are in
+`research/scripts/test_annotation_blinding.py` and
+`research/scripts/test_build_step55_probe.py`.
 
 ### Project setup and protocol
 
@@ -304,6 +351,24 @@ Artifacts:
 
 The completed pool is HDFS-only. BGL has been prepared and validated, but it
 has not been included in this completed pilot pool.
+
+The pool was reconciled before labeling. Its 240 rows are 240 unique
+dataset/unit/architecture annotation items covering 239 unique HDFS blocks;
+the one repeated block is intentionally present once for each detector
+architecture, matching the registered sampling unit. The registered
+HDFS-only composition of 228 Normal and 12 Anomaly items is accepted for this
+pilot, with no resampling. The decision, input hashes, and validation checks
+are recorded in
+`research/experiments/pilot/annotation_pool_reconciliation.json`, which marks
+the pool ready for Step 57.
+
+The Step 57 public packet bundle and browser interface are available at
+`research/results/tables/step57_annotation_packets.json` and
+`research/experiments/pilot/step57_annotation_ui.html`. The bundle contains
+237 complete blinded packets; the two context-capped units are excluded from
+primary labeling and remain recorded in the builder manifest. The export
+validator checks packet completeness, event positions, aliases, labels, and
+the required contrastive-assessment field.
 
 ### Detector implementation and evaluation
 
@@ -632,7 +697,7 @@ cd /Users/neilvargheseabraham/Downloads/LogInsight
 python3 -m unittest discover -s research/scripts -p 'test_*.py'
 ```
 
-Result: 226 tests passed.
+Result: 239 tests passed.
 
 The tests cover preprocessing, split validation, leakage checks, vocabulary
 behavior, detector models, calibration, threshold selection, baseline
@@ -680,6 +745,14 @@ randomized-model sanity reporting.
    `research/scripts/verify_colab_transfer.py`, but the six-split local
    inference command has not yet completed in this environment. It must pass
    at the registered `1e-6` tolerance before R5 is marked complete.
+
+9. R7 is complete and independently verified in
+   `research/results/tables/r7_independent_audit.json`. The next integrity
+   gate is R5, followed by the Step 56 ethics gate and annotation readiness.
+
+10. R6 is complete and independently verified in
+    `research/results/tables/r6_cache_audit.json`. The cache now uses
+    checkpoint-content and calibration identities in its namespace.
 
 ## Remaining planned work
 

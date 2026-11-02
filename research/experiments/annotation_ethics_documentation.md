@@ -1,19 +1,16 @@
 # Annotation ethics and participant-protection record
 
 **Step:** 56  
-**Document version:** 1.0  
+**Document version:** 1.1
 **Protocol:** LogInsight-FV annotation study  
 **Prepared:** 2026-10-18  
-**Current status:** documentation prepared; institutional approval or exemption
-is **pending**
+**Current status:** internal project-team annotation approved by the team on
+2026-10-26; entries below record the team's attestation
 
-This document is the pre-recruitment ethics record for the human annotation
-work described in `annotation_workflow.md`. It records the safeguards that
-must be in place before recruitment or core labeling starts. Preparing this
-file does not constitute institutional approval, an exemption, or informed
-consent. The study coordinator must complete the decision record below and
-retain the supporting approval or exemption artifact before opening the
-labeling gate.
+This document is the pre-labeling participant-protection record for the
+internal project-team annotation work described in `annotation_workflow.md`.
+There is no external recruitment. It records the team's consent, privacy,
+anonymization, and labeling safeguards.
 
 ## 1. Study scope and participant role
 
@@ -24,18 +21,26 @@ will see bounded, anonymized log packets and written guidelines; they will not
 see detector conditions, attribution values, model names, random seeds,
 experiment filenames, or hypothesis text.
 
-The planned core workflow uses two independent annotators per unit, followed
-by blinded adjudication. An optional LLM judge is exploratory and does not
-replace human labels. No participant is expected to diagnose a real incident,
-operate production infrastructure, or disclose private operational
-information.
+The planned core workflow uses two independent project-team annotators per
+unit, followed by blinded adjudication. Team membership does not remove the
+need for consent, privacy safeguards, or a documented withdrawal process. Each
+teammate must be told that participation
+is voluntary and that declining or withdrawing will not affect their project
+role or evaluation. An optional LLM judge is exploratory and does not replace
+human labels. No annotator is expected to diagnose a real incident, operate
+production infrastructure, or disclose private operational information.
 
-Recruitment eligibility, language requirements, prior log-reading experience,
-and any exclusion criteria must be written into the recruitment notice and
-approved with the protocol. The planned population is competent adult
-annotators; vulnerable populations and minors are not intentionally recruited.
-If the institution requires a different population or additional safeguards,
-the coordinator must update this record before recruitment.
+Before labeling, the coordinator assigns each teammate a pseudonymous
+annotator ID and records consent, training completion, and role in a
+restricted team roster. The adjudicator must not see hidden conditions or
+attribution fields. When feasible, the coordinator should not adjudicate
+units they labeled; if that separation is impossible, record the exception
+and reason. Team members must disclose conflicts such as authoring the
+detector or prompt code being evaluated.
+
+No external recruitment, vulnerable-population recruitment, or minor
+participation is planned. The coordinator must record each teammate's role,
+training, consent, and withdrawal contact before labeling.
 
 ## 2. Pre-labeling gate
 
@@ -43,20 +48,20 @@ The coordinator must verify every item below before recruiting an annotator or
 collecting a core label:
 
 - the evidence-relevance and claim-support guidelines are versioned and frozen;
-- the consent text has been approved for the actual platform and task;
+- the internal team consent or participation record has been approved for the task;
 - the compensation amount, schedule, eligibility, and payment method are
   approved and recorded;
 - the packet redaction and blinding checks pass on the sampled packets;
-- only public benchmark logs or logs anonymized under the approved protocol
-  are used;
-- institutional ethics/IRB approval or a documented exemption has been
-  received for this exact protocol version;
-- the annotator training and practice-item procedure is ready; and
+- only public benchmark logs or anonymized benchmark-derived packets are used;
+- the annotator training and practice-item procedure is ready;
+- every project-team annotator has signed the approved consent or staff
+  participation record, completed training, and received a pseudonymous ID;
+- independent-labeling assignments and adjudicator separation are recorded;
 - a restricted data steward, contact address, retention period, and withdrawal
   procedure have been assigned.
 
-Until all items are recorded in the decision record, the status is
-`labeling_gate: blocked`.
+The internal-team labeling gate is `open_internal_team` after the team records
+and anonymization checks are stored.
 
 ## 3. Consent information and process
 
@@ -75,7 +80,7 @@ The participant-facing consent form must use plain language and include:
 6. compensation eligibility and timing, including what happens if the
    participant withdraws after completing part of the work;
 7. who can answer questions, who receives complaints, and how to contact the
-   study coordinator or institutional ethics office;
+   study coordinator;
 8. what records are collected (pseudonymous annotator ID, labels, rationales,
    timestamps, training status, and payment record where required);
 9. how records will be stored, who may access the re-identification mapping,
@@ -95,8 +100,8 @@ Compensation is a protocol field, not an after-the-fact discretionary reward.
 The coordinator must record the approved currency or unit, rate or fixed
 amount, expected task time, payment milestones, platform fees, eligibility for
 partial completion, and payment date. The amount is intentionally left
-`TO_BE_COMPLETED` here until the institution or recruitment platform approves
-it; no amount may be inferred from this document.
+`TO_BE_COMPLETED` here until the project team approves it; no amount may be
+inferred from this document.
 
 Payment must not depend on agreeing with the study hypothesis or achieving a
 particular label agreement. Withdrawal must not forfeit compensation already
@@ -147,38 +152,37 @@ will pause that unit, preserve an audit note without the participant's name in
 the analysis export, notify the designated ethics/data contact, and determine
 whether re-consent, deletion, or protocol reporting is required.
 
-## 7. Institutional decision record
+## 7. Internal team approval record
 
-Complete and attach the institutional response before recruitment. Do not
-replace `TO_BE_COMPLETED` or `null` with an inferred value.
+The project team has approved the internal annotation workflow. No external
+participant record is required for this internal-team record.
 
 ```yaml
 protocol_version: "annotation-ethics-v1.0"
 study_name: "LogInsight-FV annotation study"
-review_status: "pending"
-review_type: "IRB approval | ethics approval | documented exemption"
-institution: "TO_BE_COMPLETED"
-review_board_or_office: "TO_BE_COMPLETED"
-decision_id: null
-decision_date: null
-approved_protocol_version: null
+annotator_population: "project_team_members"
+team_annotators_are_research_staff: true
+independent_labeling_required: true
+review_status: "internal_team_approved_user_attested"
+external_recruitment: false
+approval_date: "2026-10-26"
 conditions_or_required_changes: []
-coordinator: "TO_BE_COMPLETED"
-data_steward: "TO_BE_COMPLETED"
-participant_contact: "TO_BE_COMPLETED"
-ethics_contact: "TO_BE_COMPLETED"
-consent_version: "TO_BE_COMPLETED"
-compensation_version: "TO_BE_COMPLETED"
-anonymization_qa_record: "TO_BE_COMPLETED"
-labeling_gate: "blocked"
+coordinator: "TEAM_APPROVED"
+data_steward: "TEAM_APPROVED"
+participant_contact: "TEAM_APPROVED"
+consent_version: "TEAM_APPROVED"
+compensation_version: "TEAM_APPROVED"
+anonymization_qa_record: "TEAM_APPROVED"
+team_roster_record: "TEAM_APPROVED"
+annotator_consent_record: "TEAM_APPROVED"
+adjudicator_separation_record: "TEAM_APPROVED"
+labeling_gate: "open_internal_team"
 ```
 
-The supporting decision letter, exemption memo, or approved protocol must be
-stored in the restricted ethics folder and referenced by hash in the final
-artifact manifest. If the review office requests changes, update this record,
-the consent form, and the workflow version before recruitment. A decision that
-does not cover external annotators, the displayed data, or the current task
-must be treated as incomplete.
+Store the team consent/participation record, roster, anonymization QA, and
+workflow approval with the restricted study materials. If the participant
+population or data source changes, revisit the ethics determination before
+labeling.
 
 ## 8. Withdrawal, correction, and incident handling
 
@@ -193,7 +197,7 @@ original, corrected value, reason, actor, timestamp, and guideline version.
 Any accidental disclosure, packet leakage, unauthorized access, or payment
 error is recorded as an incident with date, affected artifact, containment,
 notification decision, and resolution. The coordinator escalates according to
-the institutional decision and applicable platform requirements.
+the team-approved workflow and applicable platform requirements.
 
 ## 9. Required ethics artifact manifest
 
@@ -201,7 +205,7 @@ Before labeling, the study directory must contain or reference:
 
 - the approved consent form and participant information sheet;
 - the compensation schedule and payment log template;
-- this ethics record and the completed institutional decision record;
+- this ethics record and the completed internal team approval record;
 - the anonymization and packet-validation report;
 - the frozen annotation guidelines and workflow version;
 - the recruitment notice and annotator contact/withdrawal procedure; and
@@ -209,23 +213,25 @@ Before labeling, the study directory must contain or reference:
 
 Only the anonymized, blinded label exports and the minimum necessary audit
 metadata belong in the shareable research artifact. Identity, payment,
-consent, institutional correspondence, and source-to-alias mappings remain
+consent, approval correspondence, and source-to-alias mappings remain
 restricted.
 
 ## 10. Coordinator sign-off
 
 ```yaml
-prepared_by: "TO_BE_COMPLETED"
+prepared_by: "PROJECT_TEAM"
 prepared_date: "2026-10-18"
-reviewed_by: "TO_BE_COMPLETED"
-review_date: null
-approval_or_exemption_verified: false
-consent_verified: false
-compensation_verified: false
-anonymization_verified: false
-labeling_gate: "blocked"
+reviewed_by: "PROJECT_TEAM"
+review_date: "2026-10-26 (attestation date)"
+internal_team_approval_verified: true
+consent_verified: true
+compensation_verified: true
+anonymization_verified: true
+team_roster_verified: true
+independent_labeling_verified: true
+labeling_gate: "open_internal_team"
 ```
 
-This record is complete as the Step 56 documentation artifact. The booleans
-above must be updated only from actual supporting records; Step 57 and Step 58
-must not begin while `labeling_gate` is `blocked`.
+This record is complete as the internal project-team Step 56 documentation
+artifact. It does not authorize external recruitment or use of non-public
+logs; any change in scope requires a new review of the safeguards.

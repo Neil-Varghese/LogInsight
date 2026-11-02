@@ -138,7 +138,22 @@ def predict_probabilities_batched(
     return np.concatenate(chunks)
 
 
-def _inference_row_key(detector_id: str, model_key: str, row: np.ndarray) -> str:
+def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    """Return the content hash used to identify a checkpoint artifact."""
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(chunk_size):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _inference_row_key(
+    detector_id: str,
+    model_key: str,
+    calibration_key: str,
+    row: np.ndarray,
+) -> str:
     """Create a stable cache key for one detector input row."""
 
     row = np.ascontiguousarray(row)
@@ -146,6 +161,8 @@ def _inference_row_key(detector_id: str, model_key: str, row: np.ndarray) -> str
     digest.update(detector_id.encode("utf-8"))
     digest.update(b"\0")
     digest.update(model_key.encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(calibration_key.encode("utf-8"))
     digest.update(b"\0")
     digest.update(str(row.dtype).encode("ascii"))
     digest.update(b"\0")
@@ -168,18 +185,20 @@ class InferenceCacheStats:
 class DetectorInferenceCache:
     """Cache and batch detector probabilities for repeated perturbation inputs.
 
-    The cache is namespaced by detector ID and model key. Callers should use a
-    checkpoint hash, run-manifest path, or another stable model identity as
-    ``model_key`` so predictions from different seeds or checkpoints cannot
-    collide. The cache stores probabilities only; labels, thresholds, and
+    The cache is namespaced by detector ID, checkpoint identity, and
+    calibration identity. Callers should use a checkpoint SHA-256 digest as
+    ``model_key`` and a stable calibration/threshold manifest digest as
+    ``calibration_key``. The default calibration key explicitly identifies raw
+    detector probabilities. The cache stores probabilities only; labels and
     explanation metadata remain outside this inference layer.
     """
 
-    def __init__(self, detector_id: str, model_key: str) -> None:
-        if not detector_id or not model_key:
-            raise ValueError("detector_id and model_key must be non-empty")
+    def __init__(self, detector_id: str, model_key: str, calibration_key: str = "raw_probability_v1") -> None:
+        if not detector_id or not model_key or not calibration_key:
+            raise ValueError("detector_id, model_key, and calibration_key must be non-empty")
         self.detector_id = detector_id
         self.model_key = model_key
+        self.calibration_key = calibration_key
         self._probabilities: dict[str, float] = {}
         self.stats = InferenceCacheStats()
 
@@ -198,7 +217,10 @@ class DetectorInferenceCache:
         if inputs.shape[0] == 0:
             return np.empty(0, dtype=np.float64)
 
-        keys = [_inference_row_key(self.detector_id, self.model_key, row) for row in inputs]
+        keys = [
+            _inference_row_key(self.detector_id, self.model_key, self.calibration_key, row)
+            for row in inputs
+        ]
         output = np.full(inputs.shape[0], np.nan, dtype=np.float64)
         pending_indices: dict[str, int] = {}
         for index, key in enumerate(keys):
